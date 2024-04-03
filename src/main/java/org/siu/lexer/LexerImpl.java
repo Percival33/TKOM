@@ -1,10 +1,12 @@
 package org.siu.lexer;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.siu.error.ErrorHandler;
 import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
+import org.siu.token.type.BooleanToken;
 import org.siu.token.type.IntegerToken;
 import org.siu.token.type.KeywordToken;
 import org.siu.token.type.StringToken;
@@ -12,6 +14,10 @@ import org.siu.token.type.StringToken;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
+
+import static org.siu.token.TokenType.BOOLEAN_FALSE;
+import static org.siu.token.TokenType.BOOLEAN_TRUE;
 
 @Slf4j
 public class LexerImpl implements Lexer {
@@ -29,13 +35,33 @@ public class LexerImpl implements Lexer {
     @Override
     public Token nextToken() {
         skipWhiteCharacters();
-        if (buildEOF() || buildNumber() || buildString())
+        if (buildEOF() || buildNumber() || buildString() || buildKeyword())
             return token;
 
         if (character == '\n')
             return null;
 
         return nextToken();
+    }
+
+    private boolean buildKeyword() {
+        StringBuilder sb = new StringBuilder();
+        String potentialKeyword;
+        sb.append(character);
+        nextCharacter();
+        while(StringUtils.isAlphanumeric(String.valueOf(character))) {
+            sb.append(character);
+            nextCharacter();
+        }
+
+        potentialKeyword = sb.toString();
+
+        if(TokenType.matchBoolean(potentialKeyword)) {
+            token = new BooleanToken(null, Boolean.valueOf(potentialKeyword));
+            return true;
+        }
+//        errorHandler.handleLexerError(new Exception("Invalid keyword"));
+        return false;
     }
 
     private boolean buildString() {
@@ -56,7 +82,7 @@ public class LexerImpl implements Lexer {
 
     private boolean buildEOF() {
         if (Character.toString(character).equals(TokenType.END_OF_FILE.getKeyword())) {
-            token = new KeywordToken(TokenType.END_OF_FILE, position);
+            token = new KeywordToken(position, TokenType.END_OF_FILE);
             return true;
         }
         return false;

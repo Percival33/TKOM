@@ -3,7 +3,10 @@ package org.siu.lexer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.siu.error.ErrorHandlerImpl;
+import org.siu.token.TokenType;
+import org.siu.token.type.BooleanToken;
 import org.siu.token.type.IntegerToken;
+import org.siu.token.type.KeywordToken;
 import org.siu.token.type.StringToken;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,9 +33,8 @@ class LexerImplTest {
 
         @Test
         void testOverflowInteger() {
-            // TODO: fix text
-            Lexer lexer = setup(String.valueOf(Integer.MAX_VALUE) + "1");
-            assertNotEquals(new IntegerToken(null, -1), lexer.nextToken());
+            Lexer lexer = setup(String.valueOf(Integer.MAX_VALUE) + "11111111111111");
+            assertEquals(new IntegerToken(null, Integer.MAX_VALUE), lexer.nextToken());
         }
 
         @Test
@@ -61,6 +63,23 @@ class LexerImplTest {
         void escapeNewLine() {
             Lexer lexer = setup("\"Ala nie\n ma kota.\"");
             assertEquals(new StringToken(null, "Ala nie\n ma kota."), lexer.nextToken());
+        }
+    }
+
+    @Nested
+    class BooleanTokenTest {
+        @Test
+        void boolTrueValue() {
+            Lexer lexer = setup("true");
+            assertEquals(new BooleanToken(null, true), lexer.nextToken());
+            lexer = setup("false");
+            assertEquals(new BooleanToken(null, false), lexer.nextToken());
+        }
+
+        @Test
+        void notMatchedCaseBooleanValue() {
+            Lexer lexer = setup("False");
+            assertEquals(new KeywordToken(null, TokenType.END_OF_FILE), lexer.nextToken());
         }
     }
 }

@@ -5,13 +5,14 @@ import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
 
-@Value
-public class KeywordToken implements Token {
-    Position position;
-    TokenType type;
+import static org.siu.token.TokenType.BOOLEAN_CONSTANT;
 
+@Value
+public class BooleanToken implements Token {
+    Position position;
+    Boolean value;
     @Override
-    public <T> T getValue() {
-        return null;
+    public TokenType getType() {
+        return BOOLEAN_CONSTANT;
     }
 }
