@@ -355,7 +355,7 @@ RETURN_STATEMENT        = "return", EXPRESSION, ";"
                         | "return", ";";
 
 MATCH                   = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
-MATCH_EXP               = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" STATEMENT "}";
+MATCH_EXP               = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
 
 ASSINGMENT              = IDENTIFIER, "=", EXPRESSION
                         | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION

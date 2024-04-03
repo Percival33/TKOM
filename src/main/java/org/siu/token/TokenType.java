@@ -7,8 +7,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public enum TokenType {
     END_OF_FILE("\u0003"),
-    INTEGER,
-    INT("int")
+    INTEGER_CONSTANT,
+    INT("int"),
+    STRING_CONSTANT,
+    STRING("string")
     ;
 
     private TokenType tokenType;

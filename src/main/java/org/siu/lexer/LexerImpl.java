@@ -7,6 +7,7 @@ import org.siu.token.Token;
 import org.siu.token.TokenType;
 import org.siu.token.type.IntegerToken;
 import org.siu.token.type.KeywordToken;
+import org.siu.token.type.StringToken;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,11 +15,11 @@ import java.io.StringReader;
 
 @Slf4j
 public class LexerImpl implements Lexer {
-    private BufferedReader reader;
+    private final BufferedReader reader;
     private Character character;
     private Position position = null;
     private Token token = null;
-    private ErrorHandler errorHandler;
+    private final ErrorHandler errorHandler;
 
     public LexerImpl(String text, ErrorHandler errorHandler) {
         this.reader = new BufferedReader(new StringReader(text));
@@ -28,13 +29,29 @@ public class LexerImpl implements Lexer {
     @Override
     public Token nextToken() {
         skipWhiteCharacters();
-        if (buildEOF() || buildNumber())
+        if (buildEOF() || buildNumber() || buildString())
             return token;
 
         if (character == '\n')
             return null;
 
         return nextToken();
+    }
+
+    private boolean buildString() {
+        if (!Character.toString(character).equals("\""))  return false;
+        processString();
+        return true;
+    }
+
+    private void processString() {
+        StringBuilder sb = new StringBuilder();
+        nextCharacter();
+        while (character != '"') {
+            sb.append(character);
+            nextCharacter();
+        }
+        token = new StringToken(null, sb.toString());
     }
 
     private boolean buildEOF() {
@@ -57,21 +74,16 @@ public class LexerImpl implements Lexer {
         int x;
         nextCharacter();
 
-        try {
-            while (Character.isDigit(character)) {
-                x = character - '0';
-                if (result > (Integer.MAX_VALUE - x) / 10) {
-                    log.error("Too big integer");
-                    throw new Exception("Integer overflow");
-                    // TODO: throw lexer error
-                } else {
-
-                }
-                result = result * 10 + x;
-                nextCharacter();
+        while (Character.isDigit(character)) {
+            x = character - '0';
+            if (result > (Integer.MAX_VALUE - x) / 10) {
+                log.error("integer overflow. Skipping rest digits");
+                errorHandler.handleLexerError(new Exception("Integer overflow"));
+                while(Character.isDigit(character)) {nextCharacter();}
+                break;
             }
-        } catch (Exception e) {
-            log.error("buffer overflow");
+            result = result * 10 + x;
+            nextCharacter();
         }
         token = new IntegerToken(position, result);
     }
@@ -81,10 +93,11 @@ public class LexerImpl implements Lexer {
         try {
             charNum = reader.read();
             if (charNum == -1) {
+                character = '\u0003';
                 // TODO: handle end of text
                 // end of text
-//                return ' ';
-                throw new Exception("END OF TEXT");
+                return;
+//                errorHandler.handleLexerError(new Exception("END OF TEXT"));
             }
         } catch (IOException e) {
             log.error(e.toString());
