@@ -4,12 +4,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 @Getter
 @NoArgsConstructor
 public enum TokenType {
-    END_OF_FILE("\u0003"),
+    END_OF_FILE(""),
     INTEGER_CONSTANT,
     INT("int"),
     STRING_CONSTANT,
@@ -20,7 +19,20 @@ public enum TokenType {
 
     BOOLEAN_TRUE("true"),
     BOOLEAN_FALSE("false"),
-    ;
+
+    SEMICOLON(";"),
+    COLON(":"),
+    DOUBLE_COLON("::"),
+    DOT("."),
+
+    IDENTIFIER,
+
+    EQUAL("="),
+    PLUS("+"),
+    MINUS("-"),
+    MULTIPLY("*"),
+    DIVIDE("/"),
+    MODULO("%");
 
     private TokenType tokenType;
     private String keyword;
@@ -32,9 +44,5 @@ public enum TokenType {
     TokenType(TokenType type, String keyword) {
         this.tokenType = type;
         this.keyword = keyword;
-    }
-
-    public static Boolean matchBoolean(String name) {
-        return Arrays.stream(values()).filter(tokenType -> tokenType == BOOLEAN_FALSE || tokenType == BOOLEAN_TRUE).anyMatch(tokenType -> tokenType.getKeyword().equals(name));
     }
 }

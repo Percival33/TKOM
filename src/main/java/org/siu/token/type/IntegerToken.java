@@ -9,10 +9,10 @@ import static org.siu.token.TokenType.INTEGER_CONSTANT;
 
 @Value
 public class IntegerToken implements Token {
-    Position position;
-    Integer value;
-
     public TokenType getType() {
         return INTEGER_CONSTANT;
     }
+    Position position;
+    Integer value;
+
 }

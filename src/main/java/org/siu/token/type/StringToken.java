@@ -9,10 +9,7 @@ import static org.siu.token.TokenType.STRING_CONSTANT;
 
 @Value
 public class StringToken implements Token {
+    TokenType type;
     Position position;
     String value;
-    @Override
-    public TokenType getType() {
-        return STRING_CONSTANT;
-    }
 }

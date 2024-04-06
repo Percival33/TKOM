@@ -7,8 +7,8 @@ import org.siu.token.TokenType;
 
 @Value
 public class KeywordToken implements Token {
-    Position position;
     TokenType type;
+    Position position;
 
     @Override
     public <T> T getValue() {

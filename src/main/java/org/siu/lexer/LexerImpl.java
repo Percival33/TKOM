@@ -6,6 +6,7 @@ import org.siu.error.ErrorHandler;
 import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
+import org.siu.token.TokenUtils;
 import org.siu.token.type.BooleanToken;
 import org.siu.token.type.IntegerToken;
 import org.siu.token.type.KeywordToken;
@@ -14,41 +15,67 @@ import org.siu.token.type.StringToken;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Arrays;
-
-import static org.siu.token.TokenType.BOOLEAN_FALSE;
-import static org.siu.token.TokenType.BOOLEAN_TRUE;
 
 @Slf4j
 public class LexerImpl implements Lexer {
     private final BufferedReader reader;
     private Character character;
     private Position position = null;
-    private Token token = null;
     private final ErrorHandler errorHandler;
 
     public LexerImpl(String text, ErrorHandler errorHandler) {
         this.reader = new BufferedReader(new StringReader(text));
         this.errorHandler = errorHandler;
+        nextCharacter();
     }
 
     @Override
     public Token nextToken() {
+        Token token;
         skipWhiteCharacters();
-        if (buildEOF() || buildNumber() || buildString() || buildKeyword())
+        if ((token = buildEOF()) != null)
+            return token;
+        if ((token = buildNumber()) != null)
             return token;
 
-        if (character == '\n')
+        if ((token = buildString()) != null)
+            return token;
+
+        if ((token = buildIdentifierOrKeyword()) != null)
+            return token;
+
+        if ((token = buildOperator()) != null)
+            return token;
+
+        if (token == null) {
+            log.error("Invalid token");
             return null;
+        }
 
         return nextToken();
     }
 
-    private boolean buildKeyword() {
+    private Token buildOperator() {
         StringBuilder sb = new StringBuilder();
         String potentialKeyword;
-        sb.append(character);
-        nextCharacter();
+
+        while(TokenUtils.isSymbol(String.valueOf(character))) {
+            sb.append(character);
+            nextCharacter();
+        }
+
+        potentialKeyword = sb.toString();
+
+        var tokenType = TokenUtils.OPERATORS.getOrDefault(potentialKeyword, null);
+        return tokenType != null ? new KeywordToken(tokenType, null) : null;
+    }
+
+    // "int" -> Keyword(TokenType.INT, null)
+    private Token buildIdentifierOrKeyword() {
+        StringBuilder sb = new StringBuilder();
+        String potentialKeyword;
+
+//        !StringUtils.isBlank(String.valueOf(character))s
         while(StringUtils.isAlphanumeric(String.valueOf(character))) {
             sb.append(character);
             nextCharacter();
@@ -56,46 +83,42 @@ public class LexerImpl implements Lexer {
 
         potentialKeyword = sb.toString();
 
-        if(TokenType.matchBoolean(potentialKeyword)) {
-            token = new BooleanToken(null, Boolean.valueOf(potentialKeyword));
-            return true;
+        var tokenType = TokenUtils.KEYWORDS.getOrDefault(potentialKeyword, null);
+        if (tokenType == TokenType.BOOLEAN_TRUE || tokenType == TokenType.BOOLEAN_FALSE) {
+            return new BooleanToken(null, Boolean.valueOf(potentialKeyword));
+        } else if(tokenType != null) {
+            return new KeywordToken(tokenType, null);
         }
-//        errorHandler.handleLexerError(new Exception("Invalid keyword"));
-        return false;
+
+        return null;
     }
 
-    private boolean buildString() {
-        if (!Character.toString(character).equals("\""))  return false;
-        processString();
-        return true;
-    }
-
-    private void processString() {
+    private Token buildString() {
+        // TODO: escape " character
+        if (!Character.toString(character).equals("\""))  return null;
         StringBuilder sb = new StringBuilder();
         nextCharacter();
         while (character != '"') {
             sb.append(character);
             nextCharacter();
         }
-        token = new StringToken(null, sb.toString());
+        return new StringToken(TokenType.STRING, null, sb.toString());
     }
 
-    private boolean buildEOF() {
+    private Token buildEOF() {
         if (Character.toString(character).equals(TokenType.END_OF_FILE.getKeyword())) {
-            token = new KeywordToken(position, TokenType.END_OF_FILE);
-            return true;
+            return new KeywordToken(TokenType.END_OF_FILE, position);
         }
-        return false;
+        return null;
     }
 
     // TODO: update position, handle EOF reader returning -1
-    private boolean buildNumber() {
-        if (!Character.isDigit(character)) return false;
-        processNumber();
-        return true;
+    private Token buildNumber() {
+        if (!Character.isDigit(character)) return null;
+        return processNumber();
     }
 
-    private void processNumber() {
+    private Token processNumber() {
         int result = Character.getNumericValue(character);
         int x;
         nextCharacter();
@@ -111,33 +134,26 @@ public class LexerImpl implements Lexer {
             result = result * 10 + x;
             nextCharacter();
         }
-        token = new IntegerToken(position, result);
+        return new IntegerToken(position, result);
     }
 
-    private void nextCharacter() {
+    private Character nextCharacter() {
         int charNum = 0;
         try {
             charNum = reader.read();
-            if (charNum == -1) {
-                character = '\u0003';
-                // TODO: handle end of text
-                // end of text
-                return;
-//                errorHandler.handleLexerError(new Exception("END OF TEXT"));
-            }
         } catch (IOException e) {
             log.error(e.toString());
         } catch (Exception e) {
             log.error(e.toString());
 //            throw new RuntimeException(e);
         }
-        character = (char) charNum;
+        character = charNum == -1 ? '\u0003' : (char)charNum;
+        return character;
     }
 
     private void skipWhiteCharacters() {
-        while (true) {
+        while (Character.isWhitespace(character)) {
             nextCharacter();
-            if (!Character.isWhitespace(character)) break;
         }
     }
 }

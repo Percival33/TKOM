@@ -9,10 +9,10 @@ import static org.siu.token.TokenType.BOOLEAN_CONSTANT;
 
 @Value
 public class BooleanToken implements Token {
-    Position position;
-    Boolean value;
     @Override
     public TokenType getType() {
         return BOOLEAN_CONSTANT;
     }
+    Position position;
+    Boolean value;
 }
