@@ -15,11 +15,13 @@ import org.siu.token.type.StringToken;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Optional;
 
+// TODO: add position, add handling too long identifier
 @Slf4j
 public class LexerImpl implements Lexer {
     private final BufferedReader reader;
-    private Character character;
+    private String character;
     private Position position = null;
     private final ErrorHandler errorHandler;
 
@@ -31,35 +33,41 @@ public class LexerImpl implements Lexer {
 
     @Override
     public Token nextToken() {
-        Token token;
         skipWhiteCharacters();
-        if ((token = buildEOF()) != null)
-            return token;
-        if ((token = buildNumber()) != null)
-            return token;
+        Token token = buildEOF()
+                .or(() -> buildNumber())
+                .or(() -> buildString())
+                .or(() -> buildIdentifierOrKeyword())
+                .or(() -> buildOperator())
+                .orElse(null);
 
-        if ((token = buildString()) != null)
-            return token;
-
-        if ((token = buildIdentifierOrKeyword()) != null)
-            return token;
-
-        if ((token = buildOperator()) != null)
-            return token;
+        // TODO: optional i or'y
+//        if ((token = buildEOF()) != null)
+//            return token;
+//        if ((token = buildNumber()) != null)
+//            return token;
+//
+//        if ((token = buildString()) != null)
+//            return token;
+//
+//        if ((token = buildIdentifierOrKeyword()) != null)
+//            return token;
+//
+//        if ((token = buildOperator()) != null)
+//            return token;
 
         if (token == null) {
             log.error("Invalid token");
-            return null;
         }
 
-        return nextToken();
+        return token;
     }
 
-    private Token buildOperator() {
+    private Optional<Token> buildOperator() {
         StringBuilder sb = new StringBuilder();
         String potentialKeyword;
 
-        while(TokenUtils.isSymbol(String.valueOf(character))) {
+        while (TokenUtils.isSymbol(String.valueOf(character))) {
             sb.append(character);
             nextCharacter();
         }
@@ -67,68 +75,75 @@ public class LexerImpl implements Lexer {
         potentialKeyword = sb.toString();
 
         var tokenType = TokenUtils.OPERATORS.getOrDefault(potentialKeyword, null);
-        return tokenType != null ? new KeywordToken(tokenType, null) : null;
+        return tokenType != null ? Optional.of(new KeywordToken(tokenType, null)) : Optional.empty();
     }
 
-    // "int" -> Keyword(TokenType.INT, null)
-    private Token buildIdentifierOrKeyword() {
-        StringBuilder sb = new StringBuilder();
-        String potentialKeyword;
+    private Optional<Token> buildIdentifierOrKeyword() {
+        if (!StringUtils.isAlpha(String.valueOf(character))) return Optional.empty();
 
-//        !StringUtils.isBlank(String.valueOf(character))s
-        while(StringUtils.isAlphanumeric(String.valueOf(character))) {
+        StringBuilder sb = new StringBuilder();
+        String identifier;
+
+        while (StringUtils.isAlphanumeric(String.valueOf(character))) {
             sb.append(character);
             nextCharacter();
         }
 
-        potentialKeyword = sb.toString();
+        identifier = sb.toString();
 
-        var tokenType = TokenUtils.KEYWORDS.getOrDefault(potentialKeyword, null);
+        var tokenType = TokenUtils.KEYWORDS.getOrDefault(identifier, TokenType.IDENTIFIER);
         if (tokenType == TokenType.BOOLEAN_TRUE || tokenType == TokenType.BOOLEAN_FALSE) {
-            return new BooleanToken(null, Boolean.valueOf(potentialKeyword));
-        } else if(tokenType != null) {
-            return new KeywordToken(tokenType, null);
+            return Optional.of(new BooleanToken(null, Boolean.valueOf(identifier)));
+        } else if (tokenType != TokenType.IDENTIFIER) {
+            return Optional.of(new KeywordToken(tokenType, null));
         }
 
-        return null;
+        return Optional.of(new StringToken(tokenType, null, identifier));
     }
 
-    private Token buildString() {
-        // TODO: escape " character
-        if (!Character.toString(character).equals("\""))  return null;
+    private Optional<Token> buildString() {
+        // TODO: escape " character, czytaj do " jak byl \ przed to lec dalej a jak nie to koniec
+        if (!character.equals("\"")) return Optional.empty();
         StringBuilder sb = new StringBuilder();
         nextCharacter();
-        while (character != '"') {
+        while (!character.equals(TokenUtils.END_OF_FILE)) {
+            if (character.equals(LexerConfig.STRING_ENCLOSING_CHARACTER)) {
+                if (sb.charAt(sb.length() - 1) != '\\') break;
+                sb.deleteCharAt(sb.length() - 1);
+            }
+
             sb.append(character);
             nextCharacter();
         }
-        return new StringToken(TokenType.STRING, null, sb.toString());
+        return Optional.of(new StringToken(TokenType.STRING_CONSTANT, null, sb.toString()));
     }
 
-    private Token buildEOF() {
-        if (Character.toString(character).equals(TokenType.END_OF_FILE.getKeyword())) {
-            return new KeywordToken(TokenType.END_OF_FILE, position);
+    private Optional<Token> buildEOF() {
+        if (character.equals(TokenType.END_OF_FILE.getKeyword())) {
+            return Optional.of(new KeywordToken(TokenType.END_OF_FILE, position));
         }
-        return null;
+        return Optional.empty();
     }
 
     // TODO: update position, handle EOF reader returning -1
-    private Token buildNumber() {
-        if (!Character.isDigit(character)) return null;
-        return processNumber();
+    private Optional<Token> buildNumber() {
+        if (!StringUtils.isNumeric(character)) return Optional.empty();
+        return Optional.of(processNumber());
     }
 
     private Token processNumber() {
-        int result = Character.getNumericValue(character);
+        int result = character.charAt(0) - '0';
         int x;
         nextCharacter();
 
-        while (Character.isDigit(character)) {
-            x = character - '0';
+        while (StringUtils.isNumeric(character)) {
+            x = character.charAt(0) - '0';
             if (result > (Integer.MAX_VALUE - x) / 10) {
                 log.error("integer overflow. Skipping rest digits");
                 errorHandler.handleLexerError(new Exception("Integer overflow"));
-                while(Character.isDigit(character)) {nextCharacter();}
+                while (StringUtils.isNumeric(character)) {
+                    nextCharacter();
+                }
                 break;
             }
             result = result * 10 + x;
@@ -137,22 +152,19 @@ public class LexerImpl implements Lexer {
         return new IntegerToken(position, result);
     }
 
-    private Character nextCharacter() {
+    private String nextCharacter() {
         int charNum = 0;
         try {
             charNum = reader.read();
         } catch (IOException e) {
             log.error(e.toString());
-        } catch (Exception e) {
-            log.error(e.toString());
-//            throw new RuntimeException(e);
         }
-        character = charNum == -1 ? '\u0003' : (char)charNum;
+        character = charNum == -1 ? TokenUtils.END_OF_FILE : Character.toString((char) charNum);
         return character;
     }
 
     private void skipWhiteCharacters() {
-        while (Character.isWhitespace(character)) {
+        while (StringUtils.isWhitespace(character) && StringUtils.isNotEmpty(character)) {
             nextCharacter();
         }
     }

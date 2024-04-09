@@ -11,6 +11,9 @@ public enum TokenType {
     END_OF_FILE(""),
     INTEGER_CONSTANT,
     INT("int"),
+//    FLOAT("float"),
+    // TODO: float
+    //    1.001 10^-len
     STRING_CONSTANT,
     STRING("string"),
 
@@ -33,6 +36,9 @@ public enum TokenType {
     MULTIPLY("*"),
     DIVIDE("/"),
     MODULO("%");
+
+    // TODO: == i ogólnie dwuznakowe znaki
+    //  TODO: and, or,
 
     private TokenType tokenType;
     private String keyword;

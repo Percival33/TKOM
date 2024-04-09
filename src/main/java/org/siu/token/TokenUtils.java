@@ -11,12 +11,15 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class TokenUtils {
+    public static String END_OF_FILE = "";
+
     public static final Map<String, TokenType> KEYWORDS = EnumSet.allOf(TokenType.class)
             .stream()
             .filter(token -> StringUtils.isNotBlank(token.getKeyword()))
             .filter(token -> StringUtils.isAlphanumeric(token.getKeyword()))
             .collect(Collectors.toUnmodifiableMap(TokenType::getKeyword, Function.identity()));
 
+    // TODO: explicite podać wartości tokenów 2 składnikowych
     public static Map<String, TokenType> OPERATORS = EnumSet.allOf(TokenType.class)
                 .stream()
                 .filter(token -> isSymbol(token.getKeyword()))
@@ -27,5 +30,4 @@ public class TokenUtils {
         return StringUtils.isNotBlank(s) && StringUtils.isAsciiPrintable(s) && !StringUtils.isAlphanumeric(s);
     }
 
-    public static String END_OF_FILE = "";
 }

@@ -56,13 +56,20 @@ class LexerImplTest {
         @Test
         void simpleString() {
             Lexer lexer = setup("\"Ala nie ma kota.\"");
-            assertEquals(new StringToken(TokenType.STRING, null, "Ala nie ma kota."), lexer.nextToken());
+            assertEquals(new StringToken(TokenType.STRING_CONSTANT, null, "Ala nie ma kota."), lexer.nextToken());
+        }
+
+        @Test
+        void escapeEndStringCharacter() {
+            String text = "Niesamowita \\\" sprawa.";
+            Lexer lexer = setup(String.format("\"%s\"", text));
+            assertEquals(new StringToken(TokenType.STRING_CONSTANT, null, "Niesamowita \" sprawa."), lexer.nextToken());
         }
 
         @Test
         void escapeNewLine() {
             Lexer lexer = setup("\"Ala nie\n ma kota.\"");
-            assertEquals(new StringToken(TokenType.STRING, null, "Ala nie\n ma kota."), lexer.nextToken());
+            assertEquals(new StringToken(TokenType.STRING_CONSTANT, null, "Ala nie\n ma kota."), lexer.nextToken());
         }
     }
 
@@ -78,6 +85,7 @@ class LexerImplTest {
 
         @Test
         void notMatchedCaseBooleanValue() {
+            // TODO: fix xd
             Lexer lexer = setup("False");
             assertEquals(null, lexer.nextToken());
         }
@@ -85,25 +93,30 @@ class LexerImplTest {
 
     @Nested
     class DeclarationsTest {
-//        @Test
-//        void intDeclaration() {
-//            Lexer lexer = setup("int x = 10;");
-//            assertEquals(new KeywordToken(TokenType.INT, null), lexer.nextToken(), "Expected keyword 'INT'");
-//            assertEquals(new StringToken(TokenType.IDENTIFIER, null, "x"), lexer.nextToken(), "Expected identifier");
-//            assertEquals(new KeywordToken(TokenType.EQUAL, null), lexer.nextToken(), "Expected EQ");
-//            assertEquals(new IntegerToken(null, 10), lexer.nextToken(), "Expected integer token");
-//            assertEquals(new KeywordToken(TokenType.SEMICOLON, null), lexer.nextToken(), "Expected semicolon");
-//            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
-//        }
         @Test
         void intDeclaration() {
-            Lexer lexer = setup(" ");
-//            Lexer lexer = setup("int = 10;");
-//            assertEquals(new KeywordToken(TokenType.INT, null), lexer.nextToken(), "Expected keyword 'INT'");
-////            assertEquals(new StringToken(TokenType.IDENTIFIER, null, "x"), lexer.nextToken(), "Expected identifier");
-//            assertEquals(new KeywordToken(TokenType.EQUAL, null), lexer.nextToken(), "Expected EQ");
-//            assertEquals(new IntegerToken(null, 10), lexer.nextToken(), "Expected integer token");
-//            assertEquals(new KeywordToken(TokenType.SEMICOLON, null), lexer.nextToken(), "Expected semicolon");
+            Lexer lexer = setup("int x = 10;");
+            assertEquals(new KeywordToken(TokenType.INT, null), lexer.nextToken(), "Expected keyword 'INT'");
+            assertEquals(new StringToken(TokenType.IDENTIFIER, null, "x"), lexer.nextToken(), "Expected identifier");
+            assertEquals(new KeywordToken(TokenType.EQUAL, null), lexer.nextToken(), "Expected EQ");
+            assertEquals(new IntegerToken(null, 10), lexer.nextToken(), "Expected integer token");
+            assertEquals(new KeywordToken(TokenType.SEMICOLON, null), lexer.nextToken(), "Expected semicolon");
+            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
+            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
+            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
+        }
+
+        @Test
+        void negativeIntDeclaration() {
+            Lexer lexer = setup("int x = -10;");
+            assertEquals(new KeywordToken(TokenType.INT, null), lexer.nextToken(), "Expected keyword 'INT'");
+            assertEquals(new StringToken(TokenType.IDENTIFIER, null, "x"), lexer.nextToken(), "Expected identifier");
+            assertEquals(new KeywordToken(TokenType.EQUAL, null), lexer.nextToken(), "Expected EQ");
+            assertEquals(new KeywordToken(TokenType.MINUS, null), lexer.nextToken(), "Expected minus symbol");
+            assertEquals(new IntegerToken(null, 10), lexer.nextToken(), "Expected integer token");
+            assertEquals(new KeywordToken(TokenType.SEMICOLON, null), lexer.nextToken(), "Expected semicolon");
+            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
+            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
             assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
         }
     }
