@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TokenUtils {
     public static String END_OF_FILE = "";
+    public static String DOT = ".";
 
     public static final Map<String, TokenType> KEYWORDS = EnumSet.allOf(TokenType.class)
             .stream()

@@ -11,9 +11,8 @@ public enum TokenType {
     END_OF_FILE(""),
     INTEGER_CONSTANT,
     INT("int"),
-//    FLOAT("float"),
-    // TODO: float
-    //    1.001 10^-len
+    FLOAT_CONSTANT,
+    FLOAT("float"),
     STRING_CONSTANT,
     STRING("string"),
 

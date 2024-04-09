@@ -5,14 +5,14 @@ import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
 
-import static org.siu.token.TokenType.INTEGER_CONSTANT;
+import static org.siu.token.TokenType.FLOAT_CONSTANT;
 
 @Value
-public class IntegerToken implements Token {
+public class FloatToken implements Token{
     public TokenType getType() {
-        return INTEGER_CONSTANT;
+        return FLOAT_CONSTANT;
     }
 
     Position position;
-    Integer value;
+    Float value;
 }

@@ -7,10 +7,7 @@ import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
 import org.siu.token.TokenUtils;
-import org.siu.token.type.BooleanToken;
-import org.siu.token.type.IntegerToken;
-import org.siu.token.type.KeywordToken;
-import org.siu.token.type.StringToken;
+import org.siu.token.type.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,21 +37,6 @@ public class LexerImpl implements Lexer {
                 .or(() -> buildIdentifierOrKeyword())
                 .or(() -> buildOperator())
                 .orElse(null);
-
-        // TODO: optional i or'y
-//        if ((token = buildEOF()) != null)
-//            return token;
-//        if ((token = buildNumber()) != null)
-//            return token;
-//
-//        if ((token = buildString()) != null)
-//            return token;
-//
-//        if ((token = buildIdentifierOrKeyword()) != null)
-//            return token;
-//
-//        if ((token = buildOperator()) != null)
-//            return token;
 
         if (token == null) {
             log.error("Invalid token");
@@ -102,10 +84,11 @@ public class LexerImpl implements Lexer {
     }
 
     private Optional<Token> buildString() {
-        // TODO: escape " character, czytaj do " jak byl \ przed to lec dalej a jak nie to koniec
         if (!character.equals("\"")) return Optional.empty();
+
         StringBuilder sb = new StringBuilder();
         nextCharacter();
+
         while (!character.equals(TokenUtils.END_OF_FILE)) {
             if (character.equals(LexerConfig.STRING_ENCLOSING_CHARACTER)) {
                 if (sb.charAt(sb.length() - 1) != '\\') break;
@@ -128,10 +111,39 @@ public class LexerImpl implements Lexer {
     // TODO: update position, handle EOF reader returning -1
     private Optional<Token> buildNumber() {
         if (!StringUtils.isNumeric(character)) return Optional.empty();
-        return Optional.of(processNumber());
+
+        int decimal = processNumber();
+        if(!character.equals(TokenUtils.DOT)) {
+            return Optional.of(new IntegerToken(position, decimal));
+        }
+
+        float fractional = processFractional();
+        float number = (float)decimal + fractional;
+
+        return Optional.of(new FloatToken(position, number));
     }
 
-    private Token processNumber() {
+    private float processFractional() {
+        int result = 0;
+        int power = 0;
+        nextCharacter();
+
+        while(StringUtils.isNumeric(character)) {
+            if(power > LexerConfig.MAX_FRACTIONAL_DIGITS) {
+                log.error("Too many fractional digits. Skipping rest digits");
+                errorHandler.handleLexerError(new Exception("Too many fractional digits"));
+                while (StringUtils.isNumeric(character)) {
+                    nextCharacter();
+                }
+            }
+            result = result * 10 + (character.charAt(0) - '0');
+            power++;
+            nextCharacter();
+        }
+        return (float)result / (float)Math.pow(10, power);
+    }
+
+    private int processNumber() {
         int result = character.charAt(0) - '0';
         int x;
         nextCharacter();
@@ -149,7 +161,7 @@ public class LexerImpl implements Lexer {
             result = result * 10 + x;
             nextCharacter();
         }
-        return new IntegerToken(position, result);
+        return result;
     }
 
     private String nextCharacter() {

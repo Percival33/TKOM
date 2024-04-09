@@ -2,12 +2,11 @@ package org.siu.lexer;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.siu.error.ErrorHandlerImpl;
 import org.siu.token.TokenType;
-import org.siu.token.type.BooleanToken;
-import org.siu.token.type.IntegerToken;
-import org.siu.token.type.KeywordToken;
-import org.siu.token.type.StringToken;
+import org.siu.token.type.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,6 +47,21 @@ class LexerImplTest {
             int value = Math.abs(Integer.MIN_VALUE + 1);
             Lexer lexer = setup(String.valueOf(value));
             assertEquals(new IntegerToken(null, value), lexer.nextToken());
+        }
+    }
+
+    @Nested
+    class FloatTokenTests {
+        @ParameterizedTest
+        @ValueSource(floats = {1.1F, 1.0001F})
+        void testFloat(float value) {
+            Lexer lexer = setup(String.valueOf(value));
+            assertEquals(new FloatToken(null, value), lexer.nextToken());
+        }
+        @Test
+        void tooLongFloat() {
+            Lexer lexer = setup("1." + "0".repeat(LexerConfig.MAX_FRACTIONAL_DIGITS) + "1");
+            assertEquals(new FloatToken(null, 1.0F), lexer.nextToken());
         }
     }
 
