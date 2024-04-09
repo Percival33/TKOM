@@ -91,12 +91,12 @@ class LexerImplTest {
     }
     @Test
     void negativeIntDeclaration() {
-        Lexer lexer = setup("int x = -10\n;");
+        Lexer lexer = setup("int x =-10\n;");
         assertEquals(new KeywordToken(TokenType.INT, new Position(1,1)), lexer.nextToken(), "Expected keyword 'INT'");
         assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 5), "x"), lexer.nextToken(), "Expected identifier");
         assertEquals(new KeywordToken(TokenType.ASSIGN, new Position(1,7)), lexer.nextToken(), "Expected ASSIGN");
-        assertEquals(new KeywordToken(TokenType.MINUS, new Position(1,9)), lexer.nextToken(), "Expected minus symbol");
-        assertEquals(new IntegerToken(new Position(1, 10), 10), lexer.nextToken(), "Expected integer token");
+        assertEquals(new KeywordToken(TokenType.MINUS, new Position(1,8)), lexer.nextToken(), "Expected minus symbol");
+        assertEquals(new IntegerToken(new Position(1, 9), 10), lexer.nextToken(), "Expected integer token");
         assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(2,1)), lexer.nextToken(), "Expected semicolon");
         assertEquals(new KeywordToken(TokenType.END_OF_FILE, new Position(2,2)), lexer.nextToken(), "Expected end of file token");
         assertEquals(new KeywordToken(TokenType.END_OF_FILE, new Position(2,2)), lexer.nextToken(), "Expected end of file token");

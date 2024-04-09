@@ -21,20 +21,15 @@ public class TokenUtils {
             .filter(token -> StringUtils.isAlphanumeric(token.getKeyword()))
             .collect(Collectors.toUnmodifiableMap(TokenType::getKeyword, Function.identity()));
 
-    public static final Map<String, TokenType> OPERATORS = Arrays.stream(
+    public static final Map<String, TokenType> TWO_LETTER_SYMBOLS = Arrays.stream(
             new TokenType[]{
-                    TokenType.LESS,
                     TokenType.LESS_EQUAL,
                     TokenType.GREATER_EQUAL,
-                    TokenType.GREATER,
                     TokenType.COMPARE_EQUAL,
                     TokenType.COMPARE_NOT_EQUAL,
-                    TokenType.PLUS,
-                    TokenType.MINUS,
-                    TokenType.MULTIPLY,
-                    TokenType.DIVIDE,
-                    TokenType.MODULO,
-                    TokenType.ASSIGN,
+                    TokenType.DOUBLE_COLON,
+                    TokenType.MULTI_LINE_COMMENT_OPEN,
+                    TokenType.MULTI_LINE_COMMENT_CLOSE,
             }
     ).collect(Collectors.toUnmodifiableMap(TokenType::getKeyword, Function.identity()));
 
@@ -53,13 +48,18 @@ public class TokenUtils {
                     TokenType.SQUARE_BRACKET_CLOSE,
                     TokenType.SEMICOLON,
                     TokenType.COLON,
-                    TokenType.DOUBLE_COLON,
                     TokenType.COMMA,
                     TokenType.COPY_OPERATOR,
                     TokenType.DOT,
+                    TokenType.PLUS,
+                    TokenType.MINUS,
+                    TokenType.MULTIPLY,
+                    TokenType.DIVIDE,
+                    TokenType.MODULO,
+                    TokenType.ASSIGN,
+                    TokenType.LESS,
+                    TokenType.GREATER,
                     TokenType.SINGLE_LINE_COMMENT,
-                    TokenType.MULTI_LINE_COMMENT_OPEN,
-                    TokenType.MULTI_LINE_COMMENT_CLOSE,
             }
     ).collect(Collectors.toUnmodifiableMap(TokenType::getKeyword, Function.identity()));
 

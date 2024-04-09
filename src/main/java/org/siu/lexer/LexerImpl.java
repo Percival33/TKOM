@@ -18,7 +18,7 @@ import java.util.Optional;
 public class LexerImpl implements Lexer {
     private final BufferedReader reader;
     private String character;
-    private Position position;
+    private final Position position;
     private Position tokenPosition;
     private final ErrorHandler errorHandler;
 
@@ -48,22 +48,26 @@ public class LexerImpl implements Lexer {
         return token;
     }
 
+    /**
+     * Handles at most 2 characters
+     * @return
+     */
     private Optional<Token> buildOperatorOrSymbol() {
-        StringBuilder sb = new StringBuilder();
-        String potentialKeyword;
-
-        while (TokenUtils.isSymbol(String.valueOf(character))) {
-            sb.append(character);
-            nextCharacter();
+        var symbol = character;
+        if (TokenUtils.isSymbol(String.valueOf(nextCharacter()))) {
+            var potentialToken = Optional.ofNullable(TokenUtils.TWO_LETTER_SYMBOLS.get(symbol+character));
+            if(potentialToken.isPresent()) {
+                var newSymbol = symbol + character;
+                nextCharacter();
+                symbol = newSymbol;
+            }
         }
 
-        potentialKeyword = sb.toString();
+        String finalSymbol = symbol;
+        var tokenType = Optional.ofNullable(TokenUtils.TWO_LETTER_SYMBOLS.get(finalSymbol))
+                .or(()-> Optional.ofNullable(TokenUtils.SYMBOLS.get(finalSymbol)));
 
-        var tokenType = TokenUtils.OPERATORS.getOrDefault(potentialKeyword, null);
-        if (tokenType == null) {
-            tokenType = TokenUtils.SYMBOLS.getOrDefault(potentialKeyword, null);
-        }
-        return tokenType != null ? Optional.of(new KeywordToken(tokenType, tokenPosition)) : Optional.empty();
+        return tokenType.map(type -> new KeywordToken(type, tokenPosition));
     }
 
     private Optional<Token> buildIdentifierOrKeyword() {

@@ -48,6 +48,8 @@ public enum TokenType {
     DOUBLE_COLON("::"),
     DOT("."),
     COMMA(","),
+
+    COMMENT,
     SINGLE_LINE_COMMENT("#"),
     MULTI_LINE_COMMENT_OPEN("/*"),
     MULTI_LINE_COMMENT_CLOSE("*/"),
