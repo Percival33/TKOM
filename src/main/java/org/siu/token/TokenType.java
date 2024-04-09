@@ -3,8 +3,6 @@ package org.siu.token;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Arrays;
-
 @Getter
 @NoArgsConstructor
 public enum TokenType {
@@ -50,6 +48,9 @@ public enum TokenType {
     DOUBLE_COLON("::"),
     DOT("."),
     COMMA(","),
+    SINGLE_LINE_COMMENT("#"),
+    MULTI_LINE_COMMENT_OPEN("/*"),
+    MULTI_LINE_COMMENT_CLOSE("*/"),
 
     IDENTIFIER,
 
@@ -57,7 +58,7 @@ public enum TokenType {
     OR("or"),
     NOT("not"),
 
-    EQUAL("="),
+    ASSIGN("="),
     PLUS("+"),
     MINUS("-"),
     MULTIPLY("*"),

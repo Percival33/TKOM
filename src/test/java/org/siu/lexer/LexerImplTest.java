@@ -1,137 +1,121 @@
 package org.siu.lexer;
 
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.siu.error.ErrorHandlerImpl;
+import org.mockito.Mockito;
+import org.siu.error.ErrorHandler;
+import org.siu.token.Position;
 import org.siu.token.TokenType;
 import org.siu.token.type.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class LexerImplTest {
+    private final ErrorHandler errorHandler = Mockito.mock(ErrorHandler.class);
     Lexer setup(String text) {
-        ErrorHandlerImpl errorHandler = new ErrorHandlerImpl();
         return new LexerImpl(text, errorHandler);
     }
-
-    @Nested
-    class IntegerTokenTests {
-        @Test
-        void testInteger() {
-            Lexer lexer = setup("123");
-            assertEquals(new IntegerToken(null, 123), lexer.nextToken());
-        }
-
-        @Test
-        void testZeroWithWhitespaces() {
-            Lexer lexer = setup("    \t0");
-            assertEquals(new IntegerToken(null, 0), lexer.nextToken());
-        }
-
-        @Test
-        void testOverflowInteger() {
-            Lexer lexer = setup(String.valueOf(Integer.MAX_VALUE) + "11111111111111");
-            assertEquals(new IntegerToken(null, Integer.MAX_VALUE), lexer.nextToken());
-        }
-
-        @Test
-        void testMaxInteger() {
-            Lexer lexer = setup(String.valueOf(Integer.MAX_VALUE));
-            assertEquals(new IntegerToken(null, Integer.MAX_VALUE), lexer.nextToken());
-        }
-
-        @Test
-        void testMinInteger() {
-            int value = Math.abs(Integer.MIN_VALUE + 1);
-            Lexer lexer = setup(String.valueOf(value));
-            assertEquals(new IntegerToken(null, value), lexer.nextToken());
-        }
+    @ParameterizedTest
+    @ValueSource(ints = {123, 0, Integer.MAX_VALUE, Integer.MAX_VALUE})
+    void testInteger(int expected) {
+        Lexer lexer = setup(String.valueOf(expected));
+        assertEquals(new IntegerToken(new Position(1,1), expected), lexer.nextToken());
+    }
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void boolValue(boolean value) {
+        Lexer lexer = setup(String.valueOf(value));
+        assertEquals(new BooleanToken(new Position(1,1), value), lexer.nextToken());
     }
 
-    @Nested
-    class FloatTokenTests {
-        @ParameterizedTest
-        @ValueSource(floats = {1.1F, 1.0001F})
-        void testFloat(float value) {
-            Lexer lexer = setup(String.valueOf(value));
-            assertEquals(new FloatToken(null, value), lexer.nextToken());
-        }
-        @Test
-        void tooLongFloat() {
-            Lexer lexer = setup("1." + "0".repeat(LexerConfig.MAX_FRACTIONAL_DIGITS) + "1");
-            assertEquals(new FloatToken(null, 1.0F), lexer.nextToken());
-        }
+    @ParameterizedTest
+    @ValueSource(floats = {1.1F, 1.0001F})
+    void parseFloat(float value) {
+        Lexer lexer = setup(String.valueOf(value));
+        var returnedToken = lexer.nextToken();
+        assertEquals(TokenType.FLOAT_CONSTANT, returnedToken.getType());
+        assertEquals(Float.valueOf(value), returnedToken.getValue());
     }
 
-    @Nested
-    class StringTokenTest {
-        @Test
-        void simpleString() {
-            Lexer lexer = setup("\"Ala nie ma kota.\"");
-            assertEquals(new StringToken(TokenType.STRING_CONSTANT, null, "Ala nie ma kota."), lexer.nextToken());
-        }
-
-        @Test
-        void escapeEndStringCharacter() {
-            String text = "Niesamowita \\\" sprawa.";
-            Lexer lexer = setup(String.format("\"%s\"", text));
-            assertEquals(new StringToken(TokenType.STRING_CONSTANT, null, "Niesamowita \" sprawa."), lexer.nextToken());
-        }
-
-        @Test
-        void escapeNewLine() {
-            Lexer lexer = setup("\"Ala nie\n ma kota.\"");
-            assertEquals(new StringToken(TokenType.STRING_CONSTANT, null, "Ala nie\n ma kota."), lexer.nextToken());
-        }
+    @Test
+    void tooLongFloat() {
+        Lexer lexer = setup("1." + "0".repeat(LexerConfig.MAX_FRACTIONAL_DIGITS) + "1");
+        assertEquals(new FloatToken(new Position(1, 1), 1.0F), lexer.nextToken());
+        Mockito.verify(errorHandler).handleLexerError(Mockito.any(Exception.class), Mockito.any(Position.class));
     }
 
-    @Nested
-    class BooleanTokenTest {
-        @Test
-        void boolTrueValue() {
-            Lexer lexer = setup("true");
-            assertEquals(new BooleanToken(null, true), lexer.nextToken());
-            lexer = setup("false");
-            assertEquals(new BooleanToken(null, false), lexer.nextToken());
-        }
-
-//        @Test
-//        void notMatchedCaseBooleanValue() {
-//            // TODO: fix xd
-//            Lexer lexer = setup("False");
-//            assertEquals(null, lexer.nextToken());
-//        }
+    @ParameterizedTest
+    @CsvSource({
+            "'\"Ala nie ma kota.\"', 'Ala nie ma kota.'",
+            "'\"Niesamowita \\\" sprawa.\"', 'Niesamowita \" sprawa.'",
+            "'\"Ala nie\n ma kota.\"', 'Ala nie\n ma kota.'"
+    })
+    void testString(String input, String expected) {
+        Lexer lexer = setup(input);
+        var returnedToken = lexer.nextToken();
+        assertEquals(TokenType.STRING_CONSTANT, returnedToken.getType());
+        assertEquals(expected, returnedToken.getValue());
     }
 
-    @Nested
-    class DeclarationsTest {
-        @Test
-        void intDeclaration() {
-            Lexer lexer = setup("int x = 10;");
-            assertEquals(new KeywordToken(TokenType.INT, null), lexer.nextToken(), "Expected keyword 'INT'");
-            assertEquals(new StringToken(TokenType.IDENTIFIER, null, "x"), lexer.nextToken(), "Expected identifier");
-            assertEquals(new KeywordToken(TokenType.EQUAL, null), lexer.nextToken(), "Expected EQ");
-            assertEquals(new IntegerToken(null, 10), lexer.nextToken(), "Expected integer token");
-            assertEquals(new KeywordToken(TokenType.SEMICOLON, null), lexer.nextToken(), "Expected semicolon");
-            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
-            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
-            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
-        }
+    @Test
+    void returnsOnlyEOFAtTheEndOfInput() {
+        Lexer lexer = setup("");
+        assertEquals(TokenType.END_OF_FILE, lexer.nextToken().getType());
+        assertEquals(TokenType.END_OF_FILE, lexer.nextToken().getType());
+    }
 
-        @Test
-        void negativeIntDeclaration() {
-            Lexer lexer = setup("int x = -10;");
-            assertEquals(new KeywordToken(TokenType.INT, null), lexer.nextToken(), "Expected keyword 'INT'");
-            assertEquals(new StringToken(TokenType.IDENTIFIER, null, "x"), lexer.nextToken(), "Expected identifier");
-            assertEquals(new KeywordToken(TokenType.EQUAL, null), lexer.nextToken(), "Expected EQ");
-            assertEquals(new KeywordToken(TokenType.MINUS, null), lexer.nextToken(), "Expected minus symbol");
-            assertEquals(new IntegerToken(null, 10), lexer.nextToken(), "Expected integer token");
-            assertEquals(new KeywordToken(TokenType.SEMICOLON, null), lexer.nextToken(), "Expected semicolon");
-            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
-            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
-            assertEquals(new KeywordToken(TokenType.END_OF_FILE, null), lexer.nextToken(), "Expected end of file token");
-        }
+    @ParameterizedTest
+    @CsvSource({
+            "'<=', 'LESS_EQUAL'",
+            "'<', 'LESS'",
+            "'==', 'COMPARE_EQUAL'",
+            "'!=', 'COMPARE_NOT_EQUAL'",
+            "'=', 'ASSIGN'",
+            "'and', 'AND'",
+            "'or', 'OR'",
+            "'not', 'NOT'",
+    })
+    void testOperators(String input, String expected) {
+        Lexer lexer = setup(input);
+        assertEquals(expected, lexer.nextToken().getType().name());
+    }
+
+    @Test
+    void tooLongIdentifier() {
+        Lexer lexer = setup("a".repeat(LexerConfig.MAX_IDENTIFIER_LENGTH + 10));
+        var token = lexer.nextToken();
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 1), "a".repeat(LexerConfig.MAX_IDENTIFIER_LENGTH)), token);
+        Mockito.verify(errorHandler).handleLexerError(Mockito.any(Exception.class), Mockito.any(Position.class));
+    }
+    @Test
+    void negativeIntDeclaration() {
+        Lexer lexer = setup("int x = -10\n;");
+        assertEquals(new KeywordToken(TokenType.INT, new Position(1,1)), lexer.nextToken(), "Expected keyword 'INT'");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 5), "x"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.ASSIGN, new Position(1,7)), lexer.nextToken(), "Expected ASSIGN");
+        assertEquals(new KeywordToken(TokenType.MINUS, new Position(1,9)), lexer.nextToken(), "Expected minus symbol");
+        assertEquals(new IntegerToken(new Position(1, 10), 10), lexer.nextToken(), "Expected integer token");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(2,1)), lexer.nextToken(), "Expected semicolon");
+        assertEquals(new KeywordToken(TokenType.END_OF_FILE, new Position(2,2)), lexer.nextToken(), "Expected end of file token");
+        assertEquals(new KeywordToken(TokenType.END_OF_FILE, new Position(2,2)), lexer.nextToken(), "Expected end of file token");
+        assertEquals(new KeywordToken(TokenType.END_OF_FILE, new Position(2,2)), lexer.nextToken(), "Expected end of file token");
+    }
+
+    @Test
+    void singleLineComment() {
+        Lexer lexer = setup(" # \n aaa");
+        assertEquals(new KeywordToken(TokenType.SINGLE_LINE_COMMENT, new Position(1,2)), lexer.nextToken(), "Expected single line comment");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(2,2), "aaa"), lexer.nextToken(), "Expected identifier");
+    }
+
+    @Test
+    void multiLineComment() {
+        Lexer lexer = setup(" /*\naaa\n*/\nbbb");
+        assertEquals(new KeywordToken(TokenType.MULTI_LINE_COMMENT_OPEN, new Position(1,2)), lexer.nextToken(), "Expected single line comment");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(2,1), "aaa"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.MULTI_LINE_COMMENT_CLOSE, new Position( 3,1)), lexer.nextToken(), "Expected single line comment");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(4,1), "bbb"), lexer.nextToken(), "Expected identifier");
     }
 }

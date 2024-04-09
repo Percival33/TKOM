@@ -14,38 +14,41 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Optional;
 
-// TODO: add position, add handling too long identifier
 @Slf4j
 public class LexerImpl implements Lexer {
     private final BufferedReader reader;
     private String character;
-    private Position position = null;
+    private Position position;
+    private Position tokenPosition;
     private final ErrorHandler errorHandler;
 
     public LexerImpl(String text, ErrorHandler errorHandler) {
         this.reader = new BufferedReader(new StringReader(text));
         this.errorHandler = errorHandler;
+        this.position = new Position();
         nextCharacter();
     }
 
     @Override
     public Token nextToken() {
         skipWhiteCharacters();
+        tokenPosition = position.copy();
         Token token = buildEOF()
                 .or(() -> buildNumber())
                 .or(() -> buildString())
                 .or(() -> buildIdentifierOrKeyword())
-                .or(() -> buildOperator())
+                .or(() -> buildOperatorOrSymbol())
                 .orElse(null);
 
         if (token == null) {
             log.error("Invalid token");
+            errorHandler.handleLexerError(new Exception("Invalid token"), tokenPosition);
         }
 
         return token;
     }
 
-    private Optional<Token> buildOperator() {
+    private Optional<Token> buildOperatorOrSymbol() {
         StringBuilder sb = new StringBuilder();
         String potentialKeyword;
 
@@ -57,7 +60,10 @@ public class LexerImpl implements Lexer {
         potentialKeyword = sb.toString();
 
         var tokenType = TokenUtils.OPERATORS.getOrDefault(potentialKeyword, null);
-        return tokenType != null ? Optional.of(new KeywordToken(tokenType, null)) : Optional.empty();
+        if (tokenType == null) {
+            tokenType = TokenUtils.SYMBOLS.getOrDefault(potentialKeyword, null);
+        }
+        return tokenType != null ? Optional.of(new KeywordToken(tokenType, tokenPosition)) : Optional.empty();
     }
 
     private Optional<Token> buildIdentifierOrKeyword() {
@@ -67,9 +73,9 @@ public class LexerImpl implements Lexer {
         String identifier;
 
         while (StringUtils.isAlphanumeric(String.valueOf(character))) {
-            if(sb.length() > LexerConfig.MAX_IDENTIFIER_LENGTH) {
+            if(sb.length() == LexerConfig.MAX_IDENTIFIER_LENGTH) {
                 log.error("Too long identifier. Skipping rest characters");
-                errorHandler.handleLexerError(new Exception("Too long identifier"));
+                errorHandler.handleLexerError(new Exception("Too long identifier"), tokenPosition);
                 while (StringUtils.isAlphanumeric(String.valueOf(character))) {
                     nextCharacter();
                 }
@@ -82,53 +88,52 @@ public class LexerImpl implements Lexer {
         identifier = sb.toString();
 
         var tokenType = TokenUtils.KEYWORDS.getOrDefault(identifier, TokenType.IDENTIFIER);
-        if (TokenUtils.isBoolean(tokenType)) {
-            return Optional.of(new BooleanToken(null, Boolean.valueOf(identifier)));
+        if (TokenUtils.BOOLEANS.get(identifier) != null) {
+            return Optional.of(new BooleanToken(tokenPosition, Boolean.valueOf(identifier)));
         } else if (tokenType != TokenType.IDENTIFIER) {
-            return Optional.of(new KeywordToken(tokenType, null));
+            return Optional.of(new KeywordToken(tokenType, tokenPosition));
         }
 
-        return Optional.of(new StringToken(tokenType, null, identifier));
+        return Optional.of(new StringToken(tokenType, tokenPosition, identifier));
     }
 
     private Optional<Token> buildString() {
-        if (!character.equals("\"")) return Optional.empty();
+        if (!character.equals(LexerConfig.STRING_ENCLOSING_CHARACTER)) return Optional.empty();
 
         StringBuilder sb = new StringBuilder();
         nextCharacter();
 
         while (!character.equals(TokenUtils.END_OF_FILE)) {
             if (character.equals(LexerConfig.STRING_ENCLOSING_CHARACTER)) {
-                if (sb.charAt(sb.length() - 1) != '\\') break;
+                if (!String.valueOf(sb.charAt(sb.length() - 1)).equals(LexerConfig.ESCAPE_SYMBOL)) break;
                 sb.deleteCharAt(sb.length() - 1);
             }
 
             sb.append(character);
             nextCharacter();
         }
-        return Optional.of(new StringToken(TokenType.STRING_CONSTANT, null, sb.toString()));
+        return Optional.of(new StringToken(TokenType.STRING_CONSTANT, tokenPosition, sb.toString()));
     }
 
     private Optional<Token> buildEOF() {
         if (character.equals(TokenType.END_OF_FILE.getKeyword())) {
-            return Optional.of(new KeywordToken(TokenType.END_OF_FILE, position));
+            return Optional.of(new KeywordToken(TokenType.END_OF_FILE, tokenPosition));
         }
         return Optional.empty();
     }
 
-    // TODO: update position, handle EOF reader returning -1
     private Optional<Token> buildNumber() {
         if (!StringUtils.isNumeric(character)) return Optional.empty();
 
         int decimal = processNumber();
         if(!character.equals(TokenUtils.DOT)) {
-            return Optional.of(new IntegerToken(position, decimal));
+            return Optional.of(new IntegerToken(tokenPosition, decimal));
         }
 
         float fractional = processFractional();
         float number = (float)decimal + fractional;
 
-        return Optional.of(new FloatToken(position, number));
+        return Optional.of(new FloatToken(tokenPosition, number));
     }
 
     private float processFractional() {
@@ -137,12 +142,13 @@ public class LexerImpl implements Lexer {
         nextCharacter();
 
         while(StringUtils.isNumeric(character)) {
-            if(power > LexerConfig.MAX_FRACTIONAL_DIGITS) {
+            if(power >= LexerConfig.MAX_FRACTIONAL_DIGITS) {
                 log.error("Too many fractional digits. Skipping rest digits");
-                errorHandler.handleLexerError(new Exception("Too many fractional digits"));
+                errorHandler.handleLexerError(new Exception("Too many fractional digits"), tokenPosition);
                 while (StringUtils.isNumeric(character)) {
                     nextCharacter();
                 }
+                break;
             }
             result = result * 10 + (character.charAt(0) - '0');
             power++;
@@ -160,7 +166,7 @@ public class LexerImpl implements Lexer {
             x = character.charAt(0) - '0';
             if (result > (Integer.MAX_VALUE - x) / 10) {
                 log.error("integer overflow. Skipping rest digits");
-                errorHandler.handleLexerError(new Exception("Integer overflow"));
+                errorHandler.handleLexerError(new Exception("Integer overflow"), tokenPosition);
                 while (StringUtils.isNumeric(character)) {
                     nextCharacter();
                 }
@@ -176,10 +182,12 @@ public class LexerImpl implements Lexer {
         int charNum = 0;
         try {
             charNum = reader.read();
+            position.nextCharacter();
         } catch (IOException e) {
             log.error(e.toString());
         }
         character = charNum == -1 ? TokenUtils.END_OF_FILE : Character.toString((char) charNum);
+        if (character.equals(LexerConfig.LINE_BREAK)) position.nextLine();
         return character;
     }
 
