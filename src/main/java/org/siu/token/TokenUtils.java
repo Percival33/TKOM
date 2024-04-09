@@ -1,5 +1,6 @@
 package org.siu.token;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -9,7 +10,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Slf4j
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class TokenUtils {
     public static String END_OF_FILE = "";
     public static String DOT = ".";
@@ -27,6 +28,9 @@ public class TokenUtils {
                 .filter(token -> token.getKeyword().length() == 1)
             .collect(Collectors.toUnmodifiableMap(TokenType::getKeyword, Function.identity()));
 
+    public static boolean isBoolean(TokenType token) {
+        return token == TokenType.BOOLEAN_FALSE || token == TokenType.BOOLEAN_TRUE;
+    }
     public static boolean isSymbol(String s) {
         return StringUtils.isNotBlank(s) && StringUtils.isAsciiPrintable(s) && !StringUtils.isAlphanumeric(s);
     }

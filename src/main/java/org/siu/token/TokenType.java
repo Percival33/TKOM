@@ -9,35 +9,65 @@ import java.util.Arrays;
 @NoArgsConstructor
 public enum TokenType {
     END_OF_FILE(""),
-    INTEGER_CONSTANT,
-    INT("int"),
-    FLOAT_CONSTANT,
-    FLOAT("float"),
-    STRING_CONSTANT,
-    STRING("string"),
 
+    VARIANT("variant"),
+    STRUCT("struct"),
+    CONST("const"),
+    WHILE("while"),
+    RETURN("return"),
+    FUNCTION("fn"),
+
+    INTEGER_CONSTANT,
+    FLOAT_CONSTANT,
+    STRING_CONSTANT,
     BOOLEAN_CONSTANT,
+
+    INT("int"),
+    FLOAT("float"),
+    STRING("string"),
     BOOL("bool"),
 
     BOOLEAN_TRUE("true"),
     BOOLEAN_FALSE("false"),
 
+    GREATER_EQUAL(">="),
+    GREATER(">"),
+    LESS("<"),
+    LESS_EQUAL("<="),
+
+    COPY_OPERATOR("@"),
+    BRACKET_OPEN("("),
+    BRACKET_CLOSE(")"),
+    SQUARE_BRACKET_OPEN("{"),
+    SQUARE_BRACKET_CLOSE("}"),
+
+    COMPARE_EQUAL("=="),
+    COMPARE_NOT_EQUAL("!="),
+    MATCH("match"),
+
     SEMICOLON(";"),
     COLON(":"),
     DOUBLE_COLON("::"),
     DOT("."),
+    COMMA(","),
 
     IDENTIFIER,
+
+    AND("and"),
+    OR("or"),
+    NOT("not"),
 
     EQUAL("="),
     PLUS("+"),
     MINUS("-"),
     MULTIPLY("*"),
     DIVIDE("/"),
-    MODULO("%");
+    MODULO("%"),
 
-    // TODO: == i ogólnie dwuznakowe znaki
-    //  TODO: and, or,
+    IF("if"),
+    ELSE("else"),
+    ELIF("elif"),
+    ;
 
     private TokenType tokenType;
     private String keyword;

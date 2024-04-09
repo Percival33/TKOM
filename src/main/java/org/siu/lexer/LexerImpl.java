@@ -67,6 +67,14 @@ public class LexerImpl implements Lexer {
         String identifier;
 
         while (StringUtils.isAlphanumeric(String.valueOf(character))) {
+            if(sb.length() > LexerConfig.MAX_IDENTIFIER_LENGTH) {
+                log.error("Too long identifier. Skipping rest characters");
+                errorHandler.handleLexerError(new Exception("Too long identifier"));
+                while (StringUtils.isAlphanumeric(String.valueOf(character))) {
+                    nextCharacter();
+                }
+                break;
+            }
             sb.append(character);
             nextCharacter();
         }
@@ -74,7 +82,7 @@ public class LexerImpl implements Lexer {
         identifier = sb.toString();
 
         var tokenType = TokenUtils.KEYWORDS.getOrDefault(identifier, TokenType.IDENTIFIER);
-        if (tokenType == TokenType.BOOLEAN_TRUE || tokenType == TokenType.BOOLEAN_FALSE) {
+        if (TokenUtils.isBoolean(tokenType)) {
             return Optional.of(new BooleanToken(null, Boolean.valueOf(identifier)));
         } else if (tokenType != TokenType.IDENTIFIER) {
             return Optional.of(new KeywordToken(tokenType, null));
