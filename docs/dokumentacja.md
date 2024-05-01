@@ -1,30 +1,30 @@
-# TKOM 24L - dokumentacja wstępna
+# TKOM 24L - Język `siu`
 ```
 Marcin Jarczewski
 ```
 Język `siu`.
 
 <!-- TOC -->
-* [TKOM 24L - dokumentacja wstępna](#tkom-24l---dokumentacja-wstępna)
-    * [Zasady działania języka](#zasady-działania-języka)
-        * [Analiza wymagań](#analiza-wymagań)
-        * [Typy danych](#typy-danych)
-        * [Operatory](#operatory)
-    * [Przykłady języka](#przykłady-języka)
-        * [Konwersja typów i operator rzutowania](#konwersja-typów-i-operator-rzutowania)
-        * [Stałe](#stałe)
-        * [Zasady widoczności zmiennych](#zasady-widoczności-zmiennych)
-        * [Zasady przekazywania zmiennych do funkcji](#zasady-przekazywania-zmiennych-do-funkcji)
-        * [Przeciążanie funkcji](#przeciążanie-funkcji)
-        * [Kombinacja typów](#kombinacja-typów)
-        * [Słowa kluczowe](#słowa-kluczowe)
-        * [Biblioteka standardowa](#biblioteka-standardowa)
-        * [Komunikaty o błędach](#komunikaty-o-błędach)
-    * [Struktura projektu](#struktura-projektu)
-        * [Testowanie](#testowanie)
-    * [Gramatyka języka](#gramatyka-języka)
-    * [Sposób uruchomienia](#sposób-uruchomienia)
-    * [Środowisko programistyczne](#środowisko-programistyczne)
+* [TKOM 24L - Język `siu`](#tkom-24l---język-siu)
+  * [Zasady działania języka](#zasady-działania-języka)
+    * [Analiza wymagań](#analiza-wymagań)
+    * [Typy danych](#typy-danych)
+    * [Operatory](#operatory)
+  * [Przykłady języka](#przykłady-języka)
+    * [Konwersja typów i operator rzutowania](#konwersja-typów-i-operator-rzutowania)
+    * [Stałe](#stałe)
+    * [Zasady widoczności zmiennych](#zasady-widoczności-zmiennych)
+    * [Zasady przekazywania zmiennych do funkcji](#zasady-przekazywania-zmiennych-do-funkcji)
+    * [Przeciążanie funkcji](#przeciążanie-funkcji)
+    * [Kombinacja typów](#kombinacja-typów)
+    * [Słowa kluczowe](#słowa-kluczowe)
+    * [Biblioteka standardowa](#biblioteka-standardowa)
+    * [Komunikaty o błędach](#komunikaty-o-błędach)
+  * [Struktura projektu](#struktura-projektu)
+    * [Testowanie](#testowanie)
+  * [Gramatyka języka](#gramatyka-języka)
+  * [Sposób uruchomienia](#sposób-uruchomienia)
+  * [Środowisko programistyczne](#środowisko-programistyczne)
 <!-- TOC -->
 
 ## Zasady działania języka
