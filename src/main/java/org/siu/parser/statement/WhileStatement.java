@@ -1,4 +1,10 @@
 package org.siu.parser.statement;
 
-public class WhileStatement {
+import org.siu.parser.Visitor;
+
+public class WhileStatement extends Statement{
+    @Override
+    public void accept(Visitor visitor) {
+
+    }
 }

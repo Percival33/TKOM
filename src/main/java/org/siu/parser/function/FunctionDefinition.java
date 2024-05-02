@@ -19,6 +19,5 @@ public class FunctionDefinition extends ProgramElement {
         this.parameters = parameters;
         this.returnType = returnType;
         this.position = position;
-
     }
 }

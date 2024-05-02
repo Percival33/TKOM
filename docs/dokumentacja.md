@@ -371,7 +371,7 @@ STATEMENT               = IF_STATEMENT
 
 BLOCK                   = "{", { STATEMENT, ";" }, "}";
   
-FN_CALL                 = IDENTIFIER, "(", [ ["@"] EXPRESSION, { ",", ["@"], EXPRESSION }, ], ")";                    
+FN_CALL                 = IDENTIFIER, "(", [ ["@"] EXPRESSION, { ",", ["@"], EXPRESSION }, ], ")", ";";                    
 
 CONDITION               = EXPRESSION;
 
@@ -393,7 +393,8 @@ FACTOR                  = LITERAL
                         | '(', EXPRESSION, ')'
                         | IDENTIFIER_FNCALL_MEM; 
 
-IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ];
+IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ], ";";
+// FIXME: refactor it with assignment
 
 FN_ARGUMENTS            = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };  
 ```

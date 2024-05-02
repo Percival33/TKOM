@@ -1,5 +1,5 @@
 package org.siu.parser;
 
 public interface Visitable {
-    public accept(Visitor visitor);
+    void accept(Visitor visitor);
 }
