@@ -205,5 +205,7 @@ public class Parser {
     }
 
     private Expression parseLogicFactor() {
+        // TODO: remember if was negated.
+        // TODO: return factor or unary_negate(factor) as an expression
     }
 }
