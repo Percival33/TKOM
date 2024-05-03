@@ -1,4 +1,4 @@
-package org.siu.parser.statement;
+package org.siu.ast.statement;
 
 import org.siu.parser.Visitable;
 

@@ -12,6 +12,8 @@ import org.siu.token.Position;
 import org.siu.token.TokenType;
 import org.siu.token.type.*;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,7 +23,8 @@ class LexerImplTest {
     private final ErrorHandler errorHandler = Mockito.mock(ErrorHandler.class);
 
     Lexer setup(String text) {
-        return new LexerImpl(text, errorHandler);
+        BufferedReader reader = new BufferedReader(new StringReader(text));
+        return new LexerImpl(reader, errorHandler);
     }
 
     @ParameterizedTest

@@ -22,6 +22,13 @@ public class LexerImpl implements Lexer {
     private Position tokenPosition;
     private final ErrorHandler errorHandler;
 
+    public LexerImpl(BufferedReader reader, ErrorHandler errorHandler) {
+        this.reader = reader;
+        this.errorHandler = errorHandler;
+        this.position = new Position();
+        nextCharacter();
+    }
+
     public LexerImpl(String text, ErrorHandler errorHandler) {
         this.reader = new BufferedReader(new StringReader(text));
         this.errorHandler = errorHandler;

@@ -1,8 +1,8 @@
-package org.siu.parser.function;
+package org.siu.ast.function;
 
 import lombok.Getter;
-import org.siu.parser.Block;
-import org.siu.parser.ProgramElement;
+import org.siu.ast.Block;
+import org.siu.ast.ProgramElement;
 import org.siu.token.Position;
 
 import java.util.List;

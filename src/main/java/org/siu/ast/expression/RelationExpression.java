@@ -1,8 +1,8 @@
-package org.siu.parser.statement;
+package org.siu.ast.expression;
 
 import org.siu.parser.Visitor;
 
-public class IfStatement extends Statement{
+public class RelationExpression extends Expression2 {
     @Override
     public void accept(Visitor visitor) {
 

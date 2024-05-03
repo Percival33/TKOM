@@ -1,8 +1,8 @@
-package org.siu.parser.expression;
+package org.siu.ast.statement;
 
 import org.siu.parser.Visitor;
 
-public class Greater extends Expression{
+public class WhileStatement extends Statement{
     @Override
     public void accept(Visitor visitor) {
 

@@ -1,4 +1,4 @@
-package org.siu.parser.function;
+package org.siu.ast.function;
 
 public class FunctionParameter {
 }

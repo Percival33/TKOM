@@ -1,4 +1,4 @@
-package org.siu.parser;
+package org.siu.ast;
 
 import java.util.Map;
 

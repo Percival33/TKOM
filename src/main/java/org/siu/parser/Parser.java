@@ -1,26 +1,41 @@
 package org.siu.parser;
 
 import lombok.extern.slf4j.Slf4j;
+import org.siu.ast.Block;
+import org.siu.ast.Program;
+import org.siu.ast.ProgramElement;
+import org.siu.ast.expression.relation.Less;
+import org.siu.error.ErrorHandler;
 import org.siu.error.ParserError;
 import org.siu.error.RedefinitionError;
 import org.siu.error.SyntaxError;
 import org.siu.lexer.Lexer;
-import org.siu.parser.expression.Expression;
-import org.siu.parser.expression.OrExpression;
-import org.siu.parser.function.FunctionDefinition;
-import org.siu.parser.function.FunctionParameter;
-import org.siu.parser.statement.Statement;
+import org.siu.ast.expression.Expression;
+import org.siu.ast.expression.logical.OrExpression;
+import org.siu.ast.function.FunctionDefinition;
+import org.siu.ast.function.FunctionParameter;
+import org.siu.ast.statement.Statement;
+import org.siu.lexer.LexerImpl;
 import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
 
+import java.io.BufferedReader;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
+
+// TODO: implement parseMatch, ??
 
 @Slf4j
 public class Parser {
     private final Lexer lexer;
     private Token token;
+
+
+    public Parser(BufferedReader reader, ErrorHandler errorHandler) {
+        this.lexer = new LexerImpl(reader, errorHandler);
+    }
 
     public Parser(Lexer lexer) {
         this.lexer = lexer;
@@ -190,12 +205,12 @@ public class Parser {
     }
 
     private Expression parseConditionalExpression() throws SyntaxError {
-        Expression left = parseLogicFactor();
+        Expression left = parseAndExpression();
         if(left == null) return null;
         while(token.getType() == TokenType.OR) {
             var position = token.getPosition();
             consumeToken();
-            var right_logic_factor = parseLogicFactor();
+            var right_logic_factor = parseAndExpression();
             if(right_logic_factor == null) {
                 throw new SyntaxError(position, "No expression after OR.");
             }
@@ -204,8 +219,37 @@ public class Parser {
         return left;
     }
 
-    private Expression parseLogicFactor() {
+    private Expression parseAndExpression() {
+        var left = parseRelationExpression();
         // TODO: remember if was negated.
         // TODO: return factor or unary_negate(factor) as an expression
+        while(token.getType() == TokenType.AND)
+            parseAndExpression();
+        return null;
     }
+
+    private Expression parseRelationExpression() {
+        var left = parseMathExpression();
+        Map<TokenType, Supplier<Expression>> relationOperator = new HashMap<>();
+        relationOperator.put(TokenType.LESS, Less::new);
+        while(relationOperator.containsKey(token.getValue())) {
+            Supplier<Expression> supplier = relationOperator.get(token.getType());
+            if (supplier != null) {
+                Expression expression = supplier.get();  // Create a new instance
+                // some code...
+            }
+        }
+        return null;
+    }
+
+    private Expression parseMathExpression() {
+        // var left = parseTerm / multiplicaationExpression
+        return null;
+    }
+
+
+    public Expression addExpression() {
+
+    }
+
 }

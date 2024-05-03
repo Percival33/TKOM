@@ -168,9 +168,9 @@ x = 6; # error
 - mutable
 ```
 int x = 5; 
-print(x); # 5 
+print((string) x); # 5 
 x = 6; 
-print(x); # 6
+print((string) x); # 6
 ```
 
 ### Konwersja typów i operator rzutowania

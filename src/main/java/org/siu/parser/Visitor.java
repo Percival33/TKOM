@@ -1,7 +1,7 @@
 package org.siu.parser;
 
-import org.siu.parser.statement.IfStatement;
-import org.siu.parser.statement.WhileStatement;
+import org.siu.ast.statement.IfStatement;
+import org.siu.ast.statement.WhileStatement;
 
 /**
  * STATEMENT               = IF_STATEMENT
