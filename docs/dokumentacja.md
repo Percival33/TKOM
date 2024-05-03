@@ -6,25 +6,25 @@ Język `siu`.
 
 <!-- TOC -->
 * [TKOM 24L - dokumentacja wstępna](#tkom-24l---dokumentacja-wstępna)
-  * [Zasady działania języka](#zasady-działania-języka)
-    * [Analiza wymagań](#analiza-wymagań)
-    * [Typy danych](#typy-danych)
-    * [Operatory](#operatory)
-  * [Przykłady języka](#przykłady-języka)
-    * [Konwersja typów i operator rzutowania](#konwersja-typów-i-operator-rzutowania)
-    * [Stałe](#stałe)
-    * [Zasady widoczności zmiennych](#zasady-widoczności-zmiennych)
-    * [Zasady przekazywania zmiennych do funkcji](#zasady-przekazywania-zmiennych-do-funkcji)
-    * [Przeciążanie funkcji](#przeciążanie-funkcji)
-    * [Kombinacja typów](#kombinacja-typów)
-    * [Słowa kluczowe](#słowa-kluczowe)
-    * [Biblioteka standardowa](#biblioteka-standardowa)
-    * [Komunikaty o błędach](#komunikaty-o-błędach)
-  * [Struktura projektu](#struktura-projektu)
-    * [Testowanie](#testowanie)
-  * [Gramatyka języka](#gramatyka-języka)
-  * [Sposób uruchomienia](#sposób-uruchomienia)
-  * [Środowisko programistyczne](#środowisko-programistyczne)
+    * [Zasady działania języka](#zasady-działania-języka)
+        * [Analiza wymagań](#analiza-wymagań)
+        * [Typy danych](#typy-danych)
+        * [Operatory](#operatory)
+    * [Przykłady języka](#przykłady-języka)
+        * [Konwersja typów i operator rzutowania](#konwersja-typów-i-operator-rzutowania)
+        * [Stałe](#stałe)
+        * [Zasady widoczności zmiennych](#zasady-widoczności-zmiennych)
+        * [Zasady przekazywania zmiennych do funkcji](#zasady-przekazywania-zmiennych-do-funkcji)
+        * [Przeciążanie funkcji](#przeciążanie-funkcji)
+        * [Kombinacja typów](#kombinacja-typów)
+        * [Słowa kluczowe](#słowa-kluczowe)
+        * [Biblioteka standardowa](#biblioteka-standardowa)
+        * [Komunikaty o błędach](#komunikaty-o-błędach)
+    * [Struktura projektu](#struktura-projektu)
+        * [Testowanie](#testowanie)
+    * [Gramatyka języka](#gramatyka-języka)
+    * [Sposób uruchomienia](#sposób-uruchomienia)
+    * [Środowisko programistyczne](#środowisko-programistyczne)
 <!-- TOC -->
 
 ## Zasady działania języka
@@ -73,7 +73,7 @@ Przykład:
 ```
 int x = 4 * (3 + 1) # 16
 ```
-Dla operatorów relacyjnych, manipulowanie kolejnością wykonania odbywa się poprzez użycie nawiasów. 
+Dla operatorów relacyjnych, manipulowanie kolejnością wykonania odbywa się poprzez użycie nawiasów.
 
 ## Przykłady języka
 - komentarze jednolinijkowe będą poprzedzone znakiem `#` a komentarz blokowy poprzez `/*` oraz `*/`
@@ -215,7 +215,7 @@ Funkcji nie da się przeciążać.
 Operatory wieloargumentowe, np. porównania wymagają tego samego typu zmiennych.
 
 ### Słowa kluczowe
-`string`, `int`, `float`, `char`, `variant`, `struct`, `if`,`elif`, `else`, `const`, `print`, `while`, `@`, `true`, `false`, `return`, `fn`, `::`,
+`string`, `int`, `float`, `variant`, `struct`, `if`,`elif`, `else`, `const`, `print`, `while`, `@`, `true`, `false`, `return`, `fn`, `::`,
 `>=`, `>`, `<`, `<=`, `or`, `not`, `and`
 
 operatory matematyczne:
@@ -258,12 +258,12 @@ Wyróżniam 3 rodzaje błędów
 
 ### Testowanie
 - lekser
-  - Testy będą polegały na przyjmowaniu napisów i porównywaniu wygenerowanych tokenów
-    - test: niepoprawnego napisu, który zakończony jest końcem pliku
+    - Testy będą polegały na przyjmowaniu napisów i porównywaniu wygenerowanych tokenów
+        - test: niepoprawnego napisu, który zakończony jest końcem pliku
 - parser
-  - Testy będą porównywały wyjściową konstrukcje z oczekiwaną konstrukcją drzewa składniowego.
+    - Testy będą porównywały wyjściową konstrukcje z oczekiwaną konstrukcją drzewa składniowego.
 - interpreter
-  - Testy będą symulować błędy, które mogą powstać w kodzie użytkownika sprawdzane będzie sposób obsługi takich błędów.
+    - Testy będą symulować błędy, które mogą powstać w kodzie użytkownika sprawdzane będzie sposób obsługi takich błędów.
 
 ## Gramatyka języka
 ```
@@ -355,7 +355,7 @@ RETURN_STATEMENT        = "return", EXPRESSION, ";"
                         | "return", ";";
 
 MATCH                   = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
-MATCH_EXP               = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" STATEMENT "}";
+MATCH_EXP               = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
 
 ASSINGMENT              = IDENTIFIER, "=", EXPRESSION
                         | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
@@ -405,5 +405,5 @@ Uruchomienie poprzez podanie pliku do uruchomienia
 ```
 
 ## Środowisko programistyczne
-projekt zostanie napisany przy użyciu języka `Java` w wersji 17 z wykorzystaniem narzędzia gradle. 
+projekt zostanie napisany przy użyciu języka `Java` w wersji 17 z wykorzystaniem narzędzia gradle.
 Dodatkowo zostaną użyte biblioteki lombok i Simple Logging Facade for Java (SLF4J),  a do testowania biblioteki Junit, AssertJ.

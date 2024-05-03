@@ -1,7 +1,8 @@
 # TKOM 24L - SIU
 
 ## Dokumentacja wstępna
-[dokumentacja](./dokumentacja-wstępna.md)
+[dokumentacja wstępna](docs/dokumentacja-wstępna.md)
+[dokumentacja aktualna](docs/dokumentacja.md)
 
 Potencjalne pomysły na rozbudowę:
 - [ ] dodanie mapy
