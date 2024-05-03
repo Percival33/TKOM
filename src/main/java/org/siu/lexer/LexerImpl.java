@@ -107,16 +107,29 @@ public class LexerImpl implements Lexer {
         StringBuilder sb = new StringBuilder();
         nextCharacter();
 
-        while (!character.equals(TokenUtils.END_OF_FILE)) {
-            if (character.equals(LexerConfig.STRING_ENCLOSING_CHARACTER)) {
-                if (!String.valueOf(sb.charAt(sb.length() - 1)).equals(LexerConfig.ESCAPE_SYMBOL)) break;
-                sb.deleteCharAt(sb.length() - 1);
+        while (!character.equals(TokenUtils.END_OF_FILE) && !character.equals(LexerConfig.STRING_ENCLOSING_CHARACTER)) {
+            if(character.equals(LexerConfig.ESCAPE_SYMBOL)) {
+                parseEscapeCharacter(sb);
+                continue;
             }
-
             sb.append(character);
             nextCharacter();
         }
         return Optional.of(new StringToken(TokenType.STRING_CONSTANT, tokenPosition, sb.toString()));
+    }
+
+    private void parseEscapeCharacter(StringBuilder sb) {
+        nextCharacter();
+        Character escapedCharacter = LexerConfig.charactersToEscape.get(character);
+
+        if(escapedCharacter == null) {
+            sb.append(LexerConfig.ESCAPE_SYMBOL);
+            sb.append(character);
+        }
+        else {
+            sb.append(escapedCharacter);
+        }
+        nextCharacter();
     }
 
     private Optional<Token> buildEOF() {
