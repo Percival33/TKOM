@@ -326,8 +326,8 @@ STRUCT_TYPE_DECL        = VARIANT_TYPE_DECL, IDENTIFIER;
 DECLARATION             = ["const"], VARIABLE_DECLARATION;
 
 VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
-                        | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
                         | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
+                        | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
                         | IDENTIFIER, IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
                         
 STRUCT_MEMBER           = LITERAL 
@@ -366,20 +366,15 @@ STATEMENT               = IF_STATEMENT
                         | DECLARATION
                         | RETURN_STATEMENT
                         | ASSINGMENT
-                        | MATCH
-                        | FN_CALL;
+                        | MATCH;
 
 BLOCK                   = "{", { STATEMENT, ";" }, "}";
   
-FN_CALL                 = IDENTIFIER, "(", [ ["@"] EXPRESSION, { ",", ["@"], EXPRESSION }, ], ")", ";";                    
-
-CONDITION               = EXPRESSION;
-
 EXPRESSION              = AND_EXPRESSION, { "or", AND_EXPRESSION };
 
 AND_EXPRESSION          = RELATION_EXPRESSION, { "and", RELATION_EXPRESSION }
 
-RELATION_EXPRESSION     = MATH_EXPRESSION, { relation_operator, MATH_EXPRESSION };
+RELATION_EXPRESSION     = ["not"], MATH_EXPRESSION, { relation_operator, MATH_EXPRESSION };
                         
 MATH_EXPRESSION         = TERM, { arithmetic_operator, TERM };
 

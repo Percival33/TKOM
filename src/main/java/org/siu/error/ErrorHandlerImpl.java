@@ -9,4 +9,7 @@ public class ErrorHandlerImpl implements ErrorHandler{
     public void handleLexerError(Exception e, Position p) {
         System.out.println(e.toString() + "at" + p);
     }
+    public void handleParserError(Exception e, Position p) {
+        System.out.println(e.toString() + "at" + p);
+    }
 }

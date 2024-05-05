@@ -1,10 +1,8 @@
 package org.siu.ast.expression;
 
-import org.siu.parser.Visitor;
+public interface RelationExpression extends Expression {
+    Expression getLeft();
+    Expression getRight();
 
-public class RelationExpression implements Expression {
-    @Override
-    public void accept(Visitor visitor) {
-
-    }
+    boolean evaluate(int left, int right);
 }

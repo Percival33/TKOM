@@ -1,7 +1,15 @@
 package org.siu.parser;
 
+import org.siu.ast.expression.*;
+import org.siu.ast.expression.logical.NegateLogicalExpression;
+import org.siu.ast.expression.relation.LessExpression;
+import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.statement.IfStatement;
 import org.siu.ast.statement.WhileStatement;
+import org.siu.ast.type.BooleanExpression;
+import org.siu.ast.type.FloatExpression;
+import org.siu.ast.type.IntegerExpression;
+import org.siu.ast.type.StringExpression;
 
 /**
  * STATEMENT               = IF_STATEMENT
@@ -14,7 +22,26 @@ import org.siu.ast.statement.WhileStatement;
  */
 public interface Visitor {
     // TODO: implement rest of statements
-    // TODO: FN_CALL - is it really a statement??
     void visit(WhileStatement statement);
     void visit(IfStatement statement);
+
+    void visit(IntegerExpression integerExpression);
+    void visit(FloatExpression expression);
+    void visit(StringExpression stringExpression);
+    void visit(BooleanExpression booleanExpression);
+
+    void visit(IdentifierExpression identifierExpression);
+    void visit(StructExpression structExpression);
+
+    void visit(FunctionCallExpression functionCallExpression);
+
+    void visit(CastedFactorExpression castedFactorExpression);
+
+    void visit(CopiedFactorExpression copiedFactorExpression);
+
+    void visit(DeclarationStatement declarationStatement);
+
+    void visit(LessExpression lessExpression);
+
+    void visit(NegateLogicalExpression negateLogicalExpression);
 }
