@@ -2,7 +2,9 @@ package org.siu.parser;
 
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
+import org.siu.ast.expression.logical.AndExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
+import org.siu.ast.expression.logical.OrExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.statement.IfStatement;
@@ -44,7 +46,6 @@ public interface Visitor {
 
     void visit(LessExpression lessExpression);
 
-    void visit(NegateLogicalExpression negateLogicalExpression);
 
 //    ArithmeticExpression
     void visit(AddArithmeticExpression addArithmeticExpression);
@@ -52,5 +53,10 @@ public interface Visitor {
     void visit(ModuloArithmeticExpression moduloArithmeticExpression);
     void visit(MultiplyArithmeticExpression multiplyArithmeticExpression);
     void visit(SubtractArithmeticExpression subtractArithmeticExpression);
+
+//    LogicalExpression
+    void visit(AndExpression andExpression);
+    void visit(NegateLogicalExpression negateLogicalExpression);
+    void visit(OrExpression orExpression);
 
 }

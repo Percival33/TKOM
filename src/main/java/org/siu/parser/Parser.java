@@ -8,6 +8,7 @@ import org.siu.ast.Block;
 import org.siu.ast.Program;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
+import org.siu.ast.expression.logical.AndExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
@@ -18,15 +19,12 @@ import org.siu.ast.expression.logical.OrExpression;
 import org.siu.ast.function.FunctionDefinition;
 import org.siu.ast.function.FunctionParameter;
 import org.siu.ast.statement.Statement;
-import org.siu.lexer.LexerImpl;
 import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
 
-import java.io.BufferedReader;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 // TODO: implement parseMatch, ??
 
@@ -46,8 +44,8 @@ public class Parser {
         return this.token;
     }
 
-    //    PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL};
-    public Program buildProgram() throws ParserError {
+    //    PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
+    public Program buildProgram() {
         nextToken();
         Map<String, FunctionDefinition> functions = new HashMap<>();
         Map<String, DeclarationStatement> declarations = new HashMap<>();
@@ -114,7 +112,6 @@ public class Parser {
 
     private Optional<Expression> parseExpression() {
         return parseLogicExpression();
-//        return Optional.empty();
     }
 
     private Optional<ValueType> parseTypeDeclaration() {
@@ -132,7 +129,6 @@ public class Parser {
             var error = errorSupplier.apply(token.getPosition());
             log.error("{}. Expected {} got {}", error.toString(), expectedType, token.getType());
             errorHandler.handleParserError(error, error.getPosition());
-//            throw error;
         }
         var value = token.getValue();
         nextToken();
@@ -180,7 +176,6 @@ public class Parser {
 
         return new FunctionDefinition(name.toString(), params, returnType, block.get(), position);
     }
-    // TODO: wizytator z statement
 
 
     private Optional<Block> parseBlock() {
@@ -234,7 +229,7 @@ public class Parser {
                 // TODO: refactor error handling
                 errorHandler.handleParserError(new SyntaxError(position, "No expression after OR."), position);
             }
-            left = new OrExpression(left, position, right_logic_factor.get());
+            left = new OrExpression(left, right_logic_factor.get(), position);
         }
         return Optional.of(left);
     }
@@ -243,10 +238,16 @@ public class Parser {
         var leftOptional = parseRelationExpression();
         if (leftOptional.isEmpty()) return Optional.empty();
         var left = leftOptional.get();
-        // TODO: remember if was negated.
-        // TODO: return factor or unary_negate(factor) as an expression
-        while (token.getType() == TokenType.AND)
-            parseAndExpression();
+
+        while (token.getType() == TokenType.AND) {
+            nextToken();
+            var position = token.getPosition();
+            var right = parseAndExpression();
+            if (right.isEmpty()) {
+                errorHandler.handleParserError(new SyntaxError(token.getPosition(), "No expression after AND."), token.getPosition());
+            }
+            left = new AndExpression(left, right.get(), position);
+        }
         return Optional.of(left);
     }
 
@@ -297,14 +298,19 @@ public class Parser {
         var left = leftOptional.get();
         while (token.getType() != TokenType.END_OF_FILE) {
             var position = token.getPosition();
-            switch (token.getType()) {
+            var type = token.getType();
+            switch (type) {
                 case PLUS -> {
+                    nextToken();
+
                     var rightOptional = parseTerm();
                     if (rightOptional.isPresent()) {
                         left = new AddArithmeticExpression(left, rightOptional.get(), position);
                     }
                 }
                 case MINUS -> {
+                    nextToken();
+
                     var rightOptional = parseTerm();
                     if (rightOptional.isPresent()) {
                         left = new SubtractArithmeticExpression(left, rightOptional.get(), position);
@@ -334,46 +340,6 @@ public class Parser {
     /**
      * TERM                    = UNARY_FACTOR, { multiplication_operator, UNARY_FACTOR };
      */
-    private Optional<Expression> parseTerm2() {
-        var leftOptional = parseFactor();
-        if (leftOptional.isEmpty()) {
-            return Optional.empty();
-        }
-        var left = leftOptional.get();
-//        nextToken();
-        while (token.getType() != TokenType.END_OF_FILE) {
-            var position = token.getPosition();
-            switch (token.getType()) {
-                case MULTIPLY -> {
-                    var rightOptional = parseFactor();
-                    if (rightOptional.isPresent()) {
-                        left = new MultiplyArithmeticExpression(left, rightOptional.get(), position);
-                    }
-                }
-                case DIVIDE -> {
-                    var rightOptional = parseFactor();
-                    if (rightOptional.isPresent()) {
-                        left = new DivideArithmeticExpression(left, rightOptional.get(), position);
-                    }
-                }
-                case MODULO -> {
-                    var rightOptional = parseFactor();
-                    if (rightOptional.isPresent()) {
-                        left = new ModuloArithmeticExpression(left, rightOptional.get(), position);
-                    }
-                }
-                default -> {
-                    break;
-                }
-            }
-            if (token.getType() != TokenType.MULTIPLY && token.getType() != TokenType.DIVIDE && token.getType() != TokenType.MODULO) {
-                break;
-            }
-        }
-
-        return Optional.of(left);
-    }
-
     private Optional<Expression> parseTerm() {
         Optional<Expression> leftOptional = parseFactor();
         if (leftOptional.isEmpty()) {
@@ -384,7 +350,7 @@ public class Parser {
         while (token.getType() == TokenType.MULTIPLY || token.getType() == TokenType.DIVIDE || token.getType() == TokenType.MODULO) {
             Position position = token.getPosition();
             TokenType operationType = token.getType();
-
+            nextToken();
             Optional<Expression> rightOptional = parseFactor();
             if (rightOptional.isPresent()) {
                 left = buildArithmeticExpression(left, rightOptional.get(), operationType, position);
@@ -422,17 +388,17 @@ public class Parser {
             var castedTypeOptional = parseSimpleTypeExpression();
             if (castedTypeOptional.isEmpty()) {
                 log.error("Invalid cast syntax at: {}", position);
-                throw new SyntaxError(position);
+                errorHandler.handleParserError(new SyntaxError(position), position);
             }
             castedType = castedTypeOptional.get();
-//            nextToken(); // TODO: make sure that token is valid?
+            nextToken(); // TODO: make sure that token is valid?
             mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
         }
 
         // FACTOR
         var factor = parseLiteralExpression()
-                .or(this::parseExpression)
                 .or(this::parseIdentifierOrFnCall)
+                .or(this::parseExpression)
                 .or(Optional::empty);
         if (castedType != null) {
             throw new SyntaxError(position, "Casted factor not implemented.");
@@ -450,7 +416,6 @@ public class Parser {
             case BOOL -> ret = Optional.of(new BooleanExpression(token.getValue(), token.getPosition()));
             default -> ret = Optional.empty();
         }
-        nextToken();
         return ret;
     }
 
@@ -463,11 +428,11 @@ public class Parser {
             case BOOLEAN_CONSTANT -> ret = Optional.of(new BooleanExpression(token.getValue(), token.getPosition()));
             default -> ret = Optional.empty();
         }
-        nextToken();
+        if(ret.isPresent()) nextToken();
         return ret;
     }
 
-    //    IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ], ";";
+    //    IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ];
     private Optional<Expression> parseIdentifierOrFnCall() {
         if (token.getType() != TokenType.IDENTIFIER) {
             return Optional.empty();
@@ -480,12 +445,10 @@ public class Parser {
         switch (token.getType()) {
             case DOT -> {
                 nextToken();
-                mustBe(token, TokenType.IDENTIFIER, SyntaxError::new);
-                var fieldName = token.getValue().toString();
+                var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
                 expr = new StructExpression(name, fieldName, position);
             }
             case BRACKET_OPEN -> {
-                nextToken();
                 var arguments = parseFnArguments();
                 mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
                 expr = new FunctionCallExpression(name, arguments, position);
@@ -494,9 +457,6 @@ public class Parser {
                 expr = new IdentifierExpression(name, position);
             }
         }
-
-
-        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
         return Optional.of(expr);
     }
 
@@ -511,6 +471,7 @@ public class Parser {
         Expression expression;
 
         do {
+            nextToken();
             copy = false;
             if (token.getType() == TokenType.COPY_OPERATOR) {
                 copy = true;
@@ -528,7 +489,6 @@ public class Parser {
                 expression = new CopiedFactorExpression(expression, expression.getPosition());
             }
             arguments.add(expression);
-            nextToken();
         } while (token.getType() == TokenType.COMMA);
         return arguments;
     }

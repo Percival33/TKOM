@@ -147,6 +147,7 @@ Dog pluto = Dog { 14, "pluto", golden };
 
 
 Point pt = { a, f(10) };
+Point pt2 = pt;
 ```
 - variant
 ```
@@ -305,7 +306,7 @@ SIMPLE_TYPE             = "int"
 ```
 
 ```
-PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL};
+PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
                         
 TYPE_DEFINITION         = SIMPLE_TYPE_AS_ARG
                         | STRUCT_DEFINITION
@@ -388,7 +389,7 @@ FACTOR                  = LITERAL
                         | '(', EXPRESSION, ')'
                         | IDENTIFIER_FNCALL_MEM; 
 
-IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ], ";";
+IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ];
 // FIXME: refactor it with assignment
 
 FN_ARGUMENTS            = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };  

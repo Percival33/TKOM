@@ -1,20 +1,23 @@
 package org.siu.ast.expression.logical;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.expression.Expression;
+import org.siu.ast.expression.LogicalExpression;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
+@ToString(exclude = {"left", "right"})
+@EqualsAndHashCode(exclude = "position")
 @Value
-public class OrExpression implements Expression {
+public class OrExpression implements LogicalExpression {
+    Expression left;
+    Expression right;
     Position position;
-
-    public OrExpression(Expression left, Position position, Expression rightLogicFactor) {
-        this.position = position;
-    }
 
     @Override
     public void accept(Visitor visitor) {
-
+        visitor.visit(this);
     }
 }

@@ -1,5 +1,6 @@
 package org.siu.ast.expression;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.siu.parser.Visitor;
@@ -7,6 +8,7 @@ import org.siu.token.Position;
 
 import java.util.List;
 
+@EqualsAndHashCode(exclude = "position")
 @Value
 @RequiredArgsConstructor
 public class FunctionCallExpression implements Expression {
