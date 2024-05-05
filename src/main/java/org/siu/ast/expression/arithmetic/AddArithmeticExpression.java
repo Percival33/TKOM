@@ -18,7 +18,9 @@ public class AddArithmeticExpression implements ArithmeticExpression {
     Position position;
 
     @Override
-    public void accept(Visitor visitor) {}
+    public void accept(Visitor visitor) {
+        visitor.visit(this);
+    }
 
     @Override
     public int evaluate(int left, int right) {

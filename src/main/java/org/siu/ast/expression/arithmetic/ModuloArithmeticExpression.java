@@ -11,7 +11,7 @@ import org.siu.token.Position;
 @ToString(exclude = {"left", "right"})
 @EqualsAndHashCode(exclude="position")
 @Value
-public class DivideArithmeticExpression implements ArithmeticExpression {
+public class ModuloArithmeticExpression implements ArithmeticExpression {
     Expression left;
     Expression right;
 
@@ -24,6 +24,6 @@ public class DivideArithmeticExpression implements ArithmeticExpression {
 
     @Override
     public int evaluate(int left, int right) {
-        return left / right;
+        return left % right;
     }
 }

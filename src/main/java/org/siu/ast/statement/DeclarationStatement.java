@@ -11,10 +11,10 @@ import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
 import java.util.List;
+
 @ToString(exclude = {"expression"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-@Getter
 public class DeclarationStatement implements Statement {
     Argument argument;
     Expression expression;
