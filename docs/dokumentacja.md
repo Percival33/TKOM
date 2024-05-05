@@ -325,10 +325,10 @@ STRUCT_TYPE_DECL        = VARIANT_TYPE_DECL, IDENTIFIER;
                     
 DECLARATION             = ["const"], VARIABLE_DECLARATION;
 
-VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, "=", EXPRESSION, ";"
-                        | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}"
-                        | IDENTIFIER, IDENTIFIER, "=", EXPRESSION
-                        | IDENTIFIER, IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")"; (* variant *)
+VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
+                        | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
+                        | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
+                        | IDENTIFIER, IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
                         
 STRUCT_MEMBER           = LITERAL 
                         | FN_CALL
