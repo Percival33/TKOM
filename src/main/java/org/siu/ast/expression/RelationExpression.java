@@ -2,7 +2,7 @@ package org.siu.ast.expression;
 
 import org.siu.parser.Visitor;
 
-public class RelationExpression extends Expression2 {
+public class RelationExpression implements Expression {
     @Override
     public void accept(Visitor visitor) {
 

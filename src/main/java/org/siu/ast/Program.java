@@ -1,12 +1,16 @@
 package org.siu.ast;
 
-import java.util.Map;
+import lombok.ToString;
+import lombok.Value;
+import org.siu.ast.function.FunctionDefinition;
+import org.siu.ast.statement.DeclarationStatement;
 
+import java.util.Map;
+@ToString(exclude = {"functionDefinitions", "declarations"})
+@Value
 public class Program {
     // TODO: change name of variable
-    private final Map<String, ProgramElement> programElement;
+    private final Map<String, FunctionDefinition> functionDefinitions;
+    private final Map<String, DeclarationStatement> delarations;
 
-    public Program(Map<String, ProgramElement> programElement) {
-        this.programElement = programElement;
-    }
 }

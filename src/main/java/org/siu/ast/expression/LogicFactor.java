@@ -2,7 +2,7 @@ package org.siu.ast.expression;
 
 import org.siu.parser.Visitor;
 
-public class LogicFactor extends Expression2 {
+public class LogicFactor implements Expression{
     @Override
     public void accept(Visitor visitor) {
 
