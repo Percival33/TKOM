@@ -44,42 +44,45 @@ public class Parser {
         return this.token;
     }
 
+    private void saveFunctionDefinition(FunctionDefinition statement, Map<String, FunctionDefinition> functions) {
+        if (functions.containsKey(statement.getName())) {
+            errorHandler.handleParserError(new RedefinitionError(functions.get(statement.getName()).getPosition()), statement.getPosition());
+        }
+        functions.put(statement.getName(), statement);
+    }
+
+    private void saveDeclaration(DeclarationStatement statement, Map<String, DeclarationStatement> declarations) {
+        if (declarations.containsKey(statement.getArgument().getName())) {
+            errorHandler.handleParserError(new RedefinitionError(declarations.get(statement.getArgument().getName()).getPosition()), statement.getPosition());
+        }
+        declarations.put(statement.getArgument().getName(), statement);
+    }
+
     //    PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
     public Program buildProgram() {
         nextToken();
         Map<String, FunctionDefinition> functions = new HashMap<>();
         Map<String, DeclarationStatement> declarations = new HashMap<>();
-        FunctionDefinition funDef;
-        // TODO: should buildProgram look like this?
-        /**
-         * Token token = buildEOF()
-         *                 .or(() -> buildNumber())
-         *                 .or(() -> buildString())
-         *                 .or(() -> buildIdentifierOrKeyword())
-         *                 .or(() -> buildOperatorOrSymbol())
-         *                 .orElse(null);
-         */
 
-        var statement = parseDeclarationStatement();
+        var parse = true;
+        do {
+            var funDef = parseFunDef();
+            if (funDef.isPresent()) {
+                saveFunctionDefinition(funDef.get(), functions);
+                continue;
+            }
+            var declaration = parseDeclarationStatement();
+            if (declaration.isPresent()) {
+                saveDeclaration(declaration.get(), declarations);
+                continue;
+            }
 
-//        while ((funDef = parseFunDef()) != null) {
-//            try {
-//                if (functions.containsKey(funDef.getName())) {
-//                    throw new RedefinitionError(functions.get(funDef.getName()).getPosition());
-//                }
-//                functions.put(funDef.getName(), funDef);
-////            } catch (SyntaxError e) {
-////                log.error("syntax error: ", e.getPosition());
-////                log.error(e.toString());
-//            } catch (RedefinitionError e) {
-//                log.error("redefinition error: ", e.getPosition());
-//                log.error(e.toString());
-//            } catch (Exception e) {
-//                log.error("something went horribly wrong. {}", e.toString());
-//            }
-//        }
+            if(token.getType() == TokenType.SEMICOLON) {
+                continue;
+            }
+            break;
+        } while (parse);
 
-        declarations.put(statement.get().getArgument().getName(), statement.get());
         return new Program(functions, declarations);
     }
 
@@ -133,33 +136,16 @@ public class Parser {
         var value = token.getValue();
         nextToken();
         return value;
-//        return token.getValue();
     }
 
-//    private <T> T mustBe(Token token, TokenType type, Class<T> clazz, Function<Position, ? extends ParserError> errorSupplier) throws ParserError {
-//        // TODO: rename function
-//        if (token.getType() != type) {
-//            var error = errorSupplier.apply(token.getPosition());
-//            log.error(error.toString());
-//            throw error;
-//        }
-//        try {
-//            return clazz.cast(token.getValue());
-//        } catch (ClassCastException e) {
-//            throw new IllegalArgumentException("Token value is not of the expected type: " + clazz.getSimpleName(), e);
-//        }
-//    }
-
-
     //    FN_DEFINITION           = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
-    private FunctionDefinition parseFunDef() throws ParserError {
+    private Optional<FunctionDefinition> parseFunDef() {
         if (token.getType() != TokenType.FUNCTION) {
-            return null;
+            return Optional.empty();
         }
-        var position = token.getPosition(); // FIXME: should it be position.copy?
+        var position = token.getPosition(); // TODO: should it be position.copy?
         token = nextToken();
         mustBe(token, TokenType.IDENTIFIER, SyntaxError::new);
-//        mustBe(token, TokenType.IDENTIFIER, String.class, SyntaxError::new);
         var name = token.getValue();
 
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
@@ -171,10 +157,10 @@ public class Parser {
         var block = parseBlock();
         if (block.isEmpty()) {
             log.error("Block cannot be empty at: {}", position);
-            throw new SyntaxError(position);
+            errorHandler.handleParserError(new SyntaxError(position), position);
         }
 
-        return new FunctionDefinition(name.toString(), params, returnType, block.get(), position);
+        return Optional.of(new FunctionDefinition(name.toString(), params, returnType, block.get(), position));
     }
 
 
@@ -187,7 +173,7 @@ public class Parser {
         return Optional.empty();
     }
 
-    private List<FunctionParameter> parseParameters() throws SyntaxError {
+    private List<FunctionParameter> parseParameters() {
         List<FunctionParameter> parameters = new ArrayList<>();
         var param = parseParameter();
         if (param.isEmpty()) {
@@ -200,7 +186,7 @@ public class Parser {
             param = parseParameter();
             if (param.isEmpty()) {
                 log.error("");
-                throw new SyntaxError(token.getPosition());
+                errorHandler.handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
             }
             parameters.add(param.get());
         }
@@ -272,7 +258,8 @@ public class Parser {
         var left = parseMathExpression();
         if (left.isEmpty()) return Optional.empty();
         var type = token.getType();
-        if (!relationOperator.containsKey(type)) return negate ? Optional.of(new NegateLogicalExpression(left.get(), token.getPosition())) : left;
+        if (!relationOperator.containsKey(type))
+            return negate ? Optional.of(new NegateLogicalExpression(left.get(), token.getPosition())) : left;
 
         var constructor = relationOperator.get(type);
         var relationPosition = token.getPosition();
@@ -289,6 +276,7 @@ public class Parser {
 
     /**
      * MATH_EXPRESSION         = TERM, { arithmetic_operator, TERM };
+     * TODO: simplify code
      */
     private Optional<Expression> parseMathExpression() {
         var leftOptional = parseTerm();
@@ -428,7 +416,7 @@ public class Parser {
             case BOOLEAN_CONSTANT -> ret = Optional.of(new BooleanExpression(token.getValue(), token.getPosition()));
             default -> ret = Optional.empty();
         }
-        if(ret.isPresent()) nextToken();
+        if (ret.isPresent()) nextToken();
         return ret;
     }
 

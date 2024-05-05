@@ -7,12 +7,14 @@ import org.siu.ast.Argument;
 import org.siu.ast.Program;
 import org.siu.ast.expression.Expression;
 import org.siu.ast.expression.FunctionCallExpression;
+import org.siu.ast.expression.StructExpression;
 import org.siu.ast.expression.arithmetic.AddArithmeticExpression;
 import org.siu.ast.expression.arithmetic.ModuloArithmeticExpression;
 import org.siu.ast.expression.arithmetic.MultiplyArithmeticExpression;
 import org.siu.ast.expression.arithmetic.SubtractArithmeticExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.type.IntegerExpression;
+import org.siu.ast.type.StringExpression;
 import org.siu.ast.type.ValueType;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;
@@ -53,6 +55,29 @@ class ParserTest {
         Expression expression = new MultiplyArithmeticExpression(new IntegerExpression(2, position), new IntegerExpression(1, position), position);
 
         assertEquals(Map.of("a", createDeclaration("a", ValueType.INT, expression)), program.getDeclarations());
+    }
+
+//    @Test
+//    void stringDeclaration() {
+//        String s = "string c = \"a + b\";";
+//        Parser parser = toParser(s);
+//        Program program = parser.buildProgram();
+//
+//        Expression expression = new StringExpression("a + b", position);
+//        assertEquals(createDeclaration("c", ValueType.STRING, expression), program.getDeclarations().get("c"));
+//    }
+
+    @Test
+    void addTwoArithmeticOperation() {
+        String s = "int a = 2 * 1; float b = 3;";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new MultiplyArithmeticExpression(new IntegerExpression(2, position), new IntegerExpression(1, position), position);
+        Expression secondExpression = new IntegerExpression(3, position);
+
+        assertEquals(createDeclaration("a", ValueType.INT, expression), program.getDeclarations().get("a"));
+        assertEquals(createDeclaration("b", ValueType.FLOAT, secondExpression), program.getDeclarations().get("b"));
     }
 
     @Test

@@ -1,23 +1,21 @@
 package org.siu.ast.function;
 
-import lombok.Getter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import lombok.Value;
 import org.siu.ast.Block;
 import org.siu.token.Position;
 
 import java.util.List;
 import java.util.Optional;
 
-@Getter
+@ToString(exclude = "block")
+@EqualsAndHashCode(exclude = "position")
+@Value
 public class FunctionDefinition {
+    String name;
     List<FunctionParameter> parameters;
     Optional<FunctionParameter> returnType;
-    String name;
+    Block block;
     Position position;
-
-    public FunctionDefinition(String name, List<FunctionParameter> parameters, Optional<FunctionParameter> returnType, Block block, Position position) {
-        this.name = name;
-        this.parameters = parameters;
-        this.returnType = returnType;
-        this.position = position;
-    }
 }
