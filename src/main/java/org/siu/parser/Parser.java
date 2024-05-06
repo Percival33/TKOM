@@ -77,7 +77,7 @@ public class Parser {
                 continue;
             }
 
-            if(token.getType() == TokenType.SEMICOLON) {
+            if (token.getType() == TokenType.SEMICOLON) {
                 continue;
             }
             break;
@@ -353,9 +353,9 @@ public class Parser {
     }
 
     /**
-     * UNARY_FACTOR            = ["-"], CASTED_FACTOR;
+     * CASTED_FACTOR           = [ "(", SIMPLE_TYPE, ")" ], UNARY_FACTOR;
      * <p>
-     * CASTED_FACTOR           = [ "(", SIMPLE_TYPE, ")" ], FACTOR;
+     * UNARY_FACTOR            = ["-"], FACTOR;
      * <p>
      * FACTOR                  = LITERAL
      * | '(', EXPRESSION, ')'
@@ -365,41 +365,55 @@ public class Parser {
     @SneakyThrows
     private Optional<Expression> parseFactor() {
         var position = token.getPosition();
+        var factorOptional = Optional.<Expression>empty();
+        var castedType = Optional.<ValueType>empty();
+
+        // CASTED_FACTOR | '(', EXPRESSION, ')'
+        if (token.getType() == TokenType.BRACKET_OPEN) {
+            nextToken();
+            castedType = parseCastedType();
+            if (castedType.isPresent()) {
+                nextToken();
+                mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+            } else {
+                factorOptional = parseExpression();
+                mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+            }
+        }
 
         // UNARY_FACTOR
         var negate = isUnaryFactor();
 
-        // CASTED_FACTOR | '(', EXPRESSION, ')'
-        var castedType = parseCastedType();
-
-        if (token.getType() == TokenType.BRACKET_OPEN) {
-            castedType = parseCastedType();
-            var factor = parseExpression();
-            throw new RuntimeException("duuupa");
-        }
-
-
         // FACTOR
-        var factorOptional = parseLiteralExpression()
-                .or(this::parseIdentifierOrFnCall)
-//                .or(this::parseExpression)
-                .or(Optional::empty);
+        factorOptional =
+                factorOptional
+                        .or(this::parseLiteralExpression)
+                        .or(this::parseIdentifierOrFnCall)
+                        .or(Optional::empty);
 
-        if(factorOptional.isEmpty()) {
+        if (factorOptional.isEmpty()) {
             return Optional.empty();
         }
 
         var factor = factorOptional.get();
 
-        if (castedType.isPresent()) {
-//            throw new SyntaxError(position, "Casted factor not implemented.");
-            // TODO: use CastedFactorExpression
-            factor = new CastedFactorExpression(castedType.get(), factor, position);
-        }
         if (negate) {
             factor = new NegateArithmeticExpression(factor, position);
         }
+
+        if (castedType.isPresent()) {
+            factor = new CastedFactorExpression(castedType.get(), factor, position);
+        }
+
         return Optional.of(factor);
+    }
+
+    private Optional<ValueType> parseCastedType() {
+        var castedType = ValueType.of(token.getType());
+        if (castedType.isEmpty()) {
+            log.warn("Invalid cast syntax at: {}", token.getPosition());
+        }
+        return castedType;
     }
 
     private boolean isUnaryFactor() {
@@ -408,25 +422,6 @@ public class Parser {
             return true;
         }
         return false;
-    }
-
-    private Optional<ValueType> parseCastedType() {
-        if(token.getType() != TokenType.BRACKET_OPEN) {
-            return Optional.empty();
-        }
-        nextToken();
-        var position = token.getPosition();
-        var castedType = ValueType.of(token.getType());
-
-        if (castedType.isEmpty()) {
-            log.warn("Invalid cast syntax at: {}", position);
-            return Optional.empty();
-//            errorHandler.handleParserError(new SyntaxError(position), position);
-//            throw new RuntimeException("Invalid cast syntax at: " + position);
-        }
-        nextToken(); // TODO: make sure that token is valid?
-        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-        return castedType;
     }
 
     private Optional<Expression> parseLiteralExpression() {

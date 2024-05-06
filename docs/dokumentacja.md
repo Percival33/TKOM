@@ -381,9 +381,9 @@ MATH_EXPRESSION         = TERM, { arithmetic_operator, TERM };
 
 TERM                    = UNARY_FACTOR, { multiplication_operator, UNARY_FACTOR };    
 
-UNARY_FACTOR            = ["-"], CASTED_FACTOR;   
+CASTED_FACTOR           = [ "(", SIMPLE_TYPE, ")" ], UNARY_FACTOR;
 
-CASTED_FACTOR           = [ "(", SIMPLE_TYPE, ")" ], FACTOR;
+UNARY_FACTOR            = ["-"], FACTOR;   
 
 FACTOR                  = LITERAL
                         | '(', EXPRESSION, ')'
