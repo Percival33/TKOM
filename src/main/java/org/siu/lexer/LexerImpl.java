@@ -122,6 +122,7 @@ public class LexerImpl implements Lexer {
             sb.append(character);
             nextCharacter();
         }
+        nextCharacter();
         return Optional.of(new StringToken(TokenType.STRING_CONSTANT, tokenPosition, sb.toString()));
     }
 

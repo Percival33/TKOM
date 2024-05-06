@@ -87,6 +87,19 @@ class LexerImplTest {
         assertEquals(TokenType.END_OF_FILE, lexer.nextToken().getType());
     }
 
+    @Test
+    void stringRegressionTest() {
+        Lexer lexer = setup("string c = \"a + b\";");
+        assertEquals(TokenType.STRING, lexer.nextToken().getType());
+        assertEquals(TokenType.IDENTIFIER, lexer.nextToken().getType());
+        assertEquals(TokenType.ASSIGN, lexer.nextToken().getType());
+        var token = lexer.nextToken();
+        assertEquals("a + b", token.getValue());
+        assertEquals(TokenType.STRING_CONSTANT, token.getType());
+        assertEquals(TokenType.SEMICOLON, lexer.nextToken().getType());
+        assertEquals(TokenType.END_OF_FILE, lexer.nextToken().getType());
+    }
+
     @ParameterizedTest
     @CsvSource({
             "'<=', 'LESS_EQUAL'",

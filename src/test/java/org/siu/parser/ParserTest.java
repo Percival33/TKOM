@@ -57,15 +57,15 @@ class ParserTest {
         assertEquals(Map.of("a", createDeclaration("a", ValueType.INT, expression)), program.getDeclarations());
     }
 
-//    @Test
-//    void stringDeclaration() {
-//        String s = "string c = \"a + b\";";
-//        Parser parser = toParser(s);
-//        Program program = parser.buildProgram();
-//
-//        Expression expression = new StringExpression("a + b", position);
-//        assertEquals(createDeclaration("c", ValueType.STRING, expression), program.getDeclarations().get("c"));
-//    }
+    @Test
+    void stringDeclaration() {
+        String s = "string c = \"a + b\";";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new StringExpression("a + b", position);
+        assertEquals(createDeclaration("c", ValueType.STRING, expression), program.getDeclarations().get("c"));
+    }
 
     @Test
     void addTwoArithmeticOperation() {
