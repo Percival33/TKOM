@@ -3,31 +3,21 @@ package org.siu.ast.expression.arithmetic;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
+import org.siu.ast.expression.ArithmeticExpression;
 import org.siu.ast.expression.Expression;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
-@ToString(exclude = {"left", "right"})
+@ToString(exclude = "expression")
 @EqualsAndHashCode(exclude="position")
 @Value
-public class MultiplyArithmeticExpression implements TwoArgumentArithmeticExpression {
-    Expression left;
-    Expression right;
+public class NegateArithmeticExpression implements ArithmeticExpression {
+    Expression expression;
 
     Position position;
 
     @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
-    }
-
-    @Override
-    public int evaluate(int left, int right) {
-        return left * right;
-    }
-
-    @Override
-    public float evaluate(float left, float right) {
-        return left * right;
     }
 }

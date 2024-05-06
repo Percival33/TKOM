@@ -28,6 +28,7 @@ public interface Visitor {
     void visit(WhileStatement statement);
     void visit(IfStatement statement);
 
+//    Simple type expression
     void visit(IntegerExpression integerExpression);
     void visit(FloatExpression expression);
     void visit(StringExpression stringExpression);
@@ -38,9 +39,7 @@ public interface Visitor {
 
     void visit(FunctionCallExpression functionCallExpression);
 
-    void visit(CastedFactorExpression castedFactorExpression);
 
-    void visit(CopiedFactorExpression copiedFactorExpression);
 
     void visit(DeclarationStatement declarationStatement);
 
@@ -53,10 +52,17 @@ public interface Visitor {
     void visit(ModuloArithmeticExpression moduloArithmeticExpression);
     void visit(MultiplyArithmeticExpression multiplyArithmeticExpression);
     void visit(SubtractArithmeticExpression subtractArithmeticExpression);
+    void visit(TwoArgumentArithmeticExpression twoArgumentArithmeticExpression);
+    void visit(NegateArithmeticExpression negateArithmeticExpression);
 
 //    LogicalExpression
     void visit(AndExpression andExpression);
     void visit(NegateLogicalExpression negateLogicalExpression);
     void visit(OrExpression orExpression);
+
+//    Factor
+    void visit(UnaryFactorExpression unaryFactorExpression);
+    void visit(CastedFactorExpression castedFactorExpression);
+    void visit(CopiedFactorExpression copiedFactorExpression);
 
 }

@@ -5,14 +5,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.siu.ast.Argument;
 import org.siu.ast.Program;
+import org.siu.ast.expression.CastedFactorExpression;
 import org.siu.ast.expression.Expression;
 import org.siu.ast.expression.FunctionCallExpression;
 import org.siu.ast.expression.StructExpression;
-import org.siu.ast.expression.arithmetic.AddArithmeticExpression;
-import org.siu.ast.expression.arithmetic.ModuloArithmeticExpression;
-import org.siu.ast.expression.arithmetic.MultiplyArithmeticExpression;
-import org.siu.ast.expression.arithmetic.SubtractArithmeticExpression;
+import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.statement.DeclarationStatement;
+import org.siu.ast.type.FloatExpression;
 import org.siu.ast.type.IntegerExpression;
 import org.siu.ast.type.StringExpression;
 import org.siu.ast.type.ValueType;
@@ -44,6 +43,28 @@ class ParserTest {
     private DeclarationStatement createDeclaration(String name, ValueType type, Expression expression) {
         Argument argument = new Argument(type, name);
         return new DeclarationStatement(argument, expression, position);
+    }
+
+    @Test
+    void negateNumberArithmeticOperation() {
+        String s = "int a=-1;";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new NegateArithmeticExpression(new IntegerExpression(1, position), position);
+
+        assertEquals(Map.of("a", createDeclaration("a", ValueType.INT, expression)), program.getDeclarations());
+    }
+
+    @Test
+    void castedNegatedArithmeticOperation() {
+        String s = "int pi = ( int ) -3.14159;";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new CastedFactorExpression(ValueType.INT, new NegateArithmeticExpression(new FloatExpression(3.14159F, position), position), position);
+
+        assertEquals(Map.of("pi", createDeclaration("pi", ValueType.INT, expression)), program.getDeclarations());
     }
 
     @Test

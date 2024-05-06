@@ -1,9 +1,10 @@
 package org.siu.ast.statement;
 
+import org.siu.ast.expression.Statement;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
-public class IfStatement implements Statement{
+public class IfStatement implements Statement {
     @Override
     public void accept(Visitor visitor) {
 

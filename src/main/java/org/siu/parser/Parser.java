@@ -18,7 +18,7 @@ import org.siu.lexer.Lexer;
 import org.siu.ast.expression.logical.OrExpression;
 import org.siu.ast.function.FunctionDefinition;
 import org.siu.ast.function.FunctionParameter;
-import org.siu.ast.statement.Statement;
+import org.siu.ast.expression.Statement;
 import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
@@ -363,48 +363,58 @@ public class Parser {
         var position = token.getPosition();
 
         // UNARY_FACTOR
-        var negate = token.getType() == TokenType.MINUS;
-        if (negate) {
-            // TODO: implement unary negate Expression
-            nextToken();
-        }
+        var negate = isUnaryFactor();
 
-        Expression castedType = null;
         // CASTED_FACTOR
-        if (token.getType() == TokenType.BRACKET_OPEN) {
-            nextToken();
-            var castedTypeOptional = parseSimpleTypeExpression();
-            if (castedTypeOptional.isEmpty()) {
-                log.error("Invalid cast syntax at: {}", position);
-                errorHandler.handleParserError(new SyntaxError(position), position);
-            }
-            castedType = castedTypeOptional.get();
-            nextToken(); // TODO: make sure that token is valid?
-            mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-        }
+        var castedType = parseCastedType();
 
         // FACTOR
-        var factor = parseLiteralExpression()
+        var factorOptional = parseLiteralExpression()
                 .or(this::parseIdentifierOrFnCall)
                 .or(this::parseExpression)
                 .or(Optional::empty);
-        if (castedType != null) {
-            throw new SyntaxError(position, "Casted factor not implemented.");
-            // TODO: use CastedFactorExpression
+
+        if(factorOptional.isEmpty()) {
+            return Optional.empty();
         }
-        return Optional.of(factor.get());
+
+        var factor = factorOptional.get();
+
+        if (castedType.isPresent()) {
+//            throw new SyntaxError(position, "Casted factor not implemented.");
+            // TODO: use CastedFactorExpression
+            factor = new CastedFactorExpression(castedType.get(), factor, position);
+        }
+        if (negate) {
+            factor = new NegateArithmeticExpression(factor, position);
+        }
+        return Optional.of(factor);
     }
 
-    private Optional<Expression> parseSimpleTypeExpression() {
-        Optional<Expression> ret;
-        switch (token.getType()) {
-            case INT -> ret = Optional.of(new IntegerExpression(token.getValue(), token.getPosition()));
-            case FLOAT -> ret = Optional.of(new FloatExpression(token.getValue(), token.getPosition()));
-            case STRING -> ret = Optional.of(new StringExpression(token.getValue(), token.getPosition()));
-            case BOOL -> ret = Optional.of(new BooleanExpression(token.getValue(), token.getPosition()));
-            default -> ret = Optional.empty();
+    private boolean isUnaryFactor() {
+        var negate = token.getType() == TokenType.MINUS;
+        if (negate) {
+            nextToken();
         }
-        return ret;
+        return negate;
+    }
+
+    private Optional<ValueType> parseCastedType() {
+        if(token.getType() != TokenType.BRACKET_OPEN) {
+            return Optional.empty();
+        }
+        nextToken();
+        var position = token.getPosition();
+        var castedType = ValueType.of(token.getType());
+
+        if (castedType.isEmpty()) {
+            log.error("Invalid cast syntax at: {}", position);
+            errorHandler.handleParserError(new SyntaxError(position), position);
+            throw new RuntimeException("Invalid cast syntax at: " + position);
+        }
+        nextToken(); // TODO: make sure that token is valid?
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        return castedType;
     }
 
     private Optional<Expression> parseLiteralExpression() {

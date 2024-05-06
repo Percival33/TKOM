@@ -3,7 +3,6 @@ package org.siu.ast.expression.arithmetic;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
-import org.siu.ast.expression.ArithmeticExpression;
 import org.siu.ast.expression.Expression;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
@@ -11,7 +10,7 @@ import org.siu.token.Position;
 @ToString(exclude = {"left", "right"})
 @EqualsAndHashCode(exclude="position")
 @Value
-public class SubtractArithmeticExpression implements ArithmeticExpression {
+public class SubtractArithmeticExpression implements TwoArgumentArithmeticExpression {
     Expression left;
     Expression right;
 
@@ -24,6 +23,11 @@ public class SubtractArithmeticExpression implements ArithmeticExpression {
 
     @Override
     public int evaluate(int left, int right) {
+        return left - right;
+    }
+
+    @Override
+    public float evaluate(float left, float right) {
         return left - right;
     }
 }

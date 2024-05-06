@@ -1,12 +1,12 @@
 package org.siu.ast.statement;
 
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.Argument;
 import org.siu.ast.Node;
 import org.siu.ast.expression.Expression;
+import org.siu.ast.expression.Statement;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
