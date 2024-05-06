@@ -8,7 +8,6 @@ import org.siu.ast.Program;
 import org.siu.ast.expression.CastedFactorExpression;
 import org.siu.ast.expression.Expression;
 import org.siu.ast.expression.FunctionCallExpression;
-import org.siu.ast.expression.StructExpression;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.type.FloatExpression;
@@ -25,7 +24,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class ParserTest {
+class ParserExpressionEvaluationTests {
     private ErrorHandler errorHandler;
     private Position position;
 
@@ -46,7 +45,7 @@ class ParserTest {
     }
 
     @Test
-    void negateNumberArithmeticOperation() {
+    void negateIntegerDeclaration() {
         String s = "int a=-1;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -57,7 +56,7 @@ class ParserTest {
     }
 
     @Test
-    void castedNegatedArithmeticOperation() {
+    void casteNegatedIntegerDeclaration() {
         String s = "int pi = ( int ) -3.14159;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -68,7 +67,7 @@ class ParserTest {
     }
 
     @Test
-    void addArithmeticOperation() {
+    void multiplyIntegersDeclaration() {
         String s = "int a = 2 * 1;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -79,7 +78,7 @@ class ParserTest {
     }
 
     @Test
-    void stringDeclaration() {
+    void stringAssignmentDeclaration() {
         String s = "string c = \"a + b\";";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -89,12 +88,12 @@ class ParserTest {
     }
 
     @Test
-    void addTwoArithmeticOperation() {
-        String s = "int a = 2 * 1; float b = 3;";
+    void multipleDeclaration() {
+        String s = "int a = 2 % 1; float b = 3;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
 
-        Expression expression = new MultiplyArithmeticExpression(new IntegerExpression(2, position), new IntegerExpression(1, position), position);
+        Expression expression = new ModuloArithmeticExpression(new IntegerExpression(2, position), new IntegerExpression(1, position), position);
         Expression secondExpression = new IntegerExpression(3, position);
 
         assertEquals(createDeclaration("a", ValueType.INT, expression), program.getDeclarations().get("a"));
@@ -102,7 +101,7 @@ class ParserTest {
     }
 
     @Test
-    void moduloAddArithmeticExpressionsTest() throws Exception {
+    void expressionWithFnCallAndArithmeticOperations() {
         String s = "float a = 10 % f(33, 66) + 3;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -114,7 +113,7 @@ class ParserTest {
     }
 
     @Test
-    void ArithmeticExpressionsTest() {
+    void operatorPrecedenceDeclaration() {
         String s = "int b = 3 - 1 * 5 % 2 + 10;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
