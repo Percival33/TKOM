@@ -1,0 +1,89 @@
+package org.siu.parser;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.siu.ast.Argument;
+import org.siu.ast.Program;
+import org.siu.ast.expression.Expression;
+import org.siu.ast.expression.arithmetic.NegateArithmeticExpression;
+import org.siu.ast.expression.logical.AndLogicalExpression;
+import org.siu.ast.expression.logical.NegateLogicalExpression;
+import org.siu.ast.expression.logical.OrLogicalExpression;
+import org.siu.ast.statement.DeclarationStatement;
+import org.siu.ast.type.BooleanExpression;
+import org.siu.ast.type.IntegerExpression;
+import org.siu.ast.type.ValueType;
+import org.siu.error.ErrorHandler;
+import org.siu.lexer.Lexer;
+import org.siu.lexer.LexerImpl;
+import org.siu.token.Position;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class LogicalExpressionTest {
+    private ErrorHandler errorHandler;
+    private Position position;
+
+    @BeforeEach
+    void setUp() {
+        errorHandler = Mockito.mock(ErrorHandler.class);
+        position = Mockito.mock(Position.class);
+    }
+
+    Parser toParser(String text) {
+        Lexer lexer = new LexerImpl(text, errorHandler);
+        return new Parser(lexer, errorHandler);
+    }
+
+    private DeclarationStatement createDeclaration(String name, ValueType type, Expression expression) {
+        Argument argument = new Argument(type, name);
+        return new DeclarationStatement(argument, expression, position);
+    }
+
+    @Test
+    void testAndLogicExpression() {
+        String s = "bool b = true and false;";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new AndLogicalExpression(new BooleanExpression(true, position), new BooleanExpression(false, position), position);
+
+        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
+    }
+
+    @Test
+    void testOrLogicExpression() {
+        String s = "bool b = 5 or 5;";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new OrLogicalExpression(new IntegerExpression(5, position), new IntegerExpression(5, position), position);
+
+        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
+    }
+
+    @Test
+    void testNegateLogicExpression() {
+        String s = "bool b = not false;";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new NegateLogicalExpression(new BooleanExpression(false, position), position);
+
+        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
+    }
+
+    @Test
+    void test() {
+        String s = "bool b = not (true or false);";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new NegateLogicalExpression(new OrLogicalExpression(new BooleanExpression(true, position), new BooleanExpression(false, position),position), position);
+
+        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
+    }
+}

@@ -8,14 +8,14 @@ import org.siu.ast.Block;
 import org.siu.ast.Program;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
-import org.siu.ast.expression.logical.AndExpression;
+import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.type.*;
 import org.siu.error.*;
 import org.siu.lexer.Lexer;
-import org.siu.ast.expression.logical.OrExpression;
+import org.siu.ast.expression.logical.OrLogicalExpression;
 import org.siu.ast.function.FunctionDefinition;
 import org.siu.ast.function.FunctionParameter;
 import org.siu.ast.expression.Statement;
@@ -215,7 +215,7 @@ public class Parser {
                 // TODO: refactor error handling
                 errorHandler.handleParserError(new SyntaxError(position, "No expression after OR."), position);
             }
-            left = new OrExpression(left, right_logic_factor.get(), position);
+            left = new OrLogicalExpression(left, right_logic_factor.get(), position);
         }
         return Optional.of(left);
     }
@@ -232,7 +232,7 @@ public class Parser {
             if (right.isEmpty()) {
                 errorHandler.handleParserError(new SyntaxError(token.getPosition(), "No expression after AND."), token.getPosition());
             }
-            left = new AndExpression(left, right.get(), position);
+            left = new AndLogicalExpression(left, right.get(), position);
         }
         return Optional.of(left);
     }
@@ -250,11 +250,7 @@ public class Parser {
      * RELATION_EXPRESSION     = ["not"], MATH_EXPRESSION, { relation_operator, MATH_EXPRESSION };
      */
     private Optional<Expression> parseRelationExpression() {
-        var negate = false;
-        if (token.getType() == TokenType.NOT) {
-            nextToken();
-            negate = true;
-        }
+        var negate = isNegated();
         var left = parseMathExpression();
         if (left.isEmpty()) return Optional.empty();
         var type = token.getType();
@@ -272,6 +268,14 @@ public class Parser {
         }
         var expression = constructor.apply(left.get(), right.get(), relationPosition);
         return Optional.of(negate ? expression : new NegateLogicalExpression(expression, relationPosition));
+    }
+
+    private boolean isNegated() {
+        if (token.getType() == TokenType.NOT) {
+            nextToken();
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -321,7 +325,7 @@ public class Parser {
             case MULTIPLY -> new MultiplyArithmeticExpression(left, right, position);
             case DIVIDE -> new DivideArithmeticExpression(left, right, position);
             case MODULO -> new ModuloArithmeticExpression(left, right, position);
-            default -> throw new IllegalArgumentException("Unsupported operation: " + operationType);
+            default -> null;
         };
     }
 
@@ -365,13 +369,20 @@ public class Parser {
         // UNARY_FACTOR
         var negate = isUnaryFactor();
 
-        // CASTED_FACTOR
+        // CASTED_FACTOR | '(', EXPRESSION, ')'
         var castedType = parseCastedType();
+
+        if (token.getType() == TokenType.BRACKET_OPEN) {
+            castedType = parseCastedType();
+            var factor = parseExpression();
+            throw new RuntimeException("duuupa");
+        }
+
 
         // FACTOR
         var factorOptional = parseLiteralExpression()
                 .or(this::parseIdentifierOrFnCall)
-                .or(this::parseExpression)
+//                .or(this::parseExpression)
                 .or(Optional::empty);
 
         if(factorOptional.isEmpty()) {
@@ -392,11 +403,11 @@ public class Parser {
     }
 
     private boolean isUnaryFactor() {
-        var negate = token.getType() == TokenType.MINUS;
-        if (negate) {
+        if (token.getType() == TokenType.MINUS) {
             nextToken();
+            return true;
         }
-        return negate;
+        return false;
     }
 
     private Optional<ValueType> parseCastedType() {
@@ -408,9 +419,10 @@ public class Parser {
         var castedType = ValueType.of(token.getType());
 
         if (castedType.isEmpty()) {
-            log.error("Invalid cast syntax at: {}", position);
-            errorHandler.handleParserError(new SyntaxError(position), position);
-            throw new RuntimeException("Invalid cast syntax at: " + position);
+            log.warn("Invalid cast syntax at: {}", position);
+            return Optional.empty();
+//            errorHandler.handleParserError(new SyntaxError(position), position);
+//            throw new RuntimeException("Invalid cast syntax at: " + position);
         }
         nextToken(); // TODO: make sure that token is valid?
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);

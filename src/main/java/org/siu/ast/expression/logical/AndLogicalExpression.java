@@ -11,7 +11,7 @@ import org.siu.token.Position;
 @ToString(exclude = {"left", "right"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class OrExpression implements LogicalExpression {
+public class AndLogicalExpression implements LogicalExpression {
     Expression left;
     Expression right;
     Position position;

@@ -10,10 +10,7 @@ import org.siu.ast.expression.Expression;
 import org.siu.ast.expression.FunctionCallExpression;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.statement.DeclarationStatement;
-import org.siu.ast.type.FloatExpression;
-import org.siu.ast.type.IntegerExpression;
-import org.siu.ast.type.StringExpression;
-import org.siu.ast.type.ValueType;
+import org.siu.ast.type.*;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;
 import org.siu.lexer.LexerImpl;
@@ -45,7 +42,7 @@ class ParserExpressionEvaluationTests {
     }
 
     @Test
-    void negateIntegerDeclaration() {
+    void testNegateIntegerDeclaration() {
         String s = "int a=-1;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -56,7 +53,7 @@ class ParserExpressionEvaluationTests {
     }
 
     @Test
-    void casteNegatedIntegerDeclaration() {
+    void testCasteNegatedIntegerDeclaration() {
         String s = "int pi = ( int ) -3.14159;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -67,7 +64,7 @@ class ParserExpressionEvaluationTests {
     }
 
     @Test
-    void multiplyIntegersDeclaration() {
+    void testMultiplyIntegersDeclaration() {
         String s = "int a = 2 * 1;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -78,7 +75,7 @@ class ParserExpressionEvaluationTests {
     }
 
     @Test
-    void stringAssignmentDeclaration() {
+    void testStringAssignmentDeclaration() {
         String s = "string c = \"a + b\";";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -88,7 +85,7 @@ class ParserExpressionEvaluationTests {
     }
 
     @Test
-    void multipleDeclaration() {
+    void testMultipleDeclaration() {
         String s = "int a = 2 % 1; float b = 3;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -101,7 +98,7 @@ class ParserExpressionEvaluationTests {
     }
 
     @Test
-    void expressionWithFnCallAndArithmeticOperations() {
+    void testExpressionWithFnCallAndArithmeticOperations() {
         String s = "float a = 10 % f(33, 66) + 3;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -113,7 +110,7 @@ class ParserExpressionEvaluationTests {
     }
 
     @Test
-    void operatorPrecedenceDeclaration() {
+    void testOperatorPrecedenceDeclaration() {
         String s = "int b = 3 - 1 * 5 % 2 + 10;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -123,5 +120,17 @@ class ParserExpressionEvaluationTests {
         Expression add = new AddArithmeticExpression(subtract, new IntegerExpression(10, position), position);
 
         assertEquals(createDeclaration("b", ValueType.INT, add), program.getDeclarations().get("b"));
+    }
+
+    @Test
+    void testBoolDeclaration() {
+        String s = "bool b = false; bool c = true;";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+        Expression bExpression = new BooleanExpression(false, position);
+        Expression cExpression = new BooleanExpression(true, position);
+
+        assertEquals(createDeclaration("b", ValueType.BOOL, bExpression), program.getDeclarations().get("b"));
+        assertEquals(createDeclaration("c", ValueType.BOOL, cExpression), program.getDeclarations().get("c"));
     }
 }
