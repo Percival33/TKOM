@@ -14,6 +14,7 @@ import org.siu.ast.expression.relation.EqualExpression;
 import org.siu.ast.expression.relation.GreaterExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
+import org.siu.ast.statement.IfStatement;
 import org.siu.ast.statement.ReturnStatement;
 import org.siu.ast.type.*;
 import org.siu.error.*;
@@ -69,22 +70,21 @@ public class Parser {
 
         var parse = true;
         do {
-            var funDef = parseFunctionDefinition();
-            if (funDef.isPresent()) {
-                saveFunctionDefinition(funDef.get(), functions);
-                continue;
-            }
             var declaration = parseDeclarationStatement();
             if (declaration.isPresent()) {
                 saveDeclaration(declaration.get(), declarations);
                 continue;
             }
-
+            var funDef = parseFunctionDefinition();
+            if (funDef.isPresent()) {
+                saveFunctionDefinition(funDef.get(), functions);
+                continue;
+            }
             if (token.getType() == TokenType.SEMICOLON) {
                 continue;
             }
             break;
-        } while (parse);
+        } while (parse && token.getType() != TokenType.END_OF_FILE);
 
         return new Program(functions, declarations);
     }
@@ -97,10 +97,9 @@ public class Parser {
      */
     private Optional<DeclarationStatement> parseDeclarationStatement() {
         var typeDeclaration = parseTypeDeclaration();
-        if (typeDeclaration.isEmpty()) {
+        if(typeDeclaration.isEmpty()) {
             return Optional.empty();
         }
-
         var position = token.getPosition();
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
@@ -183,7 +182,7 @@ public class Parser {
     }
 
     private final List<Supplier<Optional<? extends Statement>>> statementSuppliers = List.of(
-//            this::parseIfStatement,
+            this::parseIfStatement,
 //            this::parseWhileStatement,
 //            this::parseForStatement,
             this::parseDeclarationStatement,
@@ -193,7 +192,8 @@ public class Parser {
     );
 
     private Optional<Statement> parseStatement() {
-        for(var supplier : statementSuppliers) {
+        for (var supplier : statementSuppliers) {
+            // TODO: handle Declaration statement and fn call - first conflict
             var statement = supplier.get();
             if (statement.isPresent()) {
                 return (Optional<Statement>) statement;
@@ -203,8 +203,67 @@ public class Parser {
     }
 
     /**
+     * IF_STATEMENT            = "if", "(", EXPRESSION, ")", BLOCK,
+     * { "elif", "(", EXPRESSION, ")", BLOCK, },
+     * [ "else", BLOCK ];
+     */
+    private Optional<IfStatement> parseIfStatement() {
+        if(token.getType() != TokenType.IF) {
+            return Optional.empty();
+        }
+
+        var conditions = new ArrayList<Expression>();
+        var ifInstructions = new ArrayList<BlockStatement>();
+        var elseInstructions = Optional.<BlockStatement>empty();
+
+        var position = token.getPosition();
+        nextToken();
+        mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+        var condition = parseExpression();
+        if(condition.isEmpty()) {
+            log.error("No condition in if statement at: {}", position);
+            errorHandler.handleParserError(new MissingExpressionError(position), position);
+        }
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        var block = parseBlock();
+        if (block.isEmpty()) {
+            log.error("Block cannot be empty at: {}", position);
+            errorHandler.handleParserError(new SyntaxError(position), position);
+        }
+
+        conditions.add(condition.get());
+        ifInstructions.add(block.get());
+
+
+        while (token.getType() == TokenType.ELIF) {
+            nextToken();
+            mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+            var elifCondition = parseExpression();
+            mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+            var elifBlock = parseBlock();
+            if (elifBlock.isEmpty()) {
+                log.error("Block cannot be empty at: {}", position);
+                errorHandler.handleParserError(new SyntaxError(position), position);
+            }
+            conditions.add(elifCondition.get());
+            ifInstructions.add(elifBlock.get());
+        }
+
+        if(token.getType() == TokenType.ELSE) {
+            nextToken();
+            var elseBlock = parseBlock();
+            if (elseBlock.isEmpty()) {
+                log.error("Block cannot be empty at: {}", position);
+                errorHandler.handleParserError(new SyntaxError(position), position);
+            }
+            elseInstructions = Optional.of(elseBlock.get());
+        }
+        return Optional.of(new IfStatement(conditions, ifInstructions, elseInstructions, position));
+    }
+
+    /**
      * RETURN_STATEMENT        = "return", EXPRESSION, ";"
-     *                         | "return", ";";
+     * | "return", ";";
      */
     private Optional<ReturnStatement> parseReturnStatement() {
         if (token.getType() != TokenType.RETURN) {
@@ -256,6 +315,9 @@ public class Parser {
      */
     private Optional<Argument> parseParameter() {
         var type = parseTypeDeclaration();
+        if (type.isEmpty()) {
+            return Optional.empty();
+        }
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
 
         if (type.isEmpty() || identifier.isEmpty()) {
@@ -275,8 +337,8 @@ public class Parser {
         if (leftOptional.isEmpty()) return Optional.empty();
         var left = leftOptional.get();
         while (token.getType() == TokenType.OR) {
-            var position = token.getPosition();
             nextToken();
+            var position = token.getPosition();
             var right_logic_factor = parseAndExpression();
             if (right_logic_factor.isEmpty()) {
                 // TODO: refactor error handling
@@ -467,7 +529,7 @@ public class Parser {
 
     private Optional<Expression> parseUnaryFactor() {
         // UNARY_FACTOR
-        var negate = isUnaryFactor();
+        var isUnaryFactor = isUnaryFactor();
         var position = token.getPosition();
 
         // FACTOR
@@ -479,7 +541,7 @@ public class Parser {
             return Optional.empty();
         }
 
-        return negate ? Optional.of(new NegateArithmeticExpression(factorOptional.get(), position)) : factorOptional;
+        return isUnaryFactor ? Optional.of(new NegateArithmeticExpression(factorOptional.get(), position)) : factorOptional;
     }
 
     private Optional<Expression> parseLiteralExpression() {
