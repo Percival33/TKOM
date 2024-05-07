@@ -5,6 +5,8 @@ import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.logical.OrLogicalExpression;
+import org.siu.ast.expression.relation.EqualExpression;
+import org.siu.ast.expression.relation.GreaterExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.statement.IfStatement;
@@ -42,8 +44,10 @@ public interface Visitor {
 
 
     void visit(DeclarationStatement declarationStatement);
-
+//    RelationExpression
     void visit(LessExpression lessExpression);
+    void visit(GreaterExpression greaterExpression);
+    void visit(EqualExpression equalExpression);
 
 
 //    ArithmeticExpression

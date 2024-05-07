@@ -39,7 +39,7 @@ public enum TokenType {
     SQUARE_BRACKET_OPEN("{"),
     SQUARE_BRACKET_CLOSE("}"),
 
-    COMPARE_EQUAL("=="),
+    EQUAL("=="),
     COMPARE_NOT_EQUAL("!="),
     MATCH("match"),
 

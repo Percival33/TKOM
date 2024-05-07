@@ -25,7 +25,7 @@ public class TokenUtils {
             new TokenType[]{
                     TokenType.LESS_EQUAL,
                     TokenType.GREATER_EQUAL,
-                    TokenType.COMPARE_EQUAL,
+                    TokenType.EQUAL,
                     TokenType.COMPARE_NOT_EQUAL,
                     TokenType.DOUBLE_COLON,
                     TokenType.MULTI_LINE_COMMENT_OPEN,

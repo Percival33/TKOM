@@ -10,6 +10,8 @@ import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
+import org.siu.ast.expression.relation.EqualExpression;
+import org.siu.ast.expression.relation.GreaterExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.type.*;
@@ -237,11 +239,11 @@ public class Parser {
     }
 
     private final Map<TokenType, Function3<Expression, Expression, Position, Expression>> relationOperator = Map.of(
-            TokenType.LESS, Function3.of(LessExpression::new)
+            TokenType.LESS, Function3.of(LessExpression::new),
 //            TokenType.LESS_EQUAL, LessEqual::new,
-//            TokenType.GREATER, Greater::new,
+            TokenType.GREATER, Function3.of(GreaterExpression::new),
 //            TokenType.GREATER_EQUAL, GreaterEqual::new,
-//            TokenType.EQUAL, Equal::new,
+            TokenType.EQUAL, Function3.of(EqualExpression::new)
 //            TokenType.NOT_EQUAL, NotEqual::new
     );
 

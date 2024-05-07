@@ -6,10 +6,14 @@ import org.mockito.Mockito;
 import org.siu.ast.Argument;
 import org.siu.ast.Program;
 import org.siu.ast.expression.Expression;
+import org.siu.ast.expression.IdentifierExpression;
 import org.siu.ast.expression.arithmetic.NegateArithmeticExpression;
 import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.logical.OrLogicalExpression;
+import org.siu.ast.expression.relation.EqualExpression;
+import org.siu.ast.expression.relation.GreaterExpression;
+import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.IntegerExpression;
@@ -77,13 +81,30 @@ public class LogicalExpressionTest {
     }
 
     @Test
-    void test() {
+    void testNestedOrLogicExpression() {
         String s = "bool b = not (true or false);";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
 
-        Expression expression = new NegateLogicalExpression(new OrLogicalExpression(new BooleanExpression(true, position), new BooleanExpression(false, position),position), position);
+        Expression expression = new NegateLogicalExpression(new OrLogicalExpression(new BooleanExpression(true, position), new BooleanExpression(false, position), position), position);
 
+        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
+    }
+
+    @Test
+    void testCombinedLogicExpression() {
+        String s = "bool b = (x < 10 and y > 20) or (z == 0);";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new OrLogicalExpression(
+                new AndLogicalExpression(
+                        new LessExpression(new IdentifierExpression("x", position), new IntegerExpression(10, position), position),
+                        new GreaterExpression(new IdentifierExpression("y", position), new IntegerExpression(20, position), position),
+                        position
+                ),
+                new EqualExpression(new IdentifierExpression("z", position), new IntegerExpression(0, position), position),
+                position);
         assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
     }
 }
