@@ -8,6 +8,9 @@ import org.siu.ast.expression.RelationExpression;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
+/**
+ * <
+ */
 @ToString(exclude = {"left", "right"})
 @EqualsAndHashCode(exclude = "position")
 @Value

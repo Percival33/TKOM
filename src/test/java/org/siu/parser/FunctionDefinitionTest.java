@@ -37,11 +37,6 @@ class FunctionDefinitionTest {
         position = Mockito.mock(Position.class);
     }
 
-    private DeclarationStatement createDeclaration(String name, ValueType type, Expression expression) {
-        Argument argument = new Argument(type, name);
-        return new DeclarationStatement(argument, expression, position);
-    }
-
     Parser toParser(String text) {
         Lexer lexer = new LexerImpl(text, errorHandler);
         return new Parser(lexer, errorHandler);
@@ -89,6 +84,7 @@ class FunctionDefinitionTest {
     @Test
     void fnDefinitionWithNoArguments() {
         String s = "fn add() { f(1); }";
+        // FIXME: fix test
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("add");

@@ -13,9 +13,7 @@ import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.relation.EqualExpression;
 import org.siu.ast.expression.relation.GreaterExpression;
 import org.siu.ast.expression.relation.LessExpression;
-import org.siu.ast.statement.DeclarationStatement;
-import org.siu.ast.statement.IfStatement;
-import org.siu.ast.statement.ReturnStatement;
+import org.siu.ast.statement.*;
 import org.siu.ast.type.*;
 import org.siu.error.*;
 import org.siu.lexer.Lexer;
@@ -97,7 +95,7 @@ public class Parser {
      */
     private Optional<DeclarationStatement> parseDeclarationStatement() {
         var typeDeclaration = parseTypeDeclaration();
-        if(typeDeclaration.isEmpty()) {
+        if (typeDeclaration.isEmpty()) {
             return Optional.empty();
         }
         var position = token.getPosition();
@@ -183,12 +181,11 @@ public class Parser {
 
     private final List<Supplier<Optional<? extends Statement>>> statementSuppliers = List.of(
             this::parseIfStatement,
-//            this::parseWhileStatement,
-//            this::parseForStatement,
+            this::parseWhileStatement,
             this::parseDeclarationStatement,
+            this::parseAssignment,
 //            this::parseAssignmentStatementOrSingleExpression,
             this::parseReturnStatement
-//            this::parseBlock
     );
 
     private Optional<Statement> parseStatement() {
@@ -203,12 +200,52 @@ public class Parser {
     }
 
     /**
+     * ASSINGMENT              = IDENTIFIER, "=", EXPRESSION
+     * | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
+     * | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
+     */
+    private Optional<AssignmentStatement> parseAssignment() {
+        if(token.getType() != TokenType.IDENTIFIER) {
+            return Optional.empty();
+        }
+        var name = token.getValue().toString();
+        var position = token.getPosition();
+        nextToken();
+
+        switch (token.getType()) {
+            case ASSIGN -> { // FIXME: expr albo identifier
+                nextToken();
+                var expression = parseExpression();
+                if (expression.isEmpty()) {
+                    log.error("No expression in assignment at: {}", position);
+                    errorHandler.handleParserError(new MissingExpressionError(position), position);
+                }
+                return Optional.of(new AssignmentStatement(name, expression.get(), position));
+            }
+            case DOT -> {
+                nextToken();
+                var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+                mustBe(token, TokenType.ASSIGN, SyntaxError::new);
+                nextToken();
+                var expression = parseExpression();
+                if (expression.isEmpty()) {
+                    log.error("No expression in assignment at: {}", position);
+                    errorHandler.handleParserError(new MissingExpressionError(position), position);
+                }
+                // FIXME: struct assignment
+                return Optional.of(new AssignmentStatement(name, fieldName, expression.get(), position));
+            }
+        }
+
+    }
+
+    /**
      * IF_STATEMENT            = "if", "(", EXPRESSION, ")", BLOCK,
      * { "elif", "(", EXPRESSION, ")", BLOCK, },
      * [ "else", BLOCK ];
      */
     private Optional<IfStatement> parseIfStatement() {
-        if(token.getType() != TokenType.IF) {
+        if (token.getType() != TokenType.IF) {
             return Optional.empty();
         }
 
@@ -220,7 +257,7 @@ public class Parser {
         nextToken();
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
         var condition = parseExpression();
-        if(condition.isEmpty()) {
+        if (condition.isEmpty()) {
             log.error("No condition in if statement at: {}", position);
             errorHandler.handleParserError(new MissingExpressionError(position), position);
         }
@@ -249,7 +286,7 @@ public class Parser {
             ifInstructions.add(elifBlock.get());
         }
 
-        if(token.getType() == TokenType.ELSE) {
+        if (token.getType() == TokenType.ELSE) {
             nextToken();
             var elseBlock = parseBlock();
             if (elseBlock.isEmpty()) {
@@ -259,6 +296,30 @@ public class Parser {
             elseInstructions = Optional.of(elseBlock.get());
         }
         return Optional.of(new IfStatement(conditions, ifInstructions, elseInstructions, position));
+    }
+
+    /**
+     * WHILE_STATEMENT         = "while", "(", EXPRESSION, ")", BLOCK;
+     */
+    private Optional<WhileStatement> parseWhileStatement() {
+        if (token.getType() != TokenType.WHILE) {
+            return Optional.empty();
+        }
+        var position = token.getPosition();
+        nextToken();
+        mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+        var condition = parseExpression();
+        if (condition.isEmpty()) {
+            log.error("No condition in while statement at: {}", position);
+            errorHandler.handleParserError(new MissingExpressionError(position), position);
+        }
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        var block = parseBlock();
+        if (block.isEmpty()) {
+            log.error("Block cannot be empty at: {}", position);
+            errorHandler.handleParserError(new SyntaxError(position), position);
+        }
+        return Optional.of(new WhileStatement(condition.get(), block.get(), position));
     }
 
     /**
@@ -396,7 +457,10 @@ public class Parser {
             assert false;
         }
         var expression = constructor.apply(left.get(), right.get(), relationPosition);
-        return Optional.of(negate ? expression : new NegateLogicalExpression(expression, relationPosition));
+        if (negate)
+            return Optional.of(new NegateLogicalExpression(expression, relationPosition));
+
+        return Optional.of(expression);
     }
 
     private boolean isNegated() {
@@ -585,8 +649,6 @@ public class Parser {
     /**
      * FN_ARGUMENTS            = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };
      */
-    // FIXME: remove SneakyThrows
-    @SneakyThrows
     private List<Expression> parseFnArguments() {
         List<Expression> arguments = new ArrayList<>();
         boolean copy;
@@ -602,7 +664,7 @@ public class Parser {
             var expressionOptional = parseExpression();
             if (expressionOptional.isEmpty()) {
                 if (copy) {
-                    throw new SyntaxError(token.getPosition(), "No expression after copy operator.");
+                    errorHandler.handleParserError(new SyntaxError(token.getPosition(), "No expression after copy operator."), token.getPosition());
                 }
                 break;
             }

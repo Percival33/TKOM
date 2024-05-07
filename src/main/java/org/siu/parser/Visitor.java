@@ -9,10 +9,7 @@ import org.siu.ast.expression.logical.OrLogicalExpression;
 import org.siu.ast.expression.relation.EqualExpression;
 import org.siu.ast.expression.relation.GreaterExpression;
 import org.siu.ast.expression.relation.LessExpression;
-import org.siu.ast.statement.DeclarationStatement;
-import org.siu.ast.statement.IfStatement;
-import org.siu.ast.statement.ReturnStatement;
-import org.siu.ast.statement.WhileStatement;
+import org.siu.ast.statement.*;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.FloatExpression;
 import org.siu.ast.type.IntegerExpression;
@@ -35,6 +32,7 @@ public interface Visitor {
     void visit(ReturnStatement returnStatement);
     void visit(DeclarationStatement declarationStatement);
     void visit(BlockStatement blockStatement);
+    void visit(AssignmentStatement assignmentStatement);
 
 //    Simple type expression
     void visit(IntegerExpression integerExpression);
