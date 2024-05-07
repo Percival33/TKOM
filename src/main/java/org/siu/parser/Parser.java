@@ -127,7 +127,6 @@ public class Parser {
     }
 
     private Object mustBe(Token token, TokenType expectedType, Function<Position, ? extends ParserError> errorSupplier) {
-        // TODO: rename function
         if (token.getType() != expectedType) {
             var error = errorSupplier.apply(token.getPosition());
             log.error("{}. Expected {} got {}", error.toString(), expectedType, token.getType());
@@ -143,7 +142,7 @@ public class Parser {
         if (token.getType() != TokenType.FUNCTION) {
             return Optional.empty();
         }
-        var position = token.getPosition(); // TODO: should it be position.copy?
+        var position = token.getPosition();
         token = nextToken();
         mustBe(token, TokenType.IDENTIFIER, SyntaxError::new);
         var name = token.getValue();
