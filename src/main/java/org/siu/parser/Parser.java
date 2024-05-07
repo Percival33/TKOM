@@ -247,7 +247,7 @@ public class Parser {
     );
 
     /**
-     * RELATION_EXPRESSION     = ["not"], MATH_EXPRESSION, { relation_operator, MATH_EXPRESSION };
+     * RELATION_EXPRESSION     = ["not"], MATH_EXPRESSION, [ relation_operator, MATH_EXPRESSION ];
      */
     private Optional<Expression> parseRelationExpression() {
         var negate = isNegated();
@@ -375,11 +375,17 @@ public class Parser {
             if (castedType.isPresent()) {
                 nextToken();
                 mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+                // return dodaj nowy typ i parseUnaryFactor(); i koniec funkcji
             } else {
                 factorOptional = parseExpression();
                 mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+//                return factorOptional;
             }
         }
+
+//        return parseUnaryFactor(castedType, factorOptional, position);
+
+//        (int)(-3 - 5)
 
         // UNARY_FACTOR
         var negate = isUnaryFactor();

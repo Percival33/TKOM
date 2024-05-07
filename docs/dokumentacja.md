@@ -375,7 +375,7 @@ EXPRESSION              = AND_EXPRESSION, { "or", AND_EXPRESSION };
 
 AND_EXPRESSION          = RELATION_EXPRESSION, { "and", RELATION_EXPRESSION }
 
-RELATION_EXPRESSION     = ["not"], MATH_EXPRESSION, { relation_operator, MATH_EXPRESSION };
+RELATION_EXPRESSION     = ["not"], MATH_EXPRESSION, [ relation_operator, MATH_EXPRESSION ];
                         
 MATH_EXPRESSION         = TERM, { arithmetic_operator, TERM };
 
@@ -390,7 +390,6 @@ FACTOR                  = LITERAL
                         | IDENTIFIER_FNCALL_MEM; 
 
 IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ];
-// FIXME: refactor it with assignment
 
 FN_ARGUMENTS            = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };  
 ```
