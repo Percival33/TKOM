@@ -1,6 +1,6 @@
 package org.siu.ast.statement;
 
-import org.siu.ast.expression.Statement;
+import org.siu.ast.Statement;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 

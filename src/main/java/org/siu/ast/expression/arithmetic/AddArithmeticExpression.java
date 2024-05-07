@@ -10,7 +10,7 @@ import org.siu.token.Position;
 @ToString(exclude = {"left", "right"})
 @EqualsAndHashCode(exclude="position")
 @Value
-public class AddArithmeticExpression implements TwoArgumentArithmeticExpression {
+public class AddArithmeticExpression implements BinaryArithmeticExpression {
     Expression left;
     Expression right;
 

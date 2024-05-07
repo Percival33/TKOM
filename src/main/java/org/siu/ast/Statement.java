@@ -1,6 +1,5 @@
-package org.siu.ast.expression;
+package org.siu.ast;
 
-import org.siu.ast.Node;
 import org.siu.parser.Visitable;
 import org.siu.token.Position;
 

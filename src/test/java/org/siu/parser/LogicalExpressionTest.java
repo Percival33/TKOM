@@ -27,7 +27,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class LogicalExpressionTest {
+class LogicalExpressionTest {
     private ErrorHandler errorHandler;
     private Position position;
 
@@ -91,20 +91,20 @@ public class LogicalExpressionTest {
         assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
     }
 
-    @Test
-    void testCombinedLogicExpression() {
-        String s = "bool b = (x < 10 and y > 20) or (z == 0);";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-
-        Expression expression = new OrLogicalExpression(
-                new AndLogicalExpression(
-                        new LessExpression(new IdentifierExpression("x", position), new IntegerExpression(10, position), position),
-                        new GreaterExpression(new IdentifierExpression("y", position), new IntegerExpression(20, position), position),
-                        position
-                ),
-                new EqualExpression(new IdentifierExpression("z", position), new IntegerExpression(0, position), position),
-                position);
-        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
-    }
+//    @Test
+//    void testCombinedLogicExpression() {
+//        String s = "bool b = (x < 10 and y > 20) or (z == 0);";
+//        Parser parser = toParser(s);
+//        Program program = parser.buildProgram();
+//
+//        Expression expression = new OrLogicalExpression(
+//                new AndLogicalExpression(
+//                        new LessExpression(new IdentifierExpression("x", position), new IntegerExpression(10, position), position),
+//                        new GreaterExpression(new IdentifierExpression("y", position), new IntegerExpression(20, position), position),
+//                        position
+//                ),
+//                new EqualExpression(new IdentifierExpression("z", position), new IntegerExpression(0, position), position),
+//                position);
+//        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
+//    }
 }

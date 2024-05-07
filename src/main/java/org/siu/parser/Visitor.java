@@ -1,5 +1,6 @@
 package org.siu.parser;
 
+import org.siu.ast.BlockStatement;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.AndLogicalExpression;
@@ -10,6 +11,7 @@ import org.siu.ast.expression.relation.GreaterExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.statement.IfStatement;
+import org.siu.ast.statement.ReturnStatement;
 import org.siu.ast.statement.WhileStatement;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.FloatExpression;
@@ -27,8 +29,12 @@ import org.siu.ast.type.StringExpression;
  */
 public interface Visitor {
     // TODO: implement rest of statements
+//    Statement
     void visit(WhileStatement statement);
     void visit(IfStatement statement);
+    void visit(ReturnStatement returnStatement);
+    void visit(DeclarationStatement declarationStatement);
+    void visit(BlockStatement blockStatement);
 
 //    Simple type expression
     void visit(IntegerExpression integerExpression);
@@ -36,14 +42,6 @@ public interface Visitor {
     void visit(StringExpression stringExpression);
     void visit(BooleanExpression booleanExpression);
 
-    void visit(IdentifierExpression identifierExpression);
-    void visit(StructExpression structExpression);
-
-    void visit(FunctionCallExpression functionCallExpression);
-
-
-
-    void visit(DeclarationStatement declarationStatement);
 //    RelationExpression
     void visit(LessExpression lessExpression);
     void visit(GreaterExpression greaterExpression);
@@ -56,7 +54,7 @@ public interface Visitor {
     void visit(ModuloArithmeticExpression moduloArithmeticExpression);
     void visit(MultiplyArithmeticExpression multiplyArithmeticExpression);
     void visit(SubtractArithmeticExpression subtractArithmeticExpression);
-    void visit(TwoArgumentArithmeticExpression twoArgumentArithmeticExpression);
+    void visit(BinaryArithmeticExpression twoArgumentArithmeticExpression);
     void visit(NegateArithmeticExpression negateArithmeticExpression);
 
 //    LogicalExpression
@@ -69,4 +67,10 @@ public interface Visitor {
     void visit(CastedFactorExpression castedFactorExpression);
     void visit(CopiedFactorExpression copiedFactorExpression);
 
+//    ???
+    void visit(IdentifierExpression identifierExpression);
+    void visit(StructExpression structExpression);
+    void visit(FunctionCallExpression functionCallExpression);
+
 }
+

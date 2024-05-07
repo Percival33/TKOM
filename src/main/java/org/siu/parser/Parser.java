@@ -4,7 +4,7 @@ import io.vavr.Function3;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.siu.ast.Argument;
-import org.siu.ast.Block;
+import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
@@ -14,19 +14,20 @@ import org.siu.ast.expression.relation.EqualExpression;
 import org.siu.ast.expression.relation.GreaterExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
+import org.siu.ast.statement.ReturnStatement;
 import org.siu.ast.type.*;
 import org.siu.error.*;
 import org.siu.lexer.Lexer;
 import org.siu.ast.expression.logical.OrLogicalExpression;
 import org.siu.ast.function.FunctionDefinition;
-import org.siu.ast.function.FunctionParameter;
-import org.siu.ast.expression.Statement;
+import org.siu.ast.Statement;
 import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 // TODO: implement parseMatch, ??
 
@@ -68,7 +69,7 @@ public class Parser {
 
         var parse = true;
         do {
-            var funDef = parseFunDef();
+            var funDef = parseFunctionDefinition();
             if (funDef.isPresent()) {
                 saveFunctionDefinition(funDef.get(), functions);
                 continue;
@@ -140,18 +141,16 @@ public class Parser {
     }
 
     //    FN_DEFINITION           = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
-    private Optional<FunctionDefinition> parseFunDef() {
+    private Optional<FunctionDefinition> parseFunctionDefinition() {
         if (token.getType() != TokenType.FUNCTION) {
             return Optional.empty();
         }
         var position = token.getPosition();
         token = nextToken();
-        mustBe(token, TokenType.IDENTIFIER, SyntaxError::new);
-        var name = token.getValue();
+        var name = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new);
 
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
-        var params = parseParameters();
-
+        var params = parseFunctionParameters();
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
 
         var returnType = parseReturnType();
@@ -162,20 +161,77 @@ public class Parser {
         }
 
         return Optional.of(new FunctionDefinition(name.toString(), params, returnType, block.get(), position));
+//        return Optional.empty();
     }
 
+    /**
+     * BLOCK                   = "{", { STATEMENT, ";" }, "}";
+     */
+    private Optional<BlockStatement> parseBlock() {
+        mustBe(token, TokenType.SQUARE_BRACKET_OPEN, SyntaxError::new);
+        var position = token.getPosition();
+        List<Statement> statements = new ArrayList<>();
 
-    private Optional<Block> parseBlock() {
+        var statement = parseStatement();
+        while (statement.isPresent()) {
+            statements.add(statement.get());
+            statement = parseStatement();
+        }
+
+        mustBe(token, TokenType.SQUARE_BRACKET_CLOSE, SyntaxError::new);
+        return Optional.of(new BlockStatement(statements, position));
+    }
+
+    private final List<Supplier<Optional<? extends Statement>>> statementSuppliers = List.of(
+//            this::parseIfStatement,
+//            this::parseWhileStatement,
+//            this::parseForStatement,
+            this::parseDeclarationStatement,
+//            this::parseAssignmentStatementOrSingleExpression,
+            this::parseReturnStatement
+//            this::parseBlock
+    );
+
+    private Optional<Statement> parseStatement() {
+        for(var supplier : statementSuppliers) {
+            var statement = supplier.get();
+            if (statement.isPresent()) {
+                return (Optional<Statement>) statement;
+            }
+        }
         return Optional.empty();
     }
 
-    private Optional<FunctionParameter> parseReturnType() {
-        // TODO: change type of optional
-        return Optional.empty();
+    /**
+     * RETURN_STATEMENT        = "return", EXPRESSION, ";"
+     *                         | "return", ";";
+     */
+    private Optional<ReturnStatement> parseReturnStatement() {
+        if (token.getType() != TokenType.RETURN) {
+            return Optional.empty();
+        }
+        var position = token.getPosition();
+        nextToken();
+
+        var expression = parseExpression();
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+
+        return Optional.of(new ReturnStatement(expression.orElse(null), position));
     }
 
-    private List<FunctionParameter> parseParameters() {
-        List<FunctionParameter> parameters = new ArrayList<>();
+    private Optional<ValueType> parseReturnType() {
+        if (token.getType() != TokenType.COLON) {
+            return Optional.empty();
+        }
+        nextToken();
+        return parseTypeDeclaration();
+    }
+
+    /**
+     * [ FN_PARAMS, { ",", FN_PARAMS }],
+     */
+    private List<Argument> parseFunctionParameters() {
+        List<Argument> parameters = new ArrayList<>();
         var param = parseParameter();
         if (param.isEmpty()) {
             log.info("Empty parameters list at: {}", token.getPosition());
@@ -194,10 +250,20 @@ public class Parser {
         return parameters;
     }
 
-    private Optional<FunctionParameter> parseParameter() {
-//        TODO: implement function
-//        consumeToken();
-        return Optional.empty();
+    /**
+     * FN_PARAMS               = SIMPLE_TYPE_AS_ARG
+     * | STRUCT_OR_VARIANT_AS_ARG
+     */
+    private Optional<Argument> parseParameter() {
+        var type = parseTypeDeclaration();
+        var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+
+        if (type.isEmpty() || identifier.isEmpty()) {
+            log.error("Invalid parameter at: {}", token.getPosition());
+            errorHandler.handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
+            return Optional.empty();
+        }
+        return Optional.of(new Argument(type.get(), identifier));
     }
 
     private Statement parseAssignment(String name) {
@@ -288,32 +354,21 @@ public class Parser {
         if (leftOptional.isEmpty()) {
             return Optional.empty();
         }
+
         var left = leftOptional.get();
-        while (token.getType() != TokenType.END_OF_FILE) {
+        while (token.getType() == TokenType.PLUS || token.getType() == TokenType.MINUS) {
+            var operator = token.getType();
             var position = token.getPosition();
-            var type = token.getType();
-            switch (type) {
-                case PLUS -> {
-                    nextToken();
+            nextToken();
 
-                    var rightOptional = parseTerm();
-                    if (rightOptional.isPresent()) {
-                        left = new AddArithmeticExpression(left, rightOptional.get(), position);
-                    }
-                }
-                case MINUS -> {
-                    nextToken();
+            var rightOptional = parseTerm();
 
-                    var rightOptional = parseTerm();
-                    if (rightOptional.isPresent()) {
-                        left = new SubtractArithmeticExpression(left, rightOptional.get(), position);
-                    }
-                }
-                default -> {
-                    break;
-                }
-            }
-            if (token.getType() != TokenType.PLUS && token.getType() != TokenType.MINUS) {
+            if (rightOptional.isPresent()) {
+                Expression right = rightOptional.get();
+                left = (operator == TokenType.PLUS)
+                        ? new AddArithmeticExpression(left, right, position)
+                        : new SubtractArithmeticExpression(left, right, position);
+            } else {
                 break;
             }
         }

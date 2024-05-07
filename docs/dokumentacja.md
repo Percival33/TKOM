@@ -314,10 +314,6 @@ TYPE_DEFINITION         = SIMPLE_TYPE_AS_ARG
 
 VARIANT_DEFINITION      = "variant", IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";                            
 STRUCT_DEFINITION       = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
-
-VARIANT_AS_ARG          = VARIANT_DEFINITION;                            
-STRUCT_AS_ARG           = IDENTIFIER, IDENTIFIER;
-SIMPLE_TYPE_AS_ARG      = SIMPLE_TYPE, IDENTIFIER;
             
 VARIANT_RET_TYPE        = "variant", "{", VARIANT_TYPE_DECL, { ",", VARIANT_TYPE_DECL }, "}"            
                             
@@ -345,8 +341,11 @@ WHILE_STATEMENT         = "while", "(", EXPRESSION, ")", BLOCK;
 
 FN_DEFINITION           = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
 FN_PARAMS               = SIMPLE_TYPE_AS_ARG 
-                        | STRUCT_AS_ARG
-                        | VARIANT_AS_ARG;
+                        | STRUCT_OR_VARIANT_AS_ARG;
+                        
+VARIANT_AS_ARG          = VARIANT_DEFINITION;                            
+STRUCT_AS_ARG           = IDENTIFIER, IDENTIFIER;
+SIMPLE_TYPE_AS_ARG      = SIMPLE_TYPE, IDENTIFIER;                        
                         
 FN_RET_TYPES            = SIMPLE_TYPE 
                         | IDENTIFIER;
@@ -367,6 +366,7 @@ STATEMENT               = IF_STATEMENT
                         | DECLARATION
                         | RETURN_STATEMENT
                         | ASSINGMENT
+                        | EXPRESSION, ";"
                         | MATCH;
 
 BLOCK                   = "{", { STATEMENT, ";" }, "}";

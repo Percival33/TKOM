@@ -1,22 +1,19 @@
-package org.siu.ast.expression;
+package org.siu.ast;
 
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.Value;
-import org.siu.ast.Statement;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
 import java.util.List;
 
+@ToString(exclude = {"statementList"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-@RequiredArgsConstructor
-public class FunctionCallExpression implements Expression, Statement {
-    String identifier;
-    List<Expression> arguments;
+public class BlockStatement implements Statement {
+    List<Statement> statementList;
     Position position;
-
 
     @Override
     public void accept(Visitor visitor) {

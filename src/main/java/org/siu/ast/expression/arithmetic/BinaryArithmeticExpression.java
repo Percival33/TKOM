@@ -4,7 +4,7 @@ import org.siu.ast.expression.ArithmeticExpression;
 import org.siu.ast.expression.Expression;
 import org.siu.parser.Visitor;
 
-public interface TwoArgumentArithmeticExpression extends ArithmeticExpression {
+public interface BinaryArithmeticExpression extends ArithmeticExpression {
     Expression getLeft();
     Expression getRight();
 

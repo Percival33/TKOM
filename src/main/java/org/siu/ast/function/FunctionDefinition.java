@@ -3,7 +3,9 @@ package org.siu.ast.function;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
-import org.siu.ast.Block;
+import org.siu.ast.Argument;
+import org.siu.ast.BlockStatement;
+import org.siu.ast.type.ValueType;
 import org.siu.token.Position;
 
 import java.util.List;
@@ -14,8 +16,8 @@ import java.util.Optional;
 @Value
 public class FunctionDefinition {
     String name;
-    List<FunctionParameter> parameters;
-    Optional<FunctionParameter> returnType;
-    Block block;
+    List<Argument> parameters;
+    Optional<ValueType> returnType;
+    BlockStatement block;
     Position position;
 }
