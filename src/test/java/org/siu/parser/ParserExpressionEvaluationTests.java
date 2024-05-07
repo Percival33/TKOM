@@ -54,11 +54,11 @@ class ParserExpressionEvaluationTests {
 
     @Test
     void testCasteNegatedIntegerDeclaration() {
-        String s = "int pi = ( int ) -3.14159;";
+        String s = "int pi = ( int ) (-3.14159 + 0.0);";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
 
-        Expression expression = new CastedFactorExpression(ValueType.INT, new NegateArithmeticExpression(new FloatExpression(3.14159F, position), position), position);
+        Expression expression = new CastedFactorExpression(ValueType.INT, new AddArithmeticExpression(new NegateArithmeticExpression(new FloatExpression(3.14159F, position), position), new FloatExpression(0.0F, position), position), position);
 
         assertEquals(Map.of("pi", createDeclaration("pi", ValueType.INT, expression)), program.getDeclarations());
     }

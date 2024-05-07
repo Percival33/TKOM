@@ -374,43 +374,15 @@ public class Parser {
             if (castedType.isPresent()) {
                 nextToken();
                 mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-                // return dodaj nowy typ i parseUnaryFactor(); i koniec funkcji
+                factorOptional = parseFactor();
+                return Optional.of(new CastedFactorExpression(castedType.get(), factorOptional.get(), position));
             } else {
                 factorOptional = parseExpression();
                 mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-//                return factorOptional;
+                return factorOptional;
             }
         }
-
-//        return parseUnaryFactor(castedType, factorOptional, position);
-
-//        (int)(-3 - 5)
-
-        // UNARY_FACTOR
-        var negate = isUnaryFactor();
-
-        // FACTOR
-        factorOptional =
-                factorOptional
-                        .or(this::parseLiteralExpression)
-                        .or(this::parseIdentifierOrFnCall)
-                        .or(Optional::empty);
-
-        if (factorOptional.isEmpty()) {
-            return Optional.empty();
-        }
-
-        var factor = factorOptional.get();
-
-        if (negate) {
-            factor = new NegateArithmeticExpression(factor, position);
-        }
-
-        if (castedType.isPresent()) {
-            factor = new CastedFactorExpression(castedType.get(), factor, position);
-        }
-
-        return Optional.of(factor);
+        return parseUnaryFactor();
     }
 
     private Optional<ValueType> parseCastedType() {
@@ -421,12 +393,36 @@ public class Parser {
         return castedType;
     }
 
+    /**
+     * UNARY_FACTOR            = ["-"], FACTOR;
+     * <p>
+     * FACTOR                  = LITERAL
+     * | '(', EXPRESSION, ')'
+     * | IDENTIFIER_FNCALL_MEM;
+     */
     private boolean isUnaryFactor() {
         if (token.getType() == TokenType.MINUS) {
             nextToken();
             return true;
         }
         return false;
+    }
+
+    private Optional<Expression> parseUnaryFactor() {
+        // UNARY_FACTOR
+        var negate = isUnaryFactor();
+        var position = token.getPosition();
+
+        // FACTOR
+        var factorOptional = parseLiteralExpression()
+                .or(this::parseIdentifierOrFnCall)
+                .or(Optional::empty);
+
+        if (factorOptional.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return negate ? Optional.of(new NegateArithmeticExpression(factorOptional.get(), position)) : factorOptional;
     }
 
     private Optional<Expression> parseLiteralExpression() {
