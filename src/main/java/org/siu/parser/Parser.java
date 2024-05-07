@@ -409,7 +409,6 @@ public class Parser {
 
     /**
      * MATH_EXPRESSION         = TERM, { arithmetic_operator, TERM };
-     * TODO: simplify code
      */
     private Optional<Expression> parseMathExpression() {
         var leftOptional = parseTerm();
@@ -479,8 +478,6 @@ public class Parser {
      * | '(', EXPRESSION, ')'
      * | IDENTIFIER_FNCALL_MEM;
      */
-    // FIXME: remove SneakyThrows
-    @SneakyThrows
     private Optional<Expression> parseFactor() {
         var position = token.getPosition();
         var factorOptional = Optional.<Expression>empty();

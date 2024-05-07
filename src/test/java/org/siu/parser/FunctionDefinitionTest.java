@@ -86,20 +86,20 @@ class FunctionDefinitionTest {
                 fn);
     }
 
-//    @Test
-//    void fnDefinitionWithNoArguments() {
-//        String s = "fn add() { f(1); }";
-//        Parser parser = toParser(s);
-//        Program program = parser.buildProgram();
-//        var fn = program.getFunctionDefinitions().get("add");
-//        assertEquals(new FunctionDefinition(
-//                        "add",
-//                        List.of(),
-//                        Optional.empty(),
-//                        new BlockStatement(List.of(new FunctionCallExpression("f", List.of(new IntegerExpression(1, position)), position)), position),
-//                        position),
-//                fn);
-//    }
+    @Test
+    void fnDefinitionWithNoArguments() {
+        String s = "fn add() { f(1); }";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+        var fn = program.getFunctionDefinitions().get("add");
+        assertEquals(new FunctionDefinition(
+                        "add",
+                        List.of(),
+                        Optional.empty(),
+                        new BlockStatement(List.of(new FunctionCallExpression("f", List.of(new IntegerExpression(1, position)), position)), position),
+                        position),
+                fn);
+    }
 
     @Test
     void fnDefinitionTest2() {
