@@ -400,12 +400,11 @@ public class Parser {
         while (token.getType() == TokenType.OR) {
             nextToken();
             var position = token.getPosition();
-            var right_logic_factor = parseAndExpression();
-            if (right_logic_factor.isEmpty()) {
-                // TODO: refactor error handling
+            var right = parseAndExpression();
+            if (right.isEmpty()) {
                 errorHandler.handleParserError(new SyntaxError(position, "No expression after OR."), position);
             }
-            left = new OrLogicalExpression(left, right_logic_factor.get(), position);
+            left = new OrLogicalExpression(left, right.get(), position);
         }
         return Optional.of(left);
     }
