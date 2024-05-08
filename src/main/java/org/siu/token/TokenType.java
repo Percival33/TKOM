@@ -36,11 +36,11 @@ public enum TokenType {
     COPY_OPERATOR("@"),
     BRACKET_OPEN("("),
     BRACKET_CLOSE(")"),
-    SQUARE_BRACKET_OPEN("{"),
-    SQUARE_BRACKET_CLOSE("}"),
+    CURLY_BRACKET_OPEN("{"),
+    CURLY_BRACKET_CLOSE("}"),
 
     EQUAL("=="),
-    COMPARE_NOT_EQUAL("!="),
+    NOT_EQUAL("!="),
     MATCH("match"),
 
     SEMICOLON(";"),

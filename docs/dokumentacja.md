@@ -305,93 +305,106 @@ SIMPLE_TYPE             = "int"
                         | "string";
 ```
 
-```
-PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
-                        
-TYPE_DEFINITION         = SIMPLE_TYPE_AS_ARG
-                        | STRUCT_DEFINITION
-                        | VARIANT_DEFINITION;
+### Instrukcje
+```                        
+TYPE_DEFINITION                 = SIMPLE_TYPE_AS_ARG
+                                | STRUCT_DEFINITION
+                                | VARIANT_DEFINITION;
 
-VARIANT_DEFINITION      = "variant", IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";                            
-STRUCT_DEFINITION       = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
+VARIANT_DEFINITION              = "variant", IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";                            
+STRUCT_DEFINITION               = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
             
-VARIANT_RET_TYPE        = "variant", "{", VARIANT_TYPE_DECL, { ",", VARIANT_TYPE_DECL }, "}"            
+VARIANT_RET_TYPE                = "variant", "{", VARIANT_TYPE_DECL, { ",", VARIANT_TYPE_DECL }, "}"            
                             
-VARIANT_TYPE_DECL       = SIMPLE_TYPE | IDENTIFIER;
-STRUCT_TYPE_DECL        = VARIANT_TYPE_DECL, IDENTIFIER;
+VARIANT_TYPE_DECL               = SIMPLE_TYPE | IDENTIFIER;
+STRUCT_TYPE_DECL                = VARIANT_TYPE_DECL, IDENTIFIER;
                     
-DECLARATION             = ["const"], VARIABLE_DECLARATION;
+DECLARATION                     = ["const"], VARIABLE_DECLARATION;
 
-VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
-                        | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
-                        | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
-                        | IDENTIFIER, IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
+VARIABLE_DECLARATION            = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
+                                | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
+                                | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
+                                | IDENTIFIER, IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
                         
-STRUCT_MEMBER           = LITERAL 
-                        | FN_CALL
-                        | IDENTIFIER_OR_STRUCT
+STRUCT_MEMBER                   = LITERAL 
+                                | FN_CALL
+                                | IDENTIFIER_OR_STRUCT
 
-IDENTIFIER_OR_STRUCT    = IDENTIFIER, [ "{", STRUCT_MEMBER, { ",",  STRUCT_MEMBER }, "}" ]; 
+IDENTIFIER_OR_STRUCT            = IDENTIFIER, [ "{", STRUCT_MEMBER, { ",",  STRUCT_MEMBER }, "}" ]; 
  
-IF_STATEMENT            = "if", "(", EXPRESSION, ")", BLOCK, 
-                            { "elif", "(", EXPRESSION, ")", BLOCK, },
-                            [ "else", BLOCK ];
+IF_STATEMENT                    = "if", "(", EXPRESSION, ")", BLOCK, 
+                                    { "elif", "(", EXPRESSION, ")", BLOCK, },
+                                    [ "else", BLOCK ];
                             
-WHILE_STATEMENT         = "while", "(", EXPRESSION, ")", BLOCK;
+WHILE_STATEMENT                 = "while", "(", EXPRESSION, ")", BLOCK;
 
-FN_DEFINITION           = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
-FN_PARAMS               = SIMPLE_TYPE_AS_ARG 
-                        | STRUCT_OR_VARIANT_AS_ARG;
+FN_DEFINITION                   = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
+FN_PARAMS                       = SIMPLE_TYPE_AS_ARG 
+                                | STRUCT_AS_ARG
+                                | VARIANT_AS_ARG;
                         
-VARIANT_AS_ARG          = VARIANT_DEFINITION;                            
-STRUCT_AS_ARG           = IDENTIFIER, IDENTIFIER;
-SIMPLE_TYPE_AS_ARG      = SIMPLE_TYPE, IDENTIFIER;                        
+VARIANT_AS_ARG                  = VARIANT_DEFINITION;                            
+STRUCT_AS_ARG                   = IDENTIFIER, IDENTIFIER;
+SIMPLE_TYPE_AS_ARG              = SIMPLE_TYPE, IDENTIFIER;                        
                         
-FN_RET_TYPES            = SIMPLE_TYPE 
-                        | IDENTIFIER;
-                        | VARIANT_RET_TYPE;
+FN_RET_TYPES                    = SIMPLE_TYPE 
+                                | IDENTIFIER;
+                                | VARIANT_RET_TYPE;
                         
-RETURN_STATEMENT        = "return", EXPRESSION, ";"
-                        | "return", ";";
+RETURN_STATEMENT                = "return", EXPRESSION, ";"
+                                | "return", ";";
 
-MATCH                   = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
-MATCH_EXP               = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
+MATCH                           = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
+MATCH_EXP                       = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
 
-ASSINGMENT              = IDENTIFIER, "=", EXPRESSION
-                        | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
-                        | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
+ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION
+                                | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
+                                | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
 
-STATEMENT               = IF_STATEMENT
-                        | WHILE_STATEMENT
-                        | DECLARATION
-                        | RETURN_STATEMENT
-                        | ASSINGMENT
-                        | EXPRESSION, ";"
-                        | MATCH;
+STATEMENT                       = IF_STATEMENT
+                                | WHILE_STATEMENT
+                                | DECLARATION
+                                | RETURN_STATEMENT
+                                | ASSINGMENT
+                                | EXPRESSION, ";"
+                                | MATCH;
 
-BLOCK                   = "{", { STATEMENT, ";" }, "}";
-  
-EXPRESSION              = AND_EXPRESSION, { "or", AND_EXPRESSION };
+BLOCK                           = "{", { STATEMENT, ";" }, "}";
+```
 
-AND_EXPRESSION          = RELATION_EXPRESSION, { "and", RELATION_EXPRESSION }
+### Wyrażenia
+```
+EXPRESSION                      = AND_EXPRESSION, { "or", AND_EXPRESSION };
 
-RELATION_EXPRESSION     = ["not"], MATH_EXPRESSION, [ relation_operator, MATH_EXPRESSION ];
+AND_EXPRESSION                  = RELATION_EXPRESSION, { "and", RELATION_EXPRESSION }
+
+RELATION_EXPRESSION             = ["not"], MATH_EXPRESSION, [ relation_operator, MATH_EXPRESSION ];
                         
-MATH_EXPRESSION         = TERM, { arithmetic_operator, TERM };
+MATH_EXPRESSION                 = TERM, { arithmetic_operator, TERM };
 
-TERM                    = UNARY_FACTOR, { multiplication_operator, UNARY_FACTOR };    
+TERM                            = UNARY_FACTOR, { multiplication_operator, UNARY_FACTOR };    
 
-CASTED_FACTOR           = [ "(", SIMPLE_TYPE, ")" ], UNARY_FACTOR;
+CASTED_FACTOR                   = [ "(", SIMPLE_TYPE, ")" ], UNARY_FACTOR;
 
-UNARY_FACTOR            = ["-"], FACTOR;   
+UNARY_FACTOR                    = ["-"], FACTOR;   
 
-FACTOR                  = LITERAL
-                        | '(', EXPRESSION, ')'
-                        | IDENTIFIER_FNCALL_MEM; 
+FACTOR                          = LITERAL
+                                | '(', EXPRESSION, ')'
+                                | IDENTIFIER_FNCALL_MEM_VARIANT; 
 
-IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ];
+IDENTIFIER_FNCALL_MEM_VARIANT   = IDENTIFIER, 
+                                [
+                                    ".", IDENTIFIER,
+                                    | "(", [ FN_ARGUMENTS ], ")",
+                                    | "::", IDENTIFIER, "(", EXPRESSION ")"
+                                ]     
 
-FN_ARGUMENTS            = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };  
+FN_ARGUMENTS                    = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };  
+```
+
+
+```
+PROGRAM                         = { FN_DEFINITION | DECLARATION | FN_CALL };
 ```
 
 ## Sposób uruchomienia

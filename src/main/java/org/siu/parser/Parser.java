@@ -90,7 +90,6 @@ public class Parser {
      * VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
      * | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
      * | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
-     * | IDENTIFIER, IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
      */
     private Optional<DeclarationStatement> parseDeclarationStatement() {
         var typeDeclarationOptional = parseTypeDeclaration();
@@ -102,6 +101,11 @@ public class Parser {
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
         // TODO: can be { or Identifier
+
+        if (token.getType() == TokenType.CURLY_BRACKET_OPEN) {
+            // TODO: struct declaration
+        }
+
 
         var expression = parseExpression();
         if (expression.isEmpty()) {
@@ -165,7 +169,7 @@ public class Parser {
      * BLOCK                   = "{", { STATEMENT, ";" }, "}";
      */
     private Optional<BlockStatement> parseBlock() {
-        mustBe(token, TokenType.SQUARE_BRACKET_OPEN, SyntaxError::new);
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
         var position = token.getPosition();
         List<Statement> statements = new ArrayList<>();
 
@@ -175,7 +179,7 @@ public class Parser {
             statement = parseStatement();
         }
 
-        mustBe(token, TokenType.SQUARE_BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
         return Optional.of(new BlockStatement(statements, position));
     }
 
@@ -606,8 +610,7 @@ public class Parser {
         if (castedType.isEmpty()) {
             log.warn("Invalid cast syntax at: {}", token.getPosition());
         }
-
-        return castedType.get() == ValueType.CUSTOM ? Optional.empty() : castedType;
+        return castedType.filter(valueType -> valueType != ValueType.CUSTOM);
     }
 
     /**
@@ -632,7 +635,7 @@ public class Parser {
 
         // FACTOR
         var factorOptional = parseLiteralExpression()
-                .or(this::parseIdentifierOrFnCall)
+                .or(this::parseIdentifierOrFnCallOrVariant)
                 .or(Optional::empty);
 
         if (factorOptional.isEmpty()) {
@@ -655,8 +658,15 @@ public class Parser {
         return ret;
     }
 
-    //    IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ];
-    private Optional<Expression> parseIdentifierOrFnCall() {
+    /**
+     * IDENTIFIER_FNCALL_MEM_VARIANT   = IDENTIFIER,
+     *                                 [
+     *                                     ".", IDENTIFIER,
+     *                                     | "(", [ FN_ARGUMENTS ], ")",
+     *                                     | "::", IDENTIFIER, "(", EXPRESSION ")"
+     *                                 ]
+     */
+    private Optional<Expression> parseIdentifierOrFnCallOrVariant() {
         if (token.getType() != TokenType.IDENTIFIER) {
             return Optional.empty();
         }
@@ -675,6 +685,18 @@ public class Parser {
                 var arguments = parseFnArguments();
                 mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
                 expr = new FunctionCallExpression(name, arguments, position);
+            }
+            case DOUBLE_COLON -> {
+                nextToken();
+                var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+                mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+                var variantExpression = parseExpression();
+                if (variantExpression.isEmpty()) {
+                    log.error("No expression in variant at: {}", position);
+                    errorHandler.handleParserError(new MissingExpressionError(position), position);
+                }
+                mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+                expr = new VariantExpression(fieldName, variantExpression.get(), position);
             }
             default -> {
                 expr = new IdentifierExpression(name, position);

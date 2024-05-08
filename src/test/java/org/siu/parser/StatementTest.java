@@ -7,6 +7,7 @@ import org.siu.ast.Argument;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.Statement;
+import org.siu.ast.expression.VariantExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.function.FunctionDefinition;
 import org.siu.ast.statement.*;
@@ -39,6 +40,16 @@ class StatementTest {
     Parser toParser(String text) {
         Lexer lexer = new LexerImpl(text, errorHandler);
         return new Parser(lexer, errorHandler);
+    }
+
+    private FunctionDefinition parseAndBuildFunction(String sourceCode) {
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+        return program.getFunctionDefinitions().get("a");
+    }
+
+    private BlockStatement blockOf(Statement... statements) {
+        return new BlockStatement(List.of(statements), position);
     }
 
     @Test
@@ -109,18 +120,16 @@ class StatementTest {
 
     @Test
     void testIfStatementWithElif() {
+        // TODO: refactor tests
         String s = "fn a() { if (true) { return 1; } elif(1 < 2) { return 2; } }";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
 
-        // Parse the actual function from the program
         var actualFunction = program.getFunctionDefinitions().get("a");
 
-        // Expected structures
         Statement trueReturn = new ReturnStatement(new IntegerExpression(1, position), position);
         Statement twoReturn = new ReturnStatement(new IntegerExpression(2, position), position);
 
-        // Constructing the expected IfStatement
         IfStatement ifStatement = new IfStatement(
                 List.of(new BooleanExpression(true, position),
                         new LessExpression(new IntegerExpression(1, position), new IntegerExpression(2, position), position)),
@@ -138,81 +147,48 @@ class StatementTest {
                 position
         );
 
-        // Checking individual elements
         assertEquals(expected.getName(), actualFunction.getName());
         assertEquals(expected.getParameters(), actualFunction.getParameters());
         assertEquals(expected.getReturnType(), actualFunction.getReturnType());
 
-        // Check top-level block
         BlockStatement expectedBlock = expected.getBlock();
         BlockStatement actualBlock = actualFunction.getBlock();
         assertEquals(expectedBlock, actualBlock);
 
-        // Check IfStatement
         IfStatement expectedIf = (IfStatement) expectedBlock.getStatementList().get(0);
         IfStatement actualIf = (IfStatement) actualBlock.getStatementList().get(0);
         assertEquals(expectedIf, actualIf);
 
-        // Check conditions and blocks within IfStatement
         assertEquals(expectedIf.getConditions(), actualIf.getConditions());
         assertEquals(expectedIf.getIfInstructions(), actualIf.getIfInstructions());
     }
 
     @Test
     void testIfStatementWithElifAndElse() {
-        String s = "fn a() { if (true) { return 1; } elif(1 < 2) { return 2; } else { return 3; } }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
+        String sourceCode = "fn a() { if (true) { return 1; } elif(1 < 2) { return 2; } else { return 3; } }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
 
-        // Parse the actual function from the program
-        var actualFunction = program.getFunctionDefinitions().get("a");
-
-        // Expected structures
         Statement trueReturn = new ReturnStatement(new IntegerExpression(1, position), position);
         Statement twoReturn = new ReturnStatement(new IntegerExpression(2, position), position);
-        Statement elseReturn = new ReturnStatement(new IntegerExpression(3, position), position);
-        BlockStatement elseBlock = new BlockStatement(List.of(elseReturn), position);
-        // Constructing the expected IfStatement
+        Statement threeReturn = new ReturnStatement(new IntegerExpression(3, position), position);
+        BlockStatement elseBlock = blockOf(threeReturn);
+
         IfStatement ifStatement = new IfStatement(
-                List.of(new BooleanExpression(true, position),
-                        new LessExpression(new IntegerExpression(1, position), new IntegerExpression(2, position), position)),
-                List.of(new BlockStatement(List.of(trueReturn), position),
-                        new BlockStatement(List.of(twoReturn), position)),
+                List.of(new BooleanExpression(true, position), new LessExpression(new IntegerExpression(1, position), new IntegerExpression(2, position), position)),
+                List.of(blockOf(trueReturn), blockOf(twoReturn)),
                 Optional.of(elseBlock),
                 position
         );
 
-        FunctionDefinition expected = new FunctionDefinition(
+        FunctionDefinition expectedFunction = new FunctionDefinition(
                 "a",
                 List.of(),
                 Optional.empty(),
-                new BlockStatement(List.of(ifStatement), position),
+                blockOf(ifStatement),
                 position
         );
 
-        // Checking individual elements
-        assertEquals(expected.getName(), actualFunction.getName());
-        assertEquals(expected.getParameters(), actualFunction.getParameters());
-        assertEquals(expected.getReturnType(), actualFunction.getReturnType());
-
-        // Check top-level block
-        BlockStatement expectedBlock = expected.getBlock();
-        BlockStatement actualBlock = actualFunction.getBlock();
-        assertEquals(expectedBlock, actualBlock);
-
-        // Check IfStatement
-        IfStatement expectedIf = (IfStatement) expectedBlock.getStatementList().get(0);
-        IfStatement actualIf = (IfStatement) actualBlock.getStatementList().get(0);
-        assertEquals(expectedIf, actualIf);
-
-        // Check conditions and blocks within IfStatement
-        assertEquals(expectedIf.getConditions(), actualIf.getConditions());
-        assertEquals(expectedIf.getIfInstructions(), actualIf.getIfInstructions());
-
-        // Additional check for else block
-        assertTrue(expectedIf.getElseInstructions().isPresent(), "Expected else block is missing");
-        assertTrue(actualIf.getElseInstructions().isPresent(), "Actual else block is missing");
-        assertEquals(expectedIf.getElseInstructions().get(), actualIf.getElseInstructions().get());
+        assertEquals(expectedFunction, actualFunction);
     }
 
     @Test
@@ -246,9 +222,9 @@ class StatementTest {
 
     @Test
     void testAssignmentStatement() {
-        String s = "fn a() { bool b = 0; abc = 1; }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
+        String sourceCode = "fn a() { bool b = 0; abc = 1; }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+
         Statement declaratioinStatement = new DeclarationStatement(
                 new Argument(new TypeDeclaration(ValueType.BOOL), "b"),
                 new IntegerExpression(0, position),
@@ -259,15 +235,56 @@ class StatementTest {
                 new IntegerExpression(1, position),
                 position
         );
-        var fn = program.getFunctionDefinitions().get("a");
-        assertEquals(new FunctionDefinition(
-                        "a",
-                        List.of(),
-                        Optional.empty(),
-                        new BlockStatement(
-                                List.of(declaratioinStatement, assignmentStatement),
-                                position),
-                        position),
-                fn);
+        FunctionDefinition expectedFunction = new FunctionDefinition(
+                "a",
+                List.of(),
+                Optional.empty(),
+                blockOf(declaratioinStatement, assignmentStatement),
+                position
+        );
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    @Test
+    void testVariantDeclaration() {
+        String sourceCode = "fn a() { Var v = Var::row(3); }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+
+        Statement declaratioinStatement = new DeclarationStatement(
+                new Argument(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v"),
+                new VariantExpression("row", new IntegerExpression(3, position), position),
+                position
+        );
+
+        FunctionDefinition expectedFunction = new FunctionDefinition(
+                "a",
+                List.of(),
+                Optional.empty(),
+                blockOf(declaratioinStatement),
+                position
+        );
+
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    @Test
+    void testVariantDefinition() {
+        String sourceCode = "fn a() { Var v = Var::row(3); }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        Statement declaratioinStatement = new DeclarationStatement(
+                new Argument(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v"),
+                new VariantExpression("row", new IntegerExpression(3, position), position),
+                position
+        );
+
+        FunctionDefinition expectedFunction = new FunctionDefinition(
+                "a",
+                List.of(),
+                Optional.empty(),
+                blockOf(declaratioinStatement),
+                position
+        );
+
+        assertEquals(expectedFunction, actualFunction);
     }
 }

@@ -39,12 +39,15 @@ public interface Visitor {
     void visit(FloatExpression expression);
     void visit(StringExpression stringExpression);
     void visit(BooleanExpression booleanExpression);
+//    Complex type expression
+    void visit(VariantExpression variantExpression);
+    void visit(StructExpression structExpression);
+
 
 //    RelationExpression
     void visit(LessExpression lessExpression);
     void visit(GreaterExpression greaterExpression);
     void visit(EqualExpression equalExpression);
-
 
 //    ArithmeticExpression
     void visit(AddArithmeticExpression addArithmeticExpression);
@@ -67,7 +70,6 @@ public interface Visitor {
 
 //    ???
     void visit(IdentifierExpression identifierExpression);
-    void visit(StructExpression structExpression);
     void visit(FunctionCallExpression functionCallExpression);
 
 }
