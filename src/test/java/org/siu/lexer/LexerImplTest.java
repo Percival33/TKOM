@@ -12,6 +12,8 @@ import org.siu.token.Position;
 import org.siu.token.TokenType;
 import org.siu.token.type.*;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,7 +23,8 @@ class LexerImplTest {
     private final ErrorHandler errorHandler = Mockito.mock(ErrorHandler.class);
 
     Lexer setup(String text) {
-        return new LexerImpl(text, errorHandler);
+        BufferedReader reader = new BufferedReader(new StringReader(text));
+        return new LexerImpl(reader, errorHandler);
     }
 
     @ParameterizedTest
@@ -84,12 +87,25 @@ class LexerImplTest {
         assertEquals(TokenType.END_OF_FILE, lexer.nextToken().getType());
     }
 
+    @Test
+    void stringRegressionTest() {
+        Lexer lexer = setup("string c = \"a + b\";");
+        assertEquals(TokenType.STRING, lexer.nextToken().getType());
+        assertEquals(TokenType.IDENTIFIER, lexer.nextToken().getType());
+        assertEquals(TokenType.ASSIGN, lexer.nextToken().getType());
+        var token = lexer.nextToken();
+        assertEquals("a + b", token.getValue());
+        assertEquals(TokenType.STRING_CONSTANT, token.getType());
+        assertEquals(TokenType.SEMICOLON, lexer.nextToken().getType());
+        assertEquals(TokenType.END_OF_FILE, lexer.nextToken().getType());
+    }
+
     @ParameterizedTest
     @CsvSource({
             "'<=', 'LESS_EQUAL'",
             "'<', 'LESS'",
-            "'==', 'COMPARE_EQUAL'",
-            "'!=', 'COMPARE_NOT_EQUAL'",
+            "'==', 'EQUAL'",
+            "'!=', 'NOT_EQUAL'",
             "'=', 'ASSIGN'",
             "'and', 'AND'",
             "'or', 'OR'",
@@ -136,5 +152,28 @@ class LexerImplTest {
         assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(2, 1), "aaa"), lexer.nextToken(), "Expected identifier");
         assertEquals(new KeywordToken(TokenType.MULTI_LINE_COMMENT_CLOSE, new Position(3, 1)), lexer.nextToken(), "Expected single line comment");
         assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(4, 1), "bbb"), lexer.nextToken(), "Expected identifier");
+    }
+
+    @Test
+    void fnDeclaration() {
+        Lexer lexer = setup("fn add(int a, int b): int { return a + b; }");
+        assertEquals(new KeywordToken(TokenType.FUNCTION, new Position(1, 1)), lexer.nextToken(), "Expected FUNCTION");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 4), "add"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.BRACKET_OPEN, new Position(1, 7)), lexer.nextToken(), "Expected BRACKET_OPEN");
+        assertEquals(new KeywordToken(TokenType.INT, new Position(1, 8)), lexer.nextToken(), "Expected INT");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 12), "a"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.COMMA, new Position(1, 13)), lexer.nextToken(), "Expected COMMA");
+        assertEquals(new KeywordToken(TokenType.INT, new Position(1, 15)), lexer.nextToken(), "Expected INT");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 19), "b"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.BRACKET_CLOSE, new Position(1, 20)), lexer.nextToken(), "Expected BRACKET_CLOSE");
+        assertEquals(new KeywordToken(TokenType.COLON, new Position(1, 21)), lexer.nextToken(), "Expected COLON");
+        assertEquals(new KeywordToken(TokenType.INT, new Position(1, 23)), lexer.nextToken(), "Expected INT");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_OPEN, new Position(1, 27)), lexer.nextToken(), "Expected SQUARE_BRACKET_OPEN");
+        assertEquals(new KeywordToken(TokenType.RETURN, new Position(1, 29)), lexer.nextToken(), "Expected RETURN");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 36), "a"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.PLUS, new Position(1, 38)), lexer.nextToken(), "Expected PLUS");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 40), "b"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 41)), lexer.nextToken(), "Expected SEMICOLON");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_CLOSE, new Position(1, 43)), lexer.nextToken(), "Expected SQUARE_BRACKET_CLOSE");
     }
 }

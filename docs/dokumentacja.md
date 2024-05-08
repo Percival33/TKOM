@@ -1,30 +1,30 @@
-# TKOM 24L - dokumentacja wstępna
+# TKOM 24L - Język `siu`
 ```
 Marcin Jarczewski
 ```
 Język `siu`.
 
 <!-- TOC -->
-* [TKOM 24L - dokumentacja wstępna](#tkom-24l---dokumentacja-wstępna)
-    * [Zasady działania języka](#zasady-działania-języka)
-        * [Analiza wymagań](#analiza-wymagań)
-        * [Typy danych](#typy-danych)
-        * [Operatory](#operatory)
-    * [Przykłady języka](#przykłady-języka)
-        * [Konwersja typów i operator rzutowania](#konwersja-typów-i-operator-rzutowania)
-        * [Stałe](#stałe)
-        * [Zasady widoczności zmiennych](#zasady-widoczności-zmiennych)
-        * [Zasady przekazywania zmiennych do funkcji](#zasady-przekazywania-zmiennych-do-funkcji)
-        * [Przeciążanie funkcji](#przeciążanie-funkcji)
-        * [Kombinacja typów](#kombinacja-typów)
-        * [Słowa kluczowe](#słowa-kluczowe)
-        * [Biblioteka standardowa](#biblioteka-standardowa)
-        * [Komunikaty o błędach](#komunikaty-o-błędach)
-    * [Struktura projektu](#struktura-projektu)
-        * [Testowanie](#testowanie)
-    * [Gramatyka języka](#gramatyka-języka)
-    * [Sposób uruchomienia](#sposób-uruchomienia)
-    * [Środowisko programistyczne](#środowisko-programistyczne)
+* [TKOM 24L - Język `siu`](#tkom-24l---język-siu)
+  * [Zasady działania języka](#zasady-działania-języka)
+    * [Analiza wymagań](#analiza-wymagań)
+    * [Typy danych](#typy-danych)
+    * [Operatory](#operatory)
+  * [Przykłady języka](#przykłady-języka)
+    * [Konwersja typów i operator rzutowania](#konwersja-typów-i-operator-rzutowania)
+    * [Stałe](#stałe)
+    * [Zasady widoczności zmiennych](#zasady-widoczności-zmiennych)
+    * [Zasady przekazywania zmiennych do funkcji](#zasady-przekazywania-zmiennych-do-funkcji)
+    * [Przeciążanie funkcji](#przeciążanie-funkcji)
+    * [Kombinacja typów](#kombinacja-typów)
+    * [Słowa kluczowe](#słowa-kluczowe)
+    * [Biblioteka standardowa](#biblioteka-standardowa)
+    * [Komunikaty o błędach](#komunikaty-o-błędach)
+  * [Struktura projektu](#struktura-projektu)
+    * [Testowanie](#testowanie)
+  * [Gramatyka języka](#gramatyka-języka)
+  * [Sposób uruchomienia](#sposób-uruchomienia)
+  * [Środowisko programistyczne](#środowisko-programistyczne)
 <!-- TOC -->
 
 ## Zasady działania języka
@@ -147,17 +147,18 @@ Dog pluto = Dog { 14, "pluto", golden };
 
 
 Point pt = { a, f(10) };
+Point pt2 = pt;
 ```
 - variant
 ```
-variant Var { int row, int col };
+variant Var { int row, int col, };
 Var v = Var::row(3);
 
-foo inspect(v) {
-	match(v) {
-		Var::row(x) { return x; }
-		Var::col(y) { return y; }
-	}
+fn inspect(Var v) {
+    match(v) {
+        Var::row(x) { x }
+        Var::col(y) { y }
+    }
 }
 ```
 - constant
@@ -168,9 +169,9 @@ x = 6; # error
 - mutable
 ```
 int x = 5; 
-print(x); # 5 
+print((string) x); # 5 
 x = 6; 
-print(x); # 6
+print((string) x); # 6
 ```
 
 ### Konwersja typów i operator rzutowania
@@ -235,7 +236,7 @@ Wyróżniam 3 rodzaje błędów
 1. błędy analizatora składniowego
     - dodanie różnych typów bez rzutowania `error: cannot perform operation on different types at line:3`
     - przypisanie nowej wartości do zmiennej oznaczonej `const`, `error: change const value`
-    - przekazanie złego typu zmiennej jako argument funkcji: `error: function argument and provided types mismatch at line:20`
+    - przekazanie złego typu zmiennej jako parameter funkcji: `error: function parameter and provided types mismatch at line:20`
 2. błędy analizatora semantycznego
     - redefinicja funkcji `error: function already declared at line:5`
     - użycie `return` w funkcji nie zwracającej typu
@@ -304,98 +305,105 @@ SIMPLE_TYPE             = "int"
                         | "string";
 ```
 
-```
-PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL};
-                        
-TYPE_DEFINITION         = SIMPLE_TYPE_AS_ARG
-                        | STRUCT_DEFINITION
-                        | VARIANT_DEFINITION;
+### Instrukcje
+```                        
+TYPE_DEFINITION                 = SIMPLE_TYPE_AS_ARG
+                                | STRUCT_DEFINITION
+                                | VARIANT_DEFINITION;
 
-VARIANT_DEFINITION      = "variant", IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";                            
-STRUCT_DEFINITION       = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
-
-VARIANT_AS_ARG          = VARIANT_DEFINITION;                            
-STRUCT_AS_ARG           = IDENTIFIER, IDENTIFIER;
-SIMPLE_TYPE_AS_ARG      = SIMPLE_TYPE, IDENTIFIER;
+VARIANT_DEFINITION              = "variant", IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";                            
+STRUCT_DEFINITION               = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
             
-VARIANT_RET_TYPE        = "variant", "{", VARIANT_TYPE_DECL, { ",", VARIANT_TYPE_DECL }, "}"            
+VARIANT_RET_TYPE                = "variant", "{", VARIANT_TYPE_DECL, { ",", VARIANT_TYPE_DECL }, "}"            
                             
-VARIANT_TYPE_DECL       = SIMPLE_TYPE | IDENTIFIER;
-STRUCT_TYPE_DECL        = VARIANT_TYPE_DECL, IDENTIFIER;
+VARIANT_TYPE_DECL               = SIMPLE_TYPE | IDENTIFIER;
+STRUCT_TYPE_DECL                = VARIANT_TYPE_DECL, IDENTIFIER;
                     
-DECLARATION             = ["const"], VARIABLE_DECLARATION;
+DECLARATION                     = ["const"], VARIABLE_DECLARATION;
 
-VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, "=", EXPRESSION, ";"
-                        | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}"
-                        | IDENTIFIER, IDENTIFIER, "=", EXPRESSION
-                        | IDENTIFIER, IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")"; (* variant *)
+VARIABLE_DECLARATION            = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
+                                | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
+                                | IDENTIFIER, IDENTIFIER, "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
                         
-STRUCT_MEMBER           = LITERAL 
-                        | FN_CALL
-                        | IDENTIFIER_OR_STRUCT
+STRUCT_MEMBER                   = LITERAL 
+                                | FN_CALL
+                                | IDENTIFIER_OR_STRUCT
 
-IDENTIFIER_OR_STRUCT    = IDENTIFIER, [ "{", STRUCT_MEMBER, { ",",  STRUCT_MEMBER }, "}" ]; 
+IDENTIFIER_OR_STRUCT            = IDENTIFIER, [ "{", STRUCT_MEMBER, { ",",  STRUCT_MEMBER }, "}" ]; 
  
-IF_STATEMENT            = "if", "(", EXPRESSION, ")", BLOCK, 
-                            { "elif", "(", EXPRESSION, ")", BLOCK, },
-                            [ "else", BLOCK ];
+IF_STATEMENT                    = "if", "(", EXPRESSION, ")", BLOCK, 
+                                    { "elif", "(", EXPRESSION, ")", BLOCK, },
+                                    [ "else", BLOCK ];
                             
-WHILE_STATEMENT         = "while", "(", EXPRESSION, ")", BLOCK;
+WHILE_STATEMENT                 = "while", "(", EXPRESSION, ")", BLOCK;
 
-FN_DEFINITION           = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
-FN_PARAMS               = SIMPLE_TYPE_AS_ARG 
-                        | STRUCT_AS_ARG
-                        | VARIANT_AS_ARG;
+FN_DEFINITION                   = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
+FN_PARAMS                       = SIMPLE_TYPE_AS_ARG 
+                                | STRUCT_AS_ARG
+                                | VARIANT_AS_ARG;
                         
-FN_RET_TYPES            = SIMPLE_TYPE 
-                        | IDENTIFIER;
-                        | VARIANT_RET_TYPE;
+VARIANT_AS_ARG                  = VARIANT_DEFINITION;                            
+STRUCT_AS_ARG                   = IDENTIFIER, IDENTIFIER;
+SIMPLE_TYPE_AS_ARG              = SIMPLE_TYPE, IDENTIFIER;                        
                         
-RETURN_STATEMENT        = "return", EXPRESSION, ";"
-                        | "return", ";";
-
-MATCH                   = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
-MATCH_EXP               = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
-
-ASSINGMENT              = IDENTIFIER, "=", EXPRESSION
-                        | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
-                        | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
-
-STATEMENT               = IF_STATEMENT
-                        | WHILE_STATEMENT
-                        | DECLARATION
-                        | RETURN_STATEMENT
-                        | ASSINGMENT
-                        | MATCH
-                        | FN_CALL;
-
-BLOCK                   = "{", { STATEMENT, ";" }, "}";
-  
-FN_CALL                 = IDENTIFIER, "(", [ ["@"] EXPRESSION, { ",", ["@"], EXPRESSION }, ], ")";                    
-
-CONDITION               = EXPRESSION;
-
-EXPRESSION              = AND_EXPRESSION, { "or", AND_EXPRESSION };
-
-AND_EXPRESSION          = RELATION_EXPRESSION, { "and", RELATION_EXPRESSION }
-
-RELATION_EXPRESSION     = MATH_EXPRESSION, { relation_operator, MATH_EXPRESSION };
+FN_RET_TYPES                    = SIMPLE_TYPE 
+                                | IDENTIFIER;
+                                | VARIANT_RET_TYPE;
                         
-MATH_EXPRESSION         = TERM, { arithmetic_operator, TERM };
+RETURN_STATEMENT                = "return", EXPRESSION, ";"
+                                | "return", ";";
 
-TERM                    = UNARY_FACTOR, { multiplication_operator, UNARY_FACTOR };    
+MATCH                           = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
+MATCH_EXP                       = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
 
-UNARY_FACTOR            = ["-"], CASTED_FACTOR;   
+ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION
+                                | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
+                                | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
 
-CASTED_FACTOR           = [ "(", SIMPLE_TYPE, ")" ], FACTOR;
+STATEMENT                       = IF_STATEMENT
+                                | WHILE_STATEMENT
+                                | DECLARATION
+                                | RETURN_STATEMENT
+                                | ASSINGMENT
+                                | EXPRESSION, ";"
+                                | MATCH;
 
-FACTOR                  = LITERAL
-                        | '(', EXPRESSION, ')'
-                        | IDENTIFIER_FNCALL_MEM; 
+BLOCK                           = "{", { STATEMENT, ";" }, "}";
+```
 
-IDENTIFIER_FNCALL_MEM   = IDENTIFIER, [ ( ".", IDENTIFIER | [ "(", [ FN_ARGUMENTS ], ")" ] ) ];
+### Wyrażenia
+```
+EXPRESSION                      = AND_EXPRESSION, { "or", AND_EXPRESSION };
 
-FN_ARGUMENTS            = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };  
+AND_EXPRESSION                  = RELATION_EXPRESSION, { "and", RELATION_EXPRESSION }
+
+RELATION_EXPRESSION             = ["not"], MATH_EXPRESSION, [ relation_operator, MATH_EXPRESSION ];
+                        
+MATH_EXPRESSION                 = TERM, { arithmetic_operator, TERM };
+
+TERM                            = UNARY_FACTOR, { multiplication_operator, UNARY_FACTOR };    
+
+CASTED_FACTOR                   = [ "(", SIMPLE_TYPE, ")" ], UNARY_FACTOR;
+
+UNARY_FACTOR                    = ["-"], FACTOR;   
+
+FACTOR                          = LITERAL
+                                | '(', EXPRESSION, ')'
+                                | IDENTIFIER_FNCALL_MEM_VARIANT; 
+
+IDENTIFIER_FNCALL_MEM_VARIANT   = IDENTIFIER, 
+                                [
+                                    ".", IDENTIFIER,
+                                    | "(", [ FN_ARGUMENTS ], ")",
+                                    | "::", IDENTIFIER, "(", EXPRESSION ")"
+                                ]     
+
+FN_ARGUMENTS                    = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };  
+```
+
+
+```
+PROGRAM                         = { FN_DEFINITION | DECLARATION | FN_CALL };
 ```
 
 ## Sposób uruchomienia

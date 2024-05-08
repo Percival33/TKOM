@@ -9,4 +9,12 @@ public class ErrorHandlerImpl implements ErrorHandler{
     public void handleLexerError(Exception e, Position p) {
         System.out.println(e.toString() + "at" + p);
     }
+    @Override
+    public void handleParserError(Exception e, Position p) {
+        System.out.println(e.toString() + "at" + p);
+        throw new RuntimeException(e);
+    }
+    /**
+     * TODO: publiczna metoda handleError (err) => prywatna metoda handluje se cos i throw
+     */
 }

@@ -12,7 +12,6 @@ import org.siu.token.type.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -22,6 +21,13 @@ public class LexerImpl implements Lexer {
     private final Position position;
     private Position tokenPosition;
     private final ErrorHandler errorHandler;
+
+    public LexerImpl(BufferedReader reader, ErrorHandler errorHandler) {
+        this.reader = reader;
+        this.errorHandler = errorHandler;
+        this.position = new Position();
+        nextCharacter();
+    }
 
     public LexerImpl(String text, ErrorHandler errorHandler) {
         this.reader = new BufferedReader(new StringReader(text));
@@ -116,6 +122,7 @@ public class LexerImpl implements Lexer {
             sb.append(character);
             nextCharacter();
         }
+        nextCharacter();
         return Optional.of(new StringToken(TokenType.STRING_CONSTANT, tokenPosition, sb.toString()));
     }
 
