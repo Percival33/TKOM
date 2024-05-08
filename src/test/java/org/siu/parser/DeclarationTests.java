@@ -9,6 +9,7 @@ import org.siu.ast.expression.CastedFactorExpression;
 import org.siu.ast.expression.Expression;
 import org.siu.ast.expression.FunctionCallExpression;
 import org.siu.ast.expression.arithmetic.*;
+import org.siu.ast.statement.ConstStatement;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.statement.StructStatement;
 import org.siu.ast.statement.VariantStatement;
@@ -158,7 +159,7 @@ class DeclarationTests {
     void testStructDeclaration() {
         String sourceCode = """
                 struct Dog {\s
-                	int age\s
+                	int age;\s
                 	string name;\s
                 	Breed breed;\s
                 }
@@ -179,5 +180,18 @@ class DeclarationTests {
         assertEquals(expectedStruct, program.getDeclarations().get("Dog"));
     }
 
+    @Test
+    void testConstIntDeclaration() {
+        String sourceCode = "const int a = 10;";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+        ConstStatement expectedConst = new ConstStatement(
+                "a",
+                createDeclaration("a", ValueType.INT, new IntegerExpression(10, position)),
+                position
+        );
 
+
+        assertEquals(expectedConst, program.getDeclarations().get("a"));
+    }
 }

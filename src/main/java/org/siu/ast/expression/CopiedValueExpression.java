@@ -5,7 +5,7 @@ import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
 @Value
-public class CopiedFactorExpression implements Expression {
+public class CopiedValueExpression implements Expression {
     Expression expression;
     Position position;
 

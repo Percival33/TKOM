@@ -58,7 +58,10 @@ public class Parser {
             name = ((VariantStatement) statement).getName();
         } else if (statement instanceof StructStatement) {
             name = ((StructStatement) statement).getName();
-        } else {
+        } else if (statement instanceof ConstStatement) {
+            name = ((ConstStatement) statement).getName();
+        }
+        else {
             throw new RuntimeException("Invalid declaration statement");
         }
 
@@ -96,11 +99,14 @@ public class Parser {
     }
 
     /**
+     * DECLARATION                     = ["const"], VARIABLE_DECLARATION;
+     * <p>
      * VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
      * | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
      * | IDENTIFIER, IDENTIFIER, "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "," "}", ";"
      */
     private Optional<Statement> parseDeclarationStatement() {
+        var isConst = parseConst();
         var typeDeclarationOptional = parseTypeDeclaration();
         if (typeDeclarationOptional.isEmpty()) {
             return Optional.empty();
@@ -118,13 +124,17 @@ public class Parser {
                     handleParserError(new MissingExpressionError(position), position);
                 }
                 mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
-                return Optional.of(new DeclarationStatement(new Parameter(typeDeclaration, identifier), expression.get(), position));
+                var parameter = new Parameter(typeDeclaration, identifier);
+                var declaration = new DeclarationStatement(parameter, expression.get(), position);
+                if (isConst) {
+                    return Optional.of(new ConstStatement(identifier, declaration, position));
+                }
+                return Optional.of(declaration);
             }
             case CURLY_BRACKET_OPEN -> {
                 nextToken();
                 var members = new ArrayList<Parameter>();
                 var member = parseParameter();
-                // TODO: validate comma and semicolon
                 if (member.isEmpty()) {
                     log.error("No member in variant/struct at: {}", position);
                     handleParserError(new SyntaxError(position), position);
@@ -145,9 +155,13 @@ public class Parser {
                 }
 
                 if (isVariant) {
-                    return Optional.of(new VariantStatement(identifier, members, position));
+                    var variant = new VariantStatement(identifier, members, position);
+                    if (isConst) return Optional.of(new ConstStatement(variant.getName(), variant, position));
+                    return Optional.of(variant);
                 }
-                return Optional.of(new StructStatement(identifier, members, position));
+                var struct = new StructStatement(identifier, members, position);
+                if (isConst) return Optional.of(new ConstStatement(struct.getName(), struct, position));
+                return Optional.of(struct);
             }
             default -> {
                 break;
@@ -155,6 +169,15 @@ public class Parser {
         }
         throw new RuntimeException("Invalid declaration statement at: " + position);
     }
+
+    private boolean parseConst() {
+        if(token.getType() == TokenType.CONST) {
+            nextToken();
+            return true;
+        }
+        return false;
+    }
+
 
     private Optional<Expression> parseExpression() {
         return parseLogicExpression();
@@ -286,6 +309,13 @@ public class Parser {
         return Optional.of(new MatchCaseExpression(variantType, member, variable, expression.get(), position));
     }
 
+    /**
+     * ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION
+     *                                 | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
+     *                                 | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
+     *
+     *
+     */
     private Optional<Statement> parseAssignmentOrDeclarationOrExpression() {
         if (token.getType() != TokenType.IDENTIFIER) {
             return Optional.empty();
@@ -299,12 +329,14 @@ public class Parser {
                 log.error("No statement in assignment at: {}", position);
                 handleParserError(new SyntaxError(position), position);
             }
+            mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
             return Optional.of((Statement) statement.get());
         }
-
+        // fnCall
         if (token.getType() == TokenType.BRACKET_OPEN) {
             var arguments = parseFnArguments();
             mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+            mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
             return Optional.of(new FunctionCallExpression(name, arguments, position));
         }
 
@@ -316,6 +348,7 @@ public class Parser {
             handleParserError(new MissingExpressionError(position), position);
         }
         var type = new TypeDeclaration(ValueType.CUSTOM, name);
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
         return Optional.of(new DeclarationStatement(new Parameter(type, variable), expression.get(), position));
     }
 
@@ -813,11 +846,7 @@ public class Parser {
 
         do {
             nextToken();
-            copy = false;
-            if (token.getType() == TokenType.COPY_OPERATOR) {
-                copy = true;
-                nextToken();
-            }
+            copy = parseCopyOperator();
             var expressionOptional = parseExpression();
             if (expressionOptional.isEmpty()) {
                 if (copy) {
@@ -827,11 +856,19 @@ public class Parser {
             }
             expression = expressionOptional.get();
             if (copy) {
-                expression = new CopiedFactorExpression(expression, expression.getPosition());
+                expression = new CopiedValueExpression(expression, expression.getPosition());
             }
             arguments.add(expression);
         } while (token.getType() == TokenType.COMMA);
         return arguments;
+    }
+
+    private boolean parseCopyOperator() {
+        if (token.getType() == TokenType.COPY_OPERATOR) {
+            nextToken();
+            return true;
+        }
+        return false;
     }
 
     private void handleParserError(ParserError error, Position position) {

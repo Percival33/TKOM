@@ -15,69 +15,98 @@ import org.siu.ast.type.StringExpression;
 
 /**
  * STATEMENT               = IF_STATEMENT
- *                         | WHILE_STATEMENT
- *                         | DECLARATION
- *                         | RETURN_STATEMENT
- *                         | ASSINGMENT
- *                         | MATCH
- *                         | FN_CALL;
+ * | WHILE_STATEMENT
+ * | DECLARATION
+ * | RETURN_STATEMENT
+ * | ASSINGMENT
+ * | MATCH
+ * | FN_CALL;
  */
 public interface Visitor {
-    // TODO: implement rest of statements
 //    Statement
     void visit(WhileStatement statement);
+
     void visit(IfStatement statement);
+
     void visit(ReturnStatement returnStatement);
+
     void visit(DeclarationStatement declarationStatement);
+
     void visit(BlockStatement blockStatement);
+
     void visit(AssignmentStatement assignmentStatement);
+
     void visit(VariantStatement variantStatement);
+
     void visit(StructStatement structStatement);
 
-//    Match statement
+    void visit(ConstStatement constStatement);
+
+    //    Match statement
     void visit(MatchStatement matchStatement);
+
     void visit(MatchCaseExpression matchCaseStatement);
 
-//    Simple type expression
+    //    Simple type expression
     void visit(IntegerExpression integerExpression);
+
     void visit(FloatExpression expression);
+
     void visit(StringExpression stringExpression);
+
     void visit(BooleanExpression booleanExpression);
-//    Complex type expression
+
+    //    Complex type expression
     void visit(VariantExpression variantExpression);
+
     void visit(StructExpression structExpression);
 
 
-//    RelationExpression
-    void visit(LessExpression lessExpression);
-    void visit(GreaterExpression greaterExpression);
-    void visit(EqualExpression equalExpression);
-    void visit(NotEqualExpression notEqualExpression);
-    void visit(LessEqualExpression lessEqualExpression);
-    void visit(GreaterEqualExpression greaterEqualExpression);
-
-//    ArithmeticExpression
-    void visit(AddArithmeticExpression addArithmeticExpression);
-    void visit(DivideArithmeticExpression divideArithmeticExpression);
-    void visit(ModuloArithmeticExpression moduloArithmeticExpression);
-    void visit(MultiplyArithmeticExpression multiplyArithmeticExpression);
-    void visit(SubtractArithmeticExpression subtractArithmeticExpression);
-    void visit(BinaryArithmeticExpression twoArgumentArithmeticExpression);
-    void visit(NegateArithmeticExpression negateArithmeticExpression);
-
-//    LogicalExpression
-    void visit(AndLogicalExpression andLogicalExpression);
-    void visit(NegateLogicalExpression negateLogicalExpression);
-    void visit(OrLogicalExpression orLogicalExpression);
-
-//    Factor
-    void visit(UnaryFactorExpression unaryFactorExpression);
-    void visit(CastedFactorExpression castedFactorExpression);
-    void visit(CopiedFactorExpression copiedFactorExpression);
-
-//    ???
     void visit(IdentifierExpression identifierExpression);
+
     void visit(FunctionCallExpression functionCallExpression);
 
+
+    //    RelationExpression
+    void visit(LessExpression lessExpression);
+
+    void visit(GreaterExpression greaterExpression);
+
+    void visit(EqualExpression equalExpression);
+
+    void visit(NotEqualExpression notEqualExpression);
+
+    void visit(LessEqualExpression lessEqualExpression);
+
+    void visit(GreaterEqualExpression greaterEqualExpression);
+
+    //    ArithmeticExpression
+    void visit(AddArithmeticExpression addArithmeticExpression);
+
+    void visit(DivideArithmeticExpression divideArithmeticExpression);
+
+    void visit(ModuloArithmeticExpression moduloArithmeticExpression);
+
+    void visit(MultiplyArithmeticExpression multiplyArithmeticExpression);
+
+    void visit(SubtractArithmeticExpression subtractArithmeticExpression);
+
+    void visit(BinaryArithmeticExpression twoArgumentArithmeticExpression);
+
+    void visit(NegateArithmeticExpression negateArithmeticExpression);
+
+    //    LogicalExpression
+    void visit(AndLogicalExpression andLogicalExpression);
+
+    void visit(NegateLogicalExpression negateLogicalExpression);
+
+    void visit(OrLogicalExpression orLogicalExpression);
+
+    //    Factor
+    void visit(UnaryFactorExpression unaryFactorExpression);
+
+    void visit(CastedFactorExpression castedFactorExpression);
+
+    void visit(CopiedValueExpression copiedFactorExpression);
 }
 
