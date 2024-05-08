@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DeclarationTests {
     private ErrorHandler errorHandler;
@@ -178,6 +179,21 @@ class DeclarationTests {
 
 
         assertEquals(expectedStruct, program.getDeclarations().get("Dog"));
+    }
+
+    @Test
+    void testWrongStructDeclaration() {
+        String sourceCode = """
+            struct Dog {\s
+                int age
+                string name;\s
+                Breed breed;\s
+            }
+            """;
+        Parser parser = toParser(sourceCode);
+
+        Exception exception = assertThrows(RuntimeException.class, parser::buildProgram);
+        assertEquals("org.siu.error.SyntaxError at: Position(line=3, column=16)", exception.getMessage());
     }
 
     @Test

@@ -7,10 +7,8 @@ import org.siu.ast.Parameter;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.Statement;
-import org.siu.ast.expression.IdentifierExpression;
-import org.siu.ast.expression.MatchCaseExpression;
+import org.siu.ast.expression.*;
 import org.siu.ast.statement.MatchStatement;
-import org.siu.ast.expression.VariantExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.function.FunctionDefinition;
 import org.siu.ast.statement.*;
@@ -57,92 +55,17 @@ class StatementTest {
 
     @Test
     void testIfStatement() {
-        String s = "fn a() { if (true) { return 1; }  }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-
-        Statement ifStatement = new IfStatement(
-                List.of(new BooleanExpression(true, position)),
-                List.of(new BlockStatement(
-                        List.of(new ReturnStatement(
-                                new IntegerExpression(1, position),
-                                position
-                        )),
-                        position
-                )),
-                Optional.empty(),
-                position
-        );
-        var fn = program.getFunctionDefinitions().get("a");
-        assertEquals(new FunctionDefinition(
-                        "a",
-                        List.of(),
-                        Optional.empty(),
-                        new BlockStatement(
-                                List.of(ifStatement),
-                                position),
-                        position),
-                fn);
-    }
-
-    @Test
-    void testIfStatementWithElse() {
-        String s = "fn a() { if (true) { return 1; } else { return 2; } }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-
-        Statement ifStatement = new IfStatement(
-                List.of(new BooleanExpression(true, position)),
-                List.of(new BlockStatement(
-                        List.of(new ReturnStatement(
-                                new IntegerExpression(1, position),
-                                position
-                        )),
-                        position
-                )),
-                Optional.of(new BlockStatement(
-                        List.of(new ReturnStatement(
-                                new IntegerExpression(2, position),
-                                position
-                        )),
-                        position
-                )),
-                position
-        );
-        var fn = program.getFunctionDefinitions().get("a");
-        assertEquals(new FunctionDefinition(
-                        "a",
-                        List.of(),
-                        Optional.empty(),
-                        new BlockStatement(
-                                List.of(ifStatement),
-                                position),
-                        position),
-                fn);
-    }
-
-    @Test
-    void testIfStatementWithElif() {
-        // TODO: refactor tests
-        String s = "fn a() { if (true) { return 1; } elif(1 < 2) { return 2; } }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-
-        var actualFunction = program.getFunctionDefinitions().get("a");
-
-        Statement trueReturn = new ReturnStatement(new IntegerExpression(1, position), position);
-        Statement twoReturn = new ReturnStatement(new IntegerExpression(2, position), position);
+        String sourceCode = "fn a() { if (true) { return 1; }  }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        Statement oneReturn = new ReturnStatement(new IntegerExpression(1, position), position);
 
         IfStatement ifStatement = new IfStatement(
-                List.of(new BooleanExpression(true, position),
-                        new LessExpression(new IntegerExpression(1, position), new IntegerExpression(2, position), position)),
-                List.of(new BlockStatement(List.of(trueReturn), position),
-                        new BlockStatement(List.of(twoReturn), position)),
+                List.of(new BooleanExpression(true, position)),
+                List.of(new BlockStatement(List.of(oneReturn), position)),
                 Optional.empty(),
                 position
         );
-
-        FunctionDefinition expected = new FunctionDefinition(
+        FunctionDefinition expectedFunction = new FunctionDefinition(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -150,20 +73,59 @@ class StatementTest {
                 position
         );
 
-        assertEquals(expected.getName(), actualFunction.getName());
-        assertEquals(expected.getParameters(), actualFunction.getParameters());
-        assertEquals(expected.getReturnType(), actualFunction.getReturnType());
+        assertEquals(expectedFunction, actualFunction);
+    }
 
-        BlockStatement expectedBlock = expected.getBlock();
-        BlockStatement actualBlock = actualFunction.getBlock();
-        assertEquals(expectedBlock, actualBlock);
+    @Test
+    void testIfStatementWithElse() {
+        String sourceCode = "fn a() { if (true) { return 1; } else { return 2; } }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
 
-        IfStatement expectedIf = (IfStatement) expectedBlock.getStatementList().get(0);
-        IfStatement actualIf = (IfStatement) actualBlock.getStatementList().get(0);
-        assertEquals(expectedIf, actualIf);
+        Statement oneReturn = new ReturnStatement(new IntegerExpression(1, position), position);
+        BlockStatement elseBlock = new BlockStatement(List.of(new ReturnStatement(new IntegerExpression(2, position), position)), position);
 
-        assertEquals(expectedIf.getConditions(), actualIf.getConditions());
-        assertEquals(expectedIf.getIfInstructions(), actualIf.getIfInstructions());
+        IfStatement ifStatement = new IfStatement(
+                List.of(new BooleanExpression(true, position)),
+                List.of(new BlockStatement(List.of(oneReturn), position)),
+                Optional.of(elseBlock),
+                position
+        );
+
+        FunctionDefinition expectedFunction = new FunctionDefinition(
+                "a",
+                List.of(),
+                Optional.empty(),
+                new BlockStatement(List.of(ifStatement), position),
+                position
+        );
+
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    @Test
+    void testIfStatementWithElif() {
+        String sourceCode = "fn a() { if (true) { return 1; } elif(1 < 2) { return 2; } }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+
+        Statement trueReturn = new ReturnStatement(new IntegerExpression(1, position), position);
+        Statement twoReturn = new ReturnStatement(new IntegerExpression(2, position), position);
+
+        IfStatement ifStatement = new IfStatement(
+                List.of(new BooleanExpression(true, position), new LessExpression(new IntegerExpression(1, position), new IntegerExpression(2, position), position)),
+                List.of(new BlockStatement(List.of(trueReturn), position), new BlockStatement(List.of(twoReturn), position)),
+                Optional.empty(),
+                position
+        );
+
+        FunctionDefinition expectedFunction = new FunctionDefinition(
+                "a",
+                List.of(),
+                Optional.empty(),
+                new BlockStatement(List.of(ifStatement), position),
+                position
+        );
+
+        assertEquals(expectedFunction, actualFunction);
     }
 
     @Test
@@ -196,9 +158,8 @@ class StatementTest {
 
     @Test
     void testWhileStatement() {
-        String s = "fn a() { while (true) { return 1; } }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
+        String sourceCode = "fn a() { while (true) { return 1; } }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement whileStatement = new WhileStatement(
                 new BooleanExpression(true, position),
@@ -211,16 +172,16 @@ class StatementTest {
                 ),
                 position
         );
-        var fn = program.getFunctionDefinitions().get("a");
-        assertEquals(new FunctionDefinition(
-                        "a",
-                        List.of(),
-                        Optional.empty(),
-                        new BlockStatement(
-                                List.of(whileStatement),
-                                position),
-                        position),
-                fn);
+
+        FunctionDefinition expectedFunction = new FunctionDefinition(
+                "a",
+                List.of(),
+                Optional.empty(),
+                blockOf(whileStatement),
+                position
+        );
+
+        assertEquals(expectedFunction, actualFunction);
     }
 
     @Test
@@ -243,6 +204,27 @@ class StatementTest {
                 List.of(),
                 Optional.empty(),
                 blockOf(declaratioinStatement, assignmentStatement),
+                position
+        );
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    @Test
+    void testCopyValueStatement() {
+        String sourceCode = "fn a() { f(@abc); }";
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+
+        Expression argument = new CopiedValueExpression(
+                new IdentifierExpression("abc", position),
+                position
+        );
+        Statement functionCall = new FunctionCallExpression("f", List.of(argument), position);
+
+        FunctionDefinition expectedFunction = new FunctionDefinition(
+                "a",
+                List.of(),
+                Optional.empty(),
+                blockOf(functionCall),
                 position
         );
         assertEquals(expectedFunction, actualFunction);
