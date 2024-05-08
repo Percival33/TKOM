@@ -17,6 +17,7 @@ import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.IntegerExpression;
+import org.siu.ast.type.TypeDeclaration;
 import org.siu.ast.type.ValueType;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;
@@ -43,7 +44,7 @@ class LogicalExpressionTest {
     }
 
     private DeclarationStatement createDeclaration(String name, ValueType type, Expression expression) {
-        Argument argument = new Argument(type, name);
+        Argument argument = new Argument(new TypeDeclaration(type), name);
         return new DeclarationStatement(argument, expression, position);
     }
 
@@ -91,20 +92,20 @@ class LogicalExpressionTest {
         assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
     }
 
-//    @Test
-//    void testCombinedLogicExpression() {
-//        String s = "bool b = (x < 10 and y > 20) or (z == 0);";
-//        Parser parser = toParser(s);
-//        Program program = parser.buildProgram();
-//
-//        Expression expression = new OrLogicalExpression(
-//                new AndLogicalExpression(
-//                        new LessExpression(new IdentifierExpression("x", position), new IntegerExpression(10, position), position),
-//                        new GreaterExpression(new IdentifierExpression("y", position), new IntegerExpression(20, position), position),
-//                        position
-//                ),
-//                new EqualExpression(new IdentifierExpression("z", position), new IntegerExpression(0, position), position),
-//                position);
-//        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
-//    }
+    @Test
+    void testCombinedLogicExpression() {
+        String s = "bool b = (x < 10 and y > 20) or (z == 0);";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new OrLogicalExpression(
+                new AndLogicalExpression(
+                        new LessExpression(new IdentifierExpression("x", position), new IntegerExpression(10, position), position),
+                        new GreaterExpression(new IdentifierExpression("y", position), new IntegerExpression(20, position), position),
+                        position
+                ),
+                new EqualExpression(new IdentifierExpression("z", position), new IntegerExpression(0, position), position),
+                position);
+        assertEquals(Map.of("b", createDeclaration("b", ValueType.BOOL, expression)), program.getDeclarations());
+    }
 }

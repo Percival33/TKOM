@@ -16,6 +16,7 @@ import org.siu.ast.function.FunctionDefinition;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.statement.ReturnStatement;
 import org.siu.ast.type.IntegerExpression;
+import org.siu.ast.type.TypeDeclaration;
 import org.siu.ast.type.ValueType;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;
@@ -50,8 +51,8 @@ class FunctionDefinitionTest {
         var fn = program.getFunctionDefinitions().get("add");
         assertEquals(new FunctionDefinition(
                         "add",
-                        List.of(new Argument(ValueType.INT, "a"), new Argument(ValueType.INT, "b")),
-                        Optional.of(ValueType.INT),
+                        List.of(new Argument(new TypeDeclaration(ValueType.INT), "a"), new Argument(new TypeDeclaration(ValueType.INT), "b")),
+                        Optional.of(new TypeDeclaration(ValueType.INT)),
                         new BlockStatement(
                                 List.of(new ReturnStatement(
                                         new AddArithmeticExpression(
@@ -74,7 +75,7 @@ class FunctionDefinitionTest {
         var fn = program.getFunctionDefinitions().get("add");
         assertEquals(new FunctionDefinition(
                         "add",
-                        List.of(new Argument(ValueType.INT, "a")),
+                        List.of(new Argument(new TypeDeclaration(ValueType.INT), "a")),
                         Optional.empty(),
                         new BlockStatement(List.of(), position),
                         position),
@@ -84,7 +85,6 @@ class FunctionDefinitionTest {
     @Test
     void fnDefinitionWithNoArguments() {
         String s = "fn add() { f(1); }";
-        // FIXME: fix test
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("add");
@@ -106,8 +106,8 @@ class FunctionDefinitionTest {
         BlockStatement block = getBlockStatement();
         FunctionDefinition expected = new FunctionDefinition(
                 "fun",
-                List.of(new Argument(ValueType.INT, "a"), new Argument(ValueType.INT, "b")),
-                Optional.of(ValueType.FLOAT),
+                List.of(new Argument(new TypeDeclaration(ValueType.INT), "a"), new Argument(new TypeDeclaration(ValueType.INT), "b")),
+                Optional.of(new TypeDeclaration(ValueType.FLOAT)),
                 block,
                 position);
 
@@ -118,7 +118,7 @@ class FunctionDefinitionTest {
     }
 
     private BlockStatement getBlockStatement() {
-        Statement declarationStatement = new DeclarationStatement(new Argument(ValueType.INT, "c"), new IntegerExpression(5, position), position);
+        Statement declarationStatement = new DeclarationStatement(new Argument(new TypeDeclaration(ValueType.INT), "c"), new IntegerExpression(5, position), position);
         Statement returnStatement = new ReturnStatement(new AddArithmeticExpression(new IdentifierExpression("a", position), new MultiplyArithmeticExpression(new IdentifierExpression("b", position), new IdentifierExpression("c", position), position), position), position);
         return new BlockStatement(List.of(declarationStatement, returnStatement), position);
     }

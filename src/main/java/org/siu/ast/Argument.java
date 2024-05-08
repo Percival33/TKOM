@@ -1,10 +1,10 @@
 package org.siu.ast;
 
 import lombok.Value;
-import org.siu.ast.type.ValueType;
+import org.siu.ast.type.TypeDeclaration;
 
 @Value
 public class Argument {
-    ValueType type;
+    TypeDeclaration type;
     String name;
 }

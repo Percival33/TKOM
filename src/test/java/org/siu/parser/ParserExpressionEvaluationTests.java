@@ -37,7 +37,7 @@ class ParserExpressionEvaluationTests {
     }
 
     private DeclarationStatement createDeclaration(String name, ValueType type, Expression expression) {
-        Argument argument = new Argument(type, name);
+        Argument argument = new Argument(new TypeDeclaration(type), name);
         return new DeclarationStatement(argument, expression, position);
     }
 

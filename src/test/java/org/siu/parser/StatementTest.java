@@ -3,16 +3,17 @@ package org.siu.parser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.siu.ast.Argument;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.Statement;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.function.FunctionDefinition;
-import org.siu.ast.statement.IfStatement;
-import org.siu.ast.statement.ReturnStatement;
-import org.siu.ast.statement.WhileStatement;
+import org.siu.ast.statement.*;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.IntegerExpression;
+import org.siu.ast.type.TypeDeclaration;
+import org.siu.ast.type.ValueType;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;
 import org.siu.lexer.LexerImpl;
@@ -42,7 +43,6 @@ class StatementTest {
 
     @Test
     void testIfStatement() {
-        /* else { return 2; } */
         String s = "fn a() { if (true) { return 1; }  }";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
@@ -239,6 +239,33 @@ class StatementTest {
                         Optional.empty(),
                         new BlockStatement(
                                 List.of(whileStatement),
+                                position),
+                        position),
+                fn);
+    }
+
+    @Test
+    void testAssignmentStatement() {
+        String s = "fn a() { bool b = 0; abc = 1; }";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+        Statement declaratioinStatement = new DeclarationStatement(
+                new Argument(new TypeDeclaration(ValueType.BOOL), "b"),
+                new IntegerExpression(0, position),
+                position
+        );
+        Statement assignmentStatement = new AssignmentStatement(
+                "abc",
+                new IntegerExpression(1, position),
+                position
+        );
+        var fn = program.getFunctionDefinitions().get("a");
+        assertEquals(new FunctionDefinition(
+                        "a",
+                        List.of(),
+                        Optional.empty(),
+                        new BlockStatement(
+                                List.of(declaratioinStatement, assignmentStatement),
                                 position),
                         position),
                 fn);
