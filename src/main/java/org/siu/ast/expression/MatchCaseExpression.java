@@ -1,18 +1,22 @@
-package org.siu.ast;
+package org.siu.ast.expression;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
+import org.siu.ast.Statement;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
-import java.util.List;
 
-//@ToString(exclude = {"statementList"})
+@ToString(exclude = {"expression"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class BlockStatement implements Statement {
-    List<Statement> statementList;
+public class MatchCaseExpression implements Statement {
+    String variantType;
+    String member;
+    String variable;
+    Expression expression;
+
     Position position;
 
     @Override

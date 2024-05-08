@@ -6,9 +6,7 @@ import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.logical.OrLogicalExpression;
-import org.siu.ast.expression.relation.EqualExpression;
-import org.siu.ast.expression.relation.GreaterExpression;
-import org.siu.ast.expression.relation.LessExpression;
+import org.siu.ast.expression.relation.*;
 import org.siu.ast.statement.*;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.FloatExpression;
@@ -36,6 +34,10 @@ public interface Visitor {
     void visit(VariantStatement variantStatement);
     void visit(StructStatement structStatement);
 
+//    Match statement
+    void visit(MatchStatement matchStatement);
+    void visit(MatchCaseExpression matchCaseStatement);
+
 //    Simple type expression
     void visit(IntegerExpression integerExpression);
     void visit(FloatExpression expression);
@@ -50,6 +52,9 @@ public interface Visitor {
     void visit(LessExpression lessExpression);
     void visit(GreaterExpression greaterExpression);
     void visit(EqualExpression equalExpression);
+    void visit(NotEqualExpression notEqualExpression);
+    void visit(LessEqualExpression lessEqualExpression);
+    void visit(GreaterEqualExpression greaterEqualExpression);
 
 //    ArithmeticExpression
     void visit(AddArithmeticExpression addArithmeticExpression);

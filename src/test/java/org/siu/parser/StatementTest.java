@@ -7,6 +7,9 @@ import org.siu.ast.Parameter;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.Statement;
+import org.siu.ast.expression.IdentifierExpression;
+import org.siu.ast.expression.MatchCaseExpression;
+import org.siu.ast.statement.MatchStatement;
 import org.siu.ast.expression.VariantExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.function.FunctionDefinition;
@@ -261,6 +264,35 @@ class StatementTest {
                 List.of(),
                 Optional.empty(),
                 blockOf(declaratioinStatement),
+                position
+        );
+
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    @Test
+    void testMatchStatement() {
+        String sourceCode = """
+                fn a(Var v): Var {
+                    match(v) {
+                        Var::row(x) { x }
+                        Var::col(y) { y }
+                    }
+                    return value;
+                }
+                """;
+        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+
+        MatchCaseExpression rowCase = new MatchCaseExpression("Var", "row", "x", new IdentifierExpression("x", position), position);
+        MatchCaseExpression colCase = new MatchCaseExpression("Var", "col", "y", new IdentifierExpression("y", position), position);
+        Statement matchStatement = new MatchStatement("v", List.of(rowCase, colCase), position);
+        Statement returnStatement = new ReturnStatement(new IdentifierExpression("value", position), position);
+
+        FunctionDefinition expectedFunction = new FunctionDefinition(
+                "a",
+                List.of(new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v")),
+                Optional.of(new TypeDeclaration(ValueType.CUSTOM, "Var")),
+                blockOf(matchStatement, returnStatement),
                 position
         );
 

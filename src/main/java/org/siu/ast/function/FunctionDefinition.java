@@ -11,7 +11,7 @@ import org.siu.token.Position;
 import java.util.List;
 import java.util.Optional;
 
-@ToString(exclude = "block")
+//@ToString(exclude = "block")
 @EqualsAndHashCode(exclude = "position")
 @Value
 public class FunctionDefinition {

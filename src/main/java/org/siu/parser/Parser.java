@@ -9,9 +9,7 @@ import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
-import org.siu.ast.expression.relation.EqualExpression;
-import org.siu.ast.expression.relation.GreaterExpression;
-import org.siu.ast.expression.relation.LessExpression;
+import org.siu.ast.expression.relation.*;
 import org.siu.ast.statement.*;
 import org.siu.ast.type.*;
 import org.siu.error.*;
@@ -54,7 +52,7 @@ public class Parser {
 
     private void saveDeclaration(Statement statement, Map<String, Statement> declarations) {
         String name;
-        if(statement instanceof DeclarationStatement) {
+        if (statement instanceof DeclarationStatement) {
             name = ((DeclarationStatement) statement).getParameter().getName();
         } else if (statement instanceof VariantStatement) {
             name = ((VariantStatement) statement).getName();
@@ -111,7 +109,7 @@ public class Parser {
         var position = token.getPosition();
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
 
-        switch(token.getType()) {
+        switch (token.getType()) {
             case ASSIGN -> {
                 nextToken();
                 var expression = parseExpression();
@@ -127,7 +125,7 @@ public class Parser {
                 var members = new ArrayList<Parameter>();
                 var member = parseParameter();
                 // TODO: validate comma and semicolon
-                if(member.isEmpty()) {
+                if (member.isEmpty()) {
                     log.error("No member in variant/struct at: {}", position);
                     handleParserError(new SyntaxError(position), position);
                 }
@@ -136,10 +134,10 @@ public class Parser {
                 var separator = token.getType();
                 var isVariant = separator == TokenType.COMMA;
 
-                while(token.getType() == separator) {
+                while (token.getType() == separator) {
                     nextToken();
                     member = parseParameter();
-                    if(member.isEmpty()) {
+                    if (member.isEmpty()) {
                         mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
                         break;
                     }
@@ -168,7 +166,7 @@ public class Parser {
             return Optional.empty();
         }
 
-        if(type.get() == ValueType.CUSTOM) {
+        if (type.get() == ValueType.CUSTOM) {
             var customType = token.getValue().toString();
             nextToken();
             return Optional.of(new TypeDeclaration(type.get(), customType));
@@ -236,9 +234,57 @@ public class Parser {
             this::parseWhileStatement,
             this::parseAssignmentOrDeclarationOrExpression,
             this::parseDeclarationStatement,
-//            this::parseAssignmentStatementOrSingleExpression,
-            this::parseReturnStatement
+            this::parseReturnStatement,
+            this::parseMatchStatement
     );
+
+    /**
+     * MATCH                           = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
+     */
+    private Optional<MatchStatement> parseMatchStatement() {
+        if (token.getType() != TokenType.MATCH) {
+            return Optional.empty();
+        }
+        var position = token.getPosition();
+        nextToken();
+        mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+        var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
+        List<MatchCaseExpression> matchCases = new ArrayList<>();
+        var matchCase = parseMatchCase();
+        while (matchCase.isPresent()) {
+            matchCases.add(matchCase.get());
+            matchCase = parseMatchCase();
+        }
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+        return Optional.of(new MatchStatement(identifier, matchCases, position));
+    }
+
+    /**
+     * MATCH_EXP                       = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
+     */
+    private Optional<MatchCaseExpression> parseMatchCase() {
+        if (token.getType() != TokenType.IDENTIFIER) {
+            return Optional.empty();
+        }
+        var position = token.getPosition();
+        var variantType = token.getValue().toString();
+        nextToken();
+        mustBe(token, TokenType.DOUBLE_COLON, SyntaxError::new);
+        var member = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+        var variable = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
+        var expression = parseExpression();
+        if (expression.isEmpty()) {
+            log.error("No expression in match case at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
+        }
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+        return Optional.of(new MatchCaseExpression(variantType, member, variable, expression.get(), position));
+    }
 
     private Optional<Statement> parseAssignmentOrDeclarationOrExpression() {
         if (token.getType() != TokenType.IDENTIFIER) {
@@ -256,7 +302,7 @@ public class Parser {
             return Optional.of((Statement) statement.get());
         }
 
-        if(token.getType() == TokenType.BRACKET_OPEN) {
+        if (token.getType() == TokenType.BRACKET_OPEN) {
             var arguments = parseFnArguments();
             mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
             return Optional.of(new FunctionCallExpression(name, arguments, position));
@@ -302,7 +348,7 @@ public class Parser {
                 log.error("No expression in assignment at: {}", position);
                 handleParserError(new MissingExpressionError(position), position);
             }
-            return Optional.of(new AssignmentStatement(name+"."+fieldName, expression.get(), position));
+            return Optional.of(new AssignmentStatement(name + "." + fieldName, expression.get(), position));
         }
         // FIXME: expr albo identifier
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
@@ -333,7 +379,7 @@ public class Parser {
             handleParserError(new MissingExpressionError(position), position);
         }
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-        return Optional.of(new AssignmentStatement(name+"::"+variantName, variantExpression.get(), position));
+        return Optional.of(new AssignmentStatement(name + "::" + variantName, variantExpression.get(), position));
     }
 
     /**
@@ -521,11 +567,11 @@ public class Parser {
 
     private final Map<TokenType, Function3<Expression, Expression, Position, Expression>> relationOperator = Map.of(
             TokenType.LESS, Function3.of(LessExpression::new),
-//            TokenType.LESS_EQUAL, LessEqual::new,
+            TokenType.LESS_EQUAL, Function3.of(LessEqualExpression::new),
             TokenType.GREATER, Function3.of(GreaterExpression::new),
-//            TokenType.GREATER_EQUAL, GreaterEqual::new,
-            TokenType.EQUAL, Function3.of(EqualExpression::new)
-//            TokenType.NOT_EQUAL, NotEqual::new
+            TokenType.GREATER_EQUAL, Function3.of(GreaterEqualExpression::new),
+            TokenType.EQUAL, Function3.of(EqualExpression::new),
+            TokenType.NOT_EQUAL, Function3.of(NotEqualExpression::new)
     );
 
     /**
@@ -712,11 +758,11 @@ public class Parser {
 
     /**
      * IDENTIFIER_FNCALL_MEM_VARIANT   = IDENTIFIER,
-     *                                 [
-     *                                     ".", IDENTIFIER,
-     *                                     | "(", [ FN_ARGUMENTS ], ")",
-     *                                     | "::", IDENTIFIER, "(", EXPRESSION ")"
-     *                                 ]
+     * [
+     * ".", IDENTIFIER,
+     * | "(", [ FN_ARGUMENTS ], ")",
+     * | "::", IDENTIFIER, "(", EXPRESSION ")"
+     * ]
      */
     private Optional<Expression> parseIdentifierOrFnCallOrVariant() {
         if (token.getType() != TokenType.IDENTIFIER) {

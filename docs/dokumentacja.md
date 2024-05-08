@@ -154,11 +154,11 @@ Point pt2 = pt;
 variant Var { int row, int col, };
 Var v = Var::row(3);
 
-foo inspect(v) {
-	match(v) {
-		Var::row(x) { return x; }
-		Var::col(y) { return y; }
-	}
+fn inspect(Var v) {
+    match(v) {
+        Var::row(x) { x }
+        Var::col(y) { y }
+    }
 }
 ```
 - constant
