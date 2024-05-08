@@ -2,7 +2,7 @@ package org.siu.parser;
 
 import io.vavr.Function3;
 import lombok.extern.slf4j.Slf4j;
-import org.siu.ast.Argument;
+import org.siu.ast.Parameter;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.expression.*;
@@ -47,25 +47,36 @@ public class Parser {
 
     private void saveFunctionDefinition(FunctionDefinition statement, Map<String, FunctionDefinition> functions) {
         if (functions.containsKey(statement.getName())) {
-            errorHandler.handleParserError(new RedefinitionError(functions.get(statement.getName()).getPosition()), statement.getPosition());
+            handleParserError(new RedefinitionError(functions.get(statement.getName()).getPosition()), statement.getPosition());
         }
         functions.put(statement.getName(), statement);
     }
 
-    private void saveDeclaration(DeclarationStatement statement, Map<String, DeclarationStatement> declarations) {
-        if (declarations.containsKey(statement.getArgument().getName())) {
-            errorHandler.handleParserError(new RedefinitionError(declarations.get(statement.getArgument().getName()).getPosition()), statement.getPosition());
+    private void saveDeclaration(Statement statement, Map<String, Statement> declarations) {
+        String name;
+        if(statement instanceof DeclarationStatement) {
+            name = ((DeclarationStatement) statement).getParameter().getName();
+        } else if (statement instanceof VariantStatement) {
+            name = ((VariantStatement) statement).getName();
+        } else if (statement instanceof StructStatement) {
+            name = ((StructStatement) statement).getName();
+        } else {
+            throw new RuntimeException("Invalid declaration statement");
         }
-        declarations.put(statement.getArgument().getName(), statement);
+
+
+        if (declarations.containsKey(name)) {
+            handleParserError(new RedefinitionError(declarations.get(name).getPosition()), statement.getPosition());
+        }
+        declarations.put(name, statement);
     }
 
     //    PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
     public Program buildProgram() {
         nextToken();
         Map<String, FunctionDefinition> functions = new HashMap<>();
-        Map<String, DeclarationStatement> declarations = new HashMap<>();
+        Map<String, Statement> declarations = new HashMap<>();
 
-        var parse = true;
         do {
             var declaration = parseDeclarationStatement();
             if (declaration.isPresent()) {
@@ -81,7 +92,7 @@ public class Parser {
                 continue;
             }
             break;
-        } while (parse && token.getType() != TokenType.END_OF_FILE);
+        } while (token.getType() != TokenType.END_OF_FILE);
 
         return new Program(functions, declarations);
     }
@@ -89,9 +100,9 @@ public class Parser {
     /**
      * VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
      * | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
-     * | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
+     * | IDENTIFIER, IDENTIFIER, "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "," "}", ";"
      */
-    private Optional<DeclarationStatement> parseDeclarationStatement() {
+    private Optional<Statement> parseDeclarationStatement() {
         var typeDeclarationOptional = parseTypeDeclaration();
         if (typeDeclarationOptional.isEmpty()) {
             return Optional.empty();
@@ -99,22 +110,52 @@ public class Parser {
         var typeDeclaration = typeDeclarationOptional.get();
         var position = token.getPosition();
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
-        mustBe(token, TokenType.ASSIGN, SyntaxError::new);
-        // TODO: can be { or Identifier
 
-        if (token.getType() == TokenType.CURLY_BRACKET_OPEN) {
-            // TODO: struct declaration
+        switch(token.getType()) {
+            case ASSIGN -> {
+                nextToken();
+                var expression = parseExpression();
+                if (expression.isEmpty()) {
+                    log.error("No expression in variable declaration at: {}", position);
+                    handleParserError(new MissingExpressionError(position), position);
+                }
+                mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+                return Optional.of(new DeclarationStatement(new Parameter(typeDeclaration, identifier), expression.get(), position));
+            }
+            case CURLY_BRACKET_OPEN -> {
+                nextToken();
+                var members = new ArrayList<Parameter>();
+                var member = parseParameter();
+                // TODO: validate comma and semicolon
+                if(member.isEmpty()) {
+                    log.error("No member in variant/struct at: {}", position);
+                    handleParserError(new SyntaxError(position), position);
+                }
+                members.add(member.get());
+
+                var separator = token.getType();
+                var isVariant = separator == TokenType.COMMA;
+
+                while(token.getType() == separator) {
+                    nextToken();
+                    member = parseParameter();
+                    if(member.isEmpty()) {
+                        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+                        break;
+                    }
+                    members.add(member.get());
+                }
+
+                if (isVariant) {
+                    return Optional.of(new VariantStatement(identifier, members, position));
+                }
+                return Optional.of(new StructStatement(identifier, members, position));
+            }
+            default -> {
+                break;
+            }
         }
-
-
-        var expression = parseExpression();
-        if (expression.isEmpty()) {
-            // TODO: refactor it to generic function
-            errorHandler.handleParserError(new MissingExpressionError(position), position);
-        }
-
-        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
-        return Optional.of(new DeclarationStatement(new Argument(typeDeclaration, identifier), expression.get(), position));
+        throw new RuntimeException("Invalid declaration statement at: " + position);
     }
 
     private Optional<Expression> parseExpression() {
@@ -126,6 +167,13 @@ public class Parser {
         if (type.isEmpty()) {
             return Optional.empty();
         }
+
+        if(type.get() == ValueType.CUSTOM) {
+            var customType = token.getValue().toString();
+            nextToken();
+            return Optional.of(new TypeDeclaration(type.get(), customType));
+        }
+
         nextToken();
         return Optional.of(new TypeDeclaration(type.get()));
     }
@@ -134,7 +182,7 @@ public class Parser {
         if (token.getType() != expectedType) {
             var error = errorSupplier.apply(token.getPosition());
             log.error("{}. Expected {} got {}", error.toString(), expectedType, token.getType());
-            errorHandler.handleParserError(error, error.getPosition());
+            handleParserError(error, error.getPosition());
         }
         var value = token.getValue();
         nextToken();
@@ -158,7 +206,7 @@ public class Parser {
         var block = parseBlock();
         if (block.isEmpty()) {
             log.error("Block cannot be empty at: {}", position);
-            errorHandler.handleParserError(new SyntaxError(position), position);
+            handleParserError(new SyntaxError(position), position);
         }
 
         return Optional.of(new FunctionDefinition(name.toString(), params, returnType, block.get(), position));
@@ -203,7 +251,7 @@ public class Parser {
             var statement = parseAssignmentStatement(name);
             if (statement.isEmpty()) {
                 log.error("No statement in assignment at: {}", position);
-                errorHandler.handleParserError(new SyntaxError(position), position);
+                handleParserError(new SyntaxError(position), position);
             }
             return Optional.of((Statement) statement.get());
         }
@@ -218,11 +266,11 @@ public class Parser {
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
         var expression = parseExpression();
         if (expression.isEmpty()) {
-            log.error("No expression in assignment at: {}", position);
-            errorHandler.handleParserError(new MissingExpressionError(position), position);
+            log.error("No expression in declaration at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
         }
         var type = new TypeDeclaration(ValueType.CUSTOM, name);
-        return Optional.of(new DeclarationStatement(new Argument(type, variable), expression.get(), position));
+        return Optional.of(new DeclarationStatement(new Parameter(type, variable), expression.get(), position));
     }
 
 
@@ -252,7 +300,7 @@ public class Parser {
             var expression = parseExpression();
             if (expression.isEmpty()) {
                 log.error("No expression in assignment at: {}", position);
-                errorHandler.handleParserError(new MissingExpressionError(position), position);
+                handleParserError(new MissingExpressionError(position), position);
             }
             return Optional.of(new AssignmentStatement(name+"."+fieldName, expression.get(), position));
         }
@@ -261,7 +309,7 @@ public class Parser {
         var expression = parseExpression();
         if (expression.isEmpty()) {
             log.error("No expression in assignment at: {}", position);
-            errorHandler.handleParserError(new MissingExpressionError(position), position);
+            handleParserError(new MissingExpressionError(position), position);
         }
 
         if (token.getType() == TokenType.DOUBLE_COLON) {
@@ -271,6 +319,10 @@ public class Parser {
         return Optional.of(new AssignmentStatement(name, expression.get(), position));
     }
 
+    /**
+     * "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
+     * part of variant assignment
+     */
     private Optional<AssignmentStatement> parseVariantAssignment(String name, Position position) {
         nextToken();
         var variantName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
@@ -278,7 +330,7 @@ public class Parser {
         var variantExpression = parseExpression();
         if (variantExpression.isEmpty()) {
             log.error("No expression in assignment at: {}", position);
-            errorHandler.handleParserError(new MissingExpressionError(position), position);
+            handleParserError(new MissingExpressionError(position), position);
         }
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
         return Optional.of(new AssignmentStatement(name+"::"+variantName, variantExpression.get(), position));
@@ -304,13 +356,13 @@ public class Parser {
         var condition = parseExpression();
         if (condition.isEmpty()) {
             log.error("No condition in if statement at: {}", position);
-            errorHandler.handleParserError(new MissingExpressionError(position), position);
+            handleParserError(new MissingExpressionError(position), position);
         }
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
         var block = parseBlock();
         if (block.isEmpty()) {
             log.error("Block cannot be empty at: {}", position);
-            errorHandler.handleParserError(new SyntaxError(position), position);
+            handleParserError(new SyntaxError(position), position);
         }
 
         conditions.add(condition.get());
@@ -325,7 +377,7 @@ public class Parser {
             var elifBlock = parseBlock();
             if (elifBlock.isEmpty()) {
                 log.error("Block cannot be empty at: {}", position);
-                errorHandler.handleParserError(new SyntaxError(position), position);
+                handleParserError(new SyntaxError(position), position);
             }
             conditions.add(elifCondition.get());
             ifInstructions.add(elifBlock.get());
@@ -336,7 +388,7 @@ public class Parser {
             var elseBlock = parseBlock();
             if (elseBlock.isEmpty()) {
                 log.error("Block cannot be empty at: {}", position);
-                errorHandler.handleParserError(new SyntaxError(position), position);
+                handleParserError(new SyntaxError(position), position);
             }
             elseInstructions = Optional.of(elseBlock.get());
         }
@@ -356,13 +408,13 @@ public class Parser {
         var condition = parseExpression();
         if (condition.isEmpty()) {
             log.error("No condition in while statement at: {}", position);
-            errorHandler.handleParserError(new MissingExpressionError(position), position);
+            handleParserError(new MissingExpressionError(position), position);
         }
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
         var block = parseBlock();
         if (block.isEmpty()) {
             log.error("Block cannot be empty at: {}", position);
-            errorHandler.handleParserError(new SyntaxError(position), position);
+            handleParserError(new SyntaxError(position), position);
         }
         return Optional.of(new WhileStatement(condition.get(), block.get(), position));
     }
@@ -395,8 +447,8 @@ public class Parser {
     /**
      * [ FN_PARAMS, { ",", FN_PARAMS }],
      */
-    private List<Argument> parseFunctionParameters() {
-        List<Argument> parameters = new ArrayList<>();
+    private List<Parameter> parseFunctionParameters() {
+        List<Parameter> parameters = new ArrayList<>();
         var param = parseParameter();
         if (param.isEmpty()) {
             log.info("Empty parameters list at: {}", token.getPosition());
@@ -408,7 +460,7 @@ public class Parser {
             param = parseParameter();
             if (param.isEmpty()) {
                 log.error("");
-                errorHandler.handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
+                handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
             }
             parameters.add(param.get());
         }
@@ -419,7 +471,7 @@ public class Parser {
      * FN_PARAMS               = SIMPLE_TYPE_AS_ARG
      * | STRUCT_OR_VARIANT_AS_ARG
      */
-    private Optional<Argument> parseParameter() {
+    private Optional<Parameter> parseParameter() {
         var type = parseTypeDeclaration();
         if (type.isEmpty()) {
             return Optional.empty();
@@ -428,10 +480,10 @@ public class Parser {
 
         if (type.isEmpty() || identifier.isEmpty()) {
             log.error("Invalid parameter at: {}", token.getPosition());
-            errorHandler.handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
+            handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
             return Optional.empty();
         }
-        return Optional.of(new Argument(type.get(), identifier));
+        return Optional.of(new Parameter(type.get(), identifier));
     }
 
     private Optional<Expression> parseLogicExpression() {
@@ -443,7 +495,7 @@ public class Parser {
             var position = token.getPosition();
             var right = parseAndExpression();
             if (right.isEmpty()) {
-                errorHandler.handleParserError(new SyntaxError(position, "No expression after OR."), position);
+                handleParserError(new SyntaxError(position, "No expression after OR."), position);
             }
             left = new OrLogicalExpression(left, right.get(), position);
         }
@@ -460,7 +512,7 @@ public class Parser {
             var position = token.getPosition();
             var right = parseAndExpression();
             if (right.isEmpty()) {
-                errorHandler.handleParserError(new SyntaxError(token.getPosition(), "No expression after AND."), token.getPosition());
+                handleParserError(new SyntaxError(token.getPosition(), "No expression after AND."), token.getPosition());
             }
             left = new AndLogicalExpression(left, right.get(), position);
         }
@@ -493,7 +545,7 @@ public class Parser {
 
         var right = parseMathExpression();
         if (right.isEmpty()) {
-            errorHandler.handleParserError(new SyntaxError(relationPosition, "No expression after relation operator."), relationPosition);
+            handleParserError(new SyntaxError(relationPosition, "No expression after relation operator."), relationPosition);
             assert false;
         }
         var expression = constructor.apply(left.get(), right.get(), relationPosition);
@@ -693,7 +745,7 @@ public class Parser {
                 var variantExpression = parseExpression();
                 if (variantExpression.isEmpty()) {
                     log.error("No expression in variant at: {}", position);
-                    errorHandler.handleParserError(new MissingExpressionError(position), position);
+                    handleParserError(new MissingExpressionError(position), position);
                 }
                 mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
                 expr = new VariantExpression(fieldName, variantExpression.get(), position);
@@ -723,7 +775,7 @@ public class Parser {
             var expressionOptional = parseExpression();
             if (expressionOptional.isEmpty()) {
                 if (copy) {
-                    errorHandler.handleParserError(new SyntaxError(token.getPosition(), "No expression after copy operator."), token.getPosition());
+                    handleParserError(new SyntaxError(token.getPosition(), "No expression after copy operator."), token.getPosition());
                 }
                 break;
             }
@@ -734,5 +786,9 @@ public class Parser {
             arguments.add(expression);
         } while (token.getType() == TokenType.COMMA);
         return arguments;
+    }
+
+    private void handleParserError(ParserError error, Position position) {
+        throw new RuntimeException(error.toString() + " at: " + position);
     }
 }

@@ -3,11 +3,10 @@ package org.siu.parser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.siu.ast.Argument;
+import org.siu.ast.Parameter;
 import org.siu.ast.Program;
 import org.siu.ast.expression.Expression;
 import org.siu.ast.expression.IdentifierExpression;
-import org.siu.ast.expression.arithmetic.NegateArithmeticExpression;
 import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.logical.OrLogicalExpression;
@@ -44,8 +43,8 @@ class LogicalExpressionTest {
     }
 
     private DeclarationStatement createDeclaration(String name, ValueType type, Expression expression) {
-        Argument argument = new Argument(new TypeDeclaration(type), name);
-        return new DeclarationStatement(argument, expression, position);
+        Parameter parameter = new Parameter(new TypeDeclaration(type), name);
+        return new DeclarationStatement(parameter, expression, position);
     }
 
     @Test

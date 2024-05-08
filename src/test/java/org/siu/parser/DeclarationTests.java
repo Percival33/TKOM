@@ -3,13 +3,15 @@ package org.siu.parser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.siu.ast.Argument;
+import org.siu.ast.Parameter;
 import org.siu.ast.Program;
 import org.siu.ast.expression.CastedFactorExpression;
 import org.siu.ast.expression.Expression;
 import org.siu.ast.expression.FunctionCallExpression;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.statement.DeclarationStatement;
+import org.siu.ast.statement.StructStatement;
+import org.siu.ast.statement.VariantStatement;
 import org.siu.ast.type.*;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;
@@ -21,7 +23,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class ParserExpressionEvaluationTests {
+class DeclarationTests {
     private ErrorHandler errorHandler;
     private Position position;
 
@@ -37,8 +39,8 @@ class ParserExpressionEvaluationTests {
     }
 
     private DeclarationStatement createDeclaration(String name, ValueType type, Expression expression) {
-        Argument argument = new Argument(new TypeDeclaration(type), name);
-        return new DeclarationStatement(argument, expression, position);
+        Parameter parameter = new Parameter(new TypeDeclaration(type), name);
+        return new DeclarationStatement(parameter, expression, position);
     }
 
     @Test
@@ -133,4 +135,49 @@ class ParserExpressionEvaluationTests {
         assertEquals(createDeclaration("b", ValueType.BOOL, bExpression), program.getDeclarations().get("b"));
         assertEquals(createDeclaration("c", ValueType.BOOL, cExpression), program.getDeclarations().get("c"));
     }
+
+    @Test
+    void testVariantDeclaration() {
+        String sourceCode = "variant Var { int row, int col };";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+        VariantStatement expectedVariant = new VariantStatement(
+                "Var",
+                List.of(
+                        new Parameter(new TypeDeclaration(ValueType.INT), "row"),
+                        new Parameter(new TypeDeclaration(ValueType.INT), "col")
+                ),
+                position
+        );
+
+
+        assertEquals(expectedVariant, program.getDeclarations().get("Var"));
+    }
+
+    @Test
+    void testStructDeclaration() {
+        String sourceCode = """
+                struct Dog {\s
+                	int age\s
+                	string name;\s
+                	Breed breed;\s
+                }
+                """;
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+        StructStatement expectedStruct = new StructStatement(
+                "Dog",
+                List.of(
+                        new Parameter(new TypeDeclaration(ValueType.INT), "age"),
+                        new Parameter(new TypeDeclaration(ValueType.STRING), "name"),
+                        new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Breed"), "breed")
+                ),
+                position
+        );
+
+
+        assertEquals(expectedStruct, program.getDeclarations().get("Dog"));
+    }
+
+
 }

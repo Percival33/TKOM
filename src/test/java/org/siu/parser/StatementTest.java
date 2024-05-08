@@ -3,7 +3,7 @@ package org.siu.parser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.siu.ast.Argument;
+import org.siu.ast.Parameter;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.Statement;
@@ -226,7 +226,7 @@ class StatementTest {
         FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement declaratioinStatement = new DeclarationStatement(
-                new Argument(new TypeDeclaration(ValueType.BOOL), "b"),
+                new Parameter(new TypeDeclaration(ValueType.BOOL), "b"),
                 new IntegerExpression(0, position),
                 position
         );
@@ -251,28 +251,7 @@ class StatementTest {
         FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement declaratioinStatement = new DeclarationStatement(
-                new Argument(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v"),
-                new VariantExpression("row", new IntegerExpression(3, position), position),
-                position
-        );
-
-        FunctionDefinition expectedFunction = new FunctionDefinition(
-                "a",
-                List.of(),
-                Optional.empty(),
-                blockOf(declaratioinStatement),
-                position
-        );
-
-        assertEquals(expectedFunction, actualFunction);
-    }
-
-    @Test
-    void testVariantDefinition() {
-        String sourceCode = "fn a() { Var v = Var::row(3); }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
-        Statement declaratioinStatement = new DeclarationStatement(
-                new Argument(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v"),
+                new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v"),
                 new VariantExpression("row", new IntegerExpression(3, position), position),
                 position
         );

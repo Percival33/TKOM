@@ -14,6 +14,8 @@ public enum ValueType {
     FLOAT(TokenType.FLOAT),
     BOOL(TokenType.BOOL),
     STRING(TokenType.STRING),
+    VARIANT(TokenType.VARIANT),
+    STRUCT(TokenType.STRUCT),
     CUSTOM(TokenType.IDENTIFIER),
     ;
 

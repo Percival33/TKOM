@@ -3,7 +3,7 @@ package org.siu.ast.statement;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
-import org.siu.ast.Argument;
+import org.siu.ast.Parameter;
 import org.siu.ast.Node;
 import org.siu.ast.expression.Expression;
 import org.siu.ast.Statement;
@@ -16,7 +16,7 @@ import java.util.List;
 @EqualsAndHashCode(exclude = "position")
 @Value
 public class DeclarationStatement implements Statement {
-    Argument argument;
+    Parameter parameter;
     Expression expression;
     Position position;
     public Iterable<Node> getExpression() { return List.of(expression); }

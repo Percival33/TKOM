@@ -151,7 +151,7 @@ Point pt2 = pt;
 ```
 - variant
 ```
-variant Var { int row, int col };
+variant Var { int row, int col, };
 Var v = Var::row(3);
 
 foo inspect(v) {
@@ -236,7 +236,7 @@ Wyróżniam 3 rodzaje błędów
 1. błędy analizatora składniowego
     - dodanie różnych typów bez rzutowania `error: cannot perform operation on different types at line:3`
     - przypisanie nowej wartości do zmiennej oznaczonej `const`, `error: change const value`
-    - przekazanie złego typu zmiennej jako argument funkcji: `error: function argument and provided types mismatch at line:20`
+    - przekazanie złego typu zmiennej jako parameter funkcji: `error: function parameter and provided types mismatch at line:20`
 2. błędy analizatora semantycznego
     - redefinicja funkcji `error: function already declared at line:5`
     - użycie `return` w funkcji nie zwracającej typu
@@ -323,8 +323,7 @@ DECLARATION                     = ["const"], VARIABLE_DECLARATION;
 
 VARIABLE_DECLARATION            = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
                                 | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
-                                | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
-                                | IDENTIFIER, IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
+                                | IDENTIFIER, IDENTIFIER, "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
                         
 STRUCT_MEMBER                   = LITERAL 
                                 | FN_CALL

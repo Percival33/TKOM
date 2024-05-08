@@ -33,6 +33,8 @@ public interface Visitor {
     void visit(DeclarationStatement declarationStatement);
     void visit(BlockStatement blockStatement);
     void visit(AssignmentStatement assignmentStatement);
+    void visit(VariantStatement variantStatement);
+    void visit(StructStatement structStatement);
 
 //    Simple type expression
     void visit(IntegerExpression integerExpression);

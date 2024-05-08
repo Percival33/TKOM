@@ -1,19 +1,19 @@
 package org.siu.ast.statement;
 
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.Value;
-import org.siu.ast.expression.Expression;
+import org.siu.ast.Parameter;
 import org.siu.ast.Statement;
 import org.siu.parser.Visitor;
 import org.siu.token.Position;
 
-@ToString(exclude = {"value"})
+import java.util.List;
+
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class AssignmentStatement implements Statement {
+public class VariantStatement implements Statement {
     String name;
-    Expression value;
+    List<Parameter> parameters;
     Position position;
 
     @Override

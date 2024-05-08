@@ -3,11 +3,10 @@ package org.siu.parser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.siu.ast.Argument;
+import org.siu.ast.Parameter;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.Statement;
-import org.siu.ast.expression.Expression;
 import org.siu.ast.expression.FunctionCallExpression;
 import org.siu.ast.expression.IdentifierExpression;
 import org.siu.ast.expression.arithmetic.AddArithmeticExpression;
@@ -51,7 +50,7 @@ class FunctionDefinitionTest {
         var fn = program.getFunctionDefinitions().get("add");
         assertEquals(new FunctionDefinition(
                         "add",
-                        List.of(new Argument(new TypeDeclaration(ValueType.INT), "a"), new Argument(new TypeDeclaration(ValueType.INT), "b")),
+                        List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a"), new Parameter(new TypeDeclaration(ValueType.INT), "b")),
                         Optional.of(new TypeDeclaration(ValueType.INT)),
                         new BlockStatement(
                                 List.of(new ReturnStatement(
@@ -75,7 +74,7 @@ class FunctionDefinitionTest {
         var fn = program.getFunctionDefinitions().get("add");
         assertEquals(new FunctionDefinition(
                         "add",
-                        List.of(new Argument(new TypeDeclaration(ValueType.INT), "a")),
+                        List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a")),
                         Optional.empty(),
                         new BlockStatement(List.of(), position),
                         position),
@@ -106,7 +105,7 @@ class FunctionDefinitionTest {
         BlockStatement block = getBlockStatement();
         FunctionDefinition expected = new FunctionDefinition(
                 "fun",
-                List.of(new Argument(new TypeDeclaration(ValueType.INT), "a"), new Argument(new TypeDeclaration(ValueType.INT), "b")),
+                List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a"), new Parameter(new TypeDeclaration(ValueType.INT), "b")),
                 Optional.of(new TypeDeclaration(ValueType.FLOAT)),
                 block,
                 position);
@@ -118,7 +117,7 @@ class FunctionDefinitionTest {
     }
 
     private BlockStatement getBlockStatement() {
-        Statement declarationStatement = new DeclarationStatement(new Argument(new TypeDeclaration(ValueType.INT), "c"), new IntegerExpression(5, position), position);
+        Statement declarationStatement = new DeclarationStatement(new Parameter(new TypeDeclaration(ValueType.INT), "c"), new IntegerExpression(5, position), position);
         Statement returnStatement = new ReturnStatement(new AddArithmeticExpression(new IdentifierExpression("a", position), new MultiplyArithmeticExpression(new IdentifierExpression("b", position), new IdentifierExpression("c", position), position), position), position);
         return new BlockStatement(List.of(declarationStatement, returnStatement), position);
     }

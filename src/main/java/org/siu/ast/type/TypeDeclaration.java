@@ -18,6 +18,6 @@ public class TypeDeclaration {
     public TypeDeclaration(ValueType valueType, String customType) {
         this.valueType = valueType;
         this.customType = customType;
-        if (valueType != ValueType.CUSTOM) throw new AssertionError();
+        if (valueType != ValueType.CUSTOM && customType == null) throw new AssertionError();
     }
 }
