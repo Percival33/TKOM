@@ -586,7 +586,7 @@ public class Parser {
         // CASTED_FACTOR | '(', EXPRESSION, ')'
         if (token.getType() == TokenType.BRACKET_OPEN) {
             nextToken();
-            castedType = parseCastedType();
+            castedType = parseCastedSimpleType();
             if (castedType.isPresent()) {
                 nextToken();
                 mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
@@ -601,7 +601,7 @@ public class Parser {
         return parseUnaryFactor();
     }
 
-    private Optional<ValueType> parseCastedType() {
+    private Optional<ValueType> parseCastedSimpleType() {
         var castedType = ValueType.of(token.getType());
         if (castedType.isEmpty()) {
             log.warn("Invalid cast syntax at: {}", token.getPosition());
