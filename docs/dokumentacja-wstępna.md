@@ -235,7 +235,7 @@ Wyróżniam 3 rodzaje błędów
 1. błędy analizatora składniowego
     - dodanie różnych typów bez rzutowania `error: cannot perform operation on different types at line:3`
     - przypisanie nowej wartości do zmiennej oznaczonej `const`, `error: change const value`
-    - przekazanie złego typu zmiennej jako argument funkcji: `error: function argument and provided types mismatch at line:20`
+    - przekazanie złego typu zmiennej jako parameter funkcji: `error: function parameter and provided types mismatch at line:20`
 2. błędy analizatora semantycznego
     - redefinicja funkcji `error: function already declared at line:5`
     - użycie `return` w funkcji nie zwracającej typu
