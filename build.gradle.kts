@@ -20,7 +20,7 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-api:2.20.0")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.20.0")
     implementation("org.apache.commons:commons-lang3:3.14.0")
-
+    implementation("io.vavr:vavr:0.9.0")
 }
 
 tasks.test {
