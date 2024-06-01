@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.type.ValueType;
-import org.siu.parser.Visitor;
+import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
 @ToString(exclude = "expression")

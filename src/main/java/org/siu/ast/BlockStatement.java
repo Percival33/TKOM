@@ -3,7 +3,7 @@ package org.siu.ast;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
-import org.siu.parser.Visitor;
+import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
 import java.util.List;

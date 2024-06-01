@@ -2,7 +2,7 @@ package org.siu.ast.expression;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import org.siu.parser.Visitor;
+import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
 @EqualsAndHashCode(exclude = "position")

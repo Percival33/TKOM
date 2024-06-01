@@ -5,7 +5,7 @@ import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.expression.ArithmeticExpression;
 import org.siu.ast.expression.Expression;
-import org.siu.parser.Visitor;
+import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
 @ToString(exclude = "expression")

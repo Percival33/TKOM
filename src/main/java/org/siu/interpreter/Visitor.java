@@ -1,4 +1,4 @@
-package org.siu.parser;
+package org.siu.interpreter;
 
 import org.siu.ast.BlockStatement;
 import org.siu.ast.expression.*;

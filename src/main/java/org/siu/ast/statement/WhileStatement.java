@@ -6,11 +6,8 @@ import lombok.Value;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Statement;
 import org.siu.ast.expression.Expression;
-import org.siu.parser.Visitor;
+import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
-
-import java.util.List;
-import java.util.Optional;
 
 @ToString(exclude = {"condition", "block"})
 @EqualsAndHashCode(exclude = "position")

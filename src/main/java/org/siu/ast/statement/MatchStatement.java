@@ -5,7 +5,7 @@ import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.Statement;
 import org.siu.ast.expression.MatchCaseExpression;
-import org.siu.parser.Visitor;
+import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
 import java.util.List;

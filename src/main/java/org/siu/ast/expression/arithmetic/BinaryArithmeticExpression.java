@@ -2,7 +2,7 @@ package org.siu.ast.expression.arithmetic;
 
 import org.siu.ast.expression.ArithmeticExpression;
 import org.siu.ast.expression.Expression;
-import org.siu.parser.Visitor;
+import org.siu.interpreter.Visitor;
 
 public interface BinaryArithmeticExpression extends ArithmeticExpression {
     Expression getLeft();
