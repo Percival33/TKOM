@@ -10,7 +10,7 @@ import org.siu.ast.Statement;
 import org.siu.ast.expression.*;
 import org.siu.ast.statement.MatchStatement;
 import org.siu.ast.expression.relation.LessExpression;
-import org.siu.ast.function.FunctionDefinition;
+import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.*;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.IntegerExpression;
@@ -43,7 +43,7 @@ class StatementTest {
         return new Parser(lexer, errorHandler);
     }
 
-    private FunctionDefinition parseAndBuildFunction(String sourceCode) {
+    private FunctionDefinitionStatement parseAndBuildFunction(String sourceCode) {
         Parser parser = toParser(sourceCode);
         Program program = parser.buildProgram();
         return program.getFunctionDefinitions().get("a");
@@ -56,7 +56,7 @@ class StatementTest {
     @Test
     void testIfStatement() {
         String sourceCode = "fn a() { if (true) { return 1; }  }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
         Statement oneReturn = new ReturnStatement(new IntegerExpression(1, position), position);
 
         IfStatement ifStatement = new IfStatement(
@@ -65,7 +65,7 @@ class StatementTest {
                 Optional.empty(),
                 position
         );
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -79,7 +79,7 @@ class StatementTest {
     @Test
     void testIfStatementWithElse() {
         String sourceCode = "fn a() { if (true) { return 1; } else { return 2; } }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement oneReturn = new ReturnStatement(new IntegerExpression(1, position), position);
         BlockStatement elseBlock = new BlockStatement(List.of(new ReturnStatement(new IntegerExpression(2, position), position)), position);
@@ -91,7 +91,7 @@ class StatementTest {
                 position
         );
 
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -105,7 +105,7 @@ class StatementTest {
     @Test
     void testIfStatementWithElif() {
         String sourceCode = "fn a() { if (true) { return 1; } elif(1 < 2) { return 2; } }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement trueReturn = new ReturnStatement(new IntegerExpression(1, position), position);
         Statement twoReturn = new ReturnStatement(new IntegerExpression(2, position), position);
@@ -117,7 +117,7 @@ class StatementTest {
                 position
         );
 
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -131,7 +131,7 @@ class StatementTest {
     @Test
     void testIfStatementWithElifAndElse() {
         String sourceCode = "fn a() { if (true) { return 1; } elif(1 < 2) { return 2; } else { return 3; } }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement trueReturn = new ReturnStatement(new IntegerExpression(1, position), position);
         Statement twoReturn = new ReturnStatement(new IntegerExpression(2, position), position);
@@ -145,7 +145,7 @@ class StatementTest {
                 position
         );
 
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -159,7 +159,7 @@ class StatementTest {
     @Test
     void testWhileStatement() {
         String sourceCode = "fn a() { while (true) { return 1; } }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement whileStatement = new WhileStatement(
                 new BooleanExpression(true, position),
@@ -173,7 +173,7 @@ class StatementTest {
                 position
         );
 
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -187,7 +187,7 @@ class StatementTest {
     @Test
     void testAssignmentStatement() {
         String sourceCode = "fn a() { bool b = 0; abc = 1; }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement declaratioinStatement = new DeclarationStatement(
                 new Parameter(new TypeDeclaration(ValueType.BOOL), "b"),
@@ -199,7 +199,7 @@ class StatementTest {
                 new IntegerExpression(1, position),
                 position
         );
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -212,7 +212,7 @@ class StatementTest {
     @Test
     void testCopyValueStatement() {
         String sourceCode = "fn a() { f(@abc); }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
 
         Expression argument = new CopiedValueExpression(
                 new IdentifierExpression("abc", position),
@@ -220,7 +220,7 @@ class StatementTest {
         );
         Statement functionCall = new FunctionCallExpression("f", List.of(argument), position);
 
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -233,7 +233,7 @@ class StatementTest {
     @Test
     void testVariantDeclaration() {
         String sourceCode = "fn a() { Var v = Var::row(3); }";
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
 
         Statement declaratioinStatement = new DeclarationStatement(
                 new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v"),
@@ -241,7 +241,7 @@ class StatementTest {
                 position
         );
 
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(),
                 Optional.empty(),
@@ -263,14 +263,14 @@ class StatementTest {
                     return value;
                 }
                 """;
-        FunctionDefinition actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
 
         MatchCaseExpression rowCase = new MatchCaseExpression("Var", "row", "x", new IdentifierExpression("x", position), position);
         MatchCaseExpression colCase = new MatchCaseExpression("Var", "col", "y", new IdentifierExpression("y", position), position);
         Statement matchStatement = new MatchStatement("v", List.of(rowCase, colCase), position);
         Statement returnStatement = new ReturnStatement(new IdentifierExpression("value", position), position);
 
-        FunctionDefinition expectedFunction = new FunctionDefinition(
+        FunctionDefinitionStatement expectedFunction = new FunctionDefinitionStatement(
                 "a",
                 List.of(new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v")),
                 Optional.of(new TypeDeclaration(ValueType.CUSTOM, "Var")),

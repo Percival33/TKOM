@@ -10,8 +10,10 @@ import org.siu.ast.Statement;
 import org.siu.ast.expression.FunctionCallExpression;
 import org.siu.ast.expression.IdentifierExpression;
 import org.siu.ast.expression.arithmetic.AddArithmeticExpression;
+import org.siu.ast.expression.arithmetic.ModuloArithmeticExpression;
 import org.siu.ast.expression.arithmetic.MultiplyArithmeticExpression;
-import org.siu.ast.function.FunctionDefinition;
+import org.siu.ast.expression.arithmetic.SubtractArithmeticExpression;
+import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.statement.ReturnStatement;
 import org.siu.ast.type.IntegerExpression;
@@ -48,7 +50,7 @@ class FunctionDefinitionTest {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("add");
-        assertEquals(new FunctionDefinition(
+        assertEquals(new FunctionDefinitionStatement(
                         "add",
                         List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a"), new Parameter(new TypeDeclaration(ValueType.INT), "b")),
                         Optional.of(new TypeDeclaration(ValueType.INT)),
@@ -72,7 +74,7 @@ class FunctionDefinitionTest {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("add");
-        assertEquals(new FunctionDefinition(
+        assertEquals(new FunctionDefinitionStatement(
                         "add",
                         List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a")),
                         Optional.empty(),
@@ -87,7 +89,7 @@ class FunctionDefinitionTest {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("add");
-        assertEquals(new FunctionDefinition(
+        assertEquals(new FunctionDefinitionStatement(
                         "add",
                         List.of(),
                         Optional.empty(),
@@ -103,7 +105,7 @@ class FunctionDefinitionTest {
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("fun");
         BlockStatement block = getBlockStatement();
-        FunctionDefinition expected = new FunctionDefinition(
+        FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
                 "fun",
                 List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a"), new Parameter(new TypeDeclaration(ValueType.INT), "b")),
                 Optional.of(new TypeDeclaration(ValueType.FLOAT)),

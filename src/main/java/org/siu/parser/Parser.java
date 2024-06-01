@@ -15,7 +15,7 @@ import org.siu.ast.type.*;
 import org.siu.error.*;
 import org.siu.lexer.Lexer;
 import org.siu.ast.expression.logical.OrLogicalExpression;
-import org.siu.ast.function.FunctionDefinition;
+import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.Statement;
 import org.siu.token.Position;
 import org.siu.token.Token;
@@ -25,7 +25,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-// TODO: implement parseMatch, ??
 
 @Slf4j
 public class Parser {
@@ -43,7 +42,7 @@ public class Parser {
         return this.token;
     }
 
-    private void saveFunctionDefinition(FunctionDefinition statement, Map<String, FunctionDefinition> functions) {
+    private void saveFunctionDefinition(FunctionDefinitionStatement statement, Map<String, FunctionDefinitionStatement> functions) {
         if (functions.containsKey(statement.getName())) {
             handleParserError(new RedefinitionError(functions.get(statement.getName()).getPosition()), statement.getPosition());
         }
@@ -75,7 +74,7 @@ public class Parser {
     //    PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
     public Program buildProgram() {
         nextToken();
-        Map<String, FunctionDefinition> functions = new HashMap<>();
+        Map<String, FunctionDefinitionStatement> functions = new HashMap<>();
         Map<String, Statement> declarations = new HashMap<>();
 
         do {
@@ -211,7 +210,7 @@ public class Parser {
     }
 
     //    FN_DEFINITION           = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
-    private Optional<FunctionDefinition> parseFunctionDefinition() {
+    private Optional<FunctionDefinitionStatement> parseFunctionDefinition() {
         if (token.getType() != TokenType.FUNCTION) {
             return Optional.empty();
         }
@@ -230,7 +229,7 @@ public class Parser {
             handleParserError(new SyntaxError(position), position);
         }
 
-        return Optional.of(new FunctionDefinition(name.toString(), params, returnType, block.get(), position));
+        return Optional.of(new FunctionDefinitionStatement(name.toString(), params, returnType, block.get(), position));
 //        return Optional.empty();
     }
 

@@ -8,6 +8,7 @@ import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.logical.OrLogicalExpression;
 import org.siu.ast.expression.relation.*;
+import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.*;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.FloatExpression;
@@ -24,6 +25,8 @@ import org.siu.ast.type.StringExpression;
  * | FN_CALL;
  */
 public interface Visitor {
+    void visit(final Program program);
+
     //    Statement
     void visit(final WhileStatement statement);
 
@@ -42,6 +45,8 @@ public interface Visitor {
     void visit(final StructStatement structStatement);
 
     void visit(final ConstStatement constStatement);
+
+    void visit(final FunctionDefinitionStatement functionDefinitionStatement);
 
     //    Match statement
     void visit(final MatchStatement matchStatement);
@@ -109,7 +114,5 @@ public interface Visitor {
     void visit(final CastedFactorExpression castedFactorExpression);
 
     void visit(final CopiedValueExpression copiedFactorExpression);
-
-    void visit(final Program program);
 }
 

@@ -9,7 +9,7 @@ import org.siu.token.Position;
 @EqualsAndHashCode(exclude = "position")
 @Value
 public class BooleanExpression implements Expression {
-    boolean value;
+    Boolean value;
     Position position;
     @Override
     public void accept(Visitor visitor) {

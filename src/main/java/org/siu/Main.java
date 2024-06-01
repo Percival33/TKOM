@@ -10,7 +10,8 @@ public class Main
 {
     public static void main(final String[] args)
     {
-        ErrorHandler errorHandler = new ErrorHandlerImpl();
-        Lexer lexer = new LexerImpl("" ,errorHandler);
+        final ErrorHandler errorHandler = new ErrorHandlerImpl();
+//        final Lexer lexer = new LexerImpl(errorHandler);
+
     }
 }
