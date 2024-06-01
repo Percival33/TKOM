@@ -1,6 +1,7 @@
 package org.siu.interpreter;
 
 import org.siu.ast.BlockStatement;
+import org.siu.ast.Program;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.AndLogicalExpression;
@@ -23,90 +24,92 @@ import org.siu.ast.type.StringExpression;
  * | FN_CALL;
  */
 public interface Visitor {
-//    Statement
-    void visit(WhileStatement statement);
+    //    Statement
+    void visit(final WhileStatement statement);
 
-    void visit(IfStatement statement);
+    void visit(final IfStatement statement);
 
-    void visit(ReturnStatement returnStatement);
+    void visit(final ReturnStatement returnStatement);
 
-    void visit(DeclarationStatement declarationStatement);
+    void visit(final DeclarationStatement declarationStatement);
 
-    void visit(BlockStatement blockStatement);
+    void visit(final BlockStatement blockStatement);
 
-    void visit(AssignmentStatement assignmentStatement);
+    void visit(final AssignmentStatement assignmentStatement);
 
-    void visit(VariantStatement variantStatement);
+    void visit(final VariantStatement variantStatement);
 
-    void visit(StructStatement structStatement);
+    void visit(final StructStatement structStatement);
 
-    void visit(ConstStatement constStatement);
+    void visit(final ConstStatement constStatement);
 
     //    Match statement
-    void visit(MatchStatement matchStatement);
+    void visit(final MatchStatement matchStatement);
 
-    void visit(MatchCaseExpression matchCaseStatement);
+    void visit(final MatchCaseExpression matchCaseStatement);
 
     //    Simple type expression
-    void visit(IntegerExpression integerExpression);
+    void visit(final IntegerExpression integerExpression);
 
-    void visit(FloatExpression expression);
+    void visit(final FloatExpression expression);
 
-    void visit(StringExpression stringExpression);
+    void visit(final StringExpression stringExpression);
 
-    void visit(BooleanExpression booleanExpression);
+    void visit(final BooleanExpression booleanExpression);
 
     //    Complex type expression
-    void visit(VariantExpression variantExpression);
+    void visit(final VariantExpression variantExpression);
 
-    void visit(StructExpression structExpression);
+    void visit(final StructExpression structExpression);
 
 
-    void visit(IdentifierExpression identifierExpression);
+    void visit(final IdentifierExpression identifierExpression);
 
-    void visit(FunctionCallExpression functionCallExpression);
+    void visit(final FunctionCallExpression functionCallExpression);
 
 
     //    RelationExpression
-    void visit(LessExpression lessExpression);
+    void visit(final LessExpression lessExpression);
 
-    void visit(GreaterExpression greaterExpression);
+    void visit(final GreaterExpression greaterExpression);
 
-    void visit(EqualExpression equalExpression);
+    void visit(final EqualExpression equalExpression);
 
-    void visit(NotEqualExpression notEqualExpression);
+    void visit(final NotEqualExpression notEqualExpression);
 
-    void visit(LessEqualExpression lessEqualExpression);
+    void visit(final LessEqualExpression lessEqualExpression);
 
-    void visit(GreaterEqualExpression greaterEqualExpression);
+    void visit(final GreaterEqualExpression greaterEqualExpression);
 
     //    ArithmeticExpression
-    void visit(AddArithmeticExpression addArithmeticExpression);
+    void visit(final AddArithmeticExpression addArithmeticExpression);
 
-    void visit(DivideArithmeticExpression divideArithmeticExpression);
+    void visit(final DivideArithmeticExpression divideArithmeticExpression);
 
-    void visit(ModuloArithmeticExpression moduloArithmeticExpression);
+    void visit(final ModuloArithmeticExpression moduloArithmeticExpression);
 
-    void visit(MultiplyArithmeticExpression multiplyArithmeticExpression);
+    void visit(final MultiplyArithmeticExpression multiplyArithmeticExpression);
 
-    void visit(SubtractArithmeticExpression subtractArithmeticExpression);
+    void visit(final SubtractArithmeticExpression subtractArithmeticExpression);
 
-    void visit(BinaryArithmeticExpression twoArgumentArithmeticExpression);
+    void visit(final BinaryArithmeticExpression twoArgumentArithmeticExpression);
 
-    void visit(NegateArithmeticExpression negateArithmeticExpression);
+    void visit(final NegateArithmeticExpression negateArithmeticExpression);
 
     //    LogicalExpression
-    void visit(AndLogicalExpression andLogicalExpression);
+    void visit(final AndLogicalExpression andLogicalExpression);
 
-    void visit(NegateLogicalExpression negateLogicalExpression);
+    void visit(final NegateLogicalExpression negateLogicalExpression);
 
-    void visit(OrLogicalExpression orLogicalExpression);
+    void visit(final OrLogicalExpression orLogicalExpression);
 
     //    Factor
-    void visit(UnaryFactorExpression unaryFactorExpression);
+    void visit(final UnaryFactorExpression unaryFactorExpression);
 
-    void visit(CastedFactorExpression castedFactorExpression);
+    void visit(final CastedFactorExpression castedFactorExpression);
 
-    void visit(CopiedValueExpression copiedFactorExpression);
+    void visit(final CopiedValueExpression copiedFactorExpression);
+
+    void visit(final Program program);
 }
 
