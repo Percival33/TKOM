@@ -6,4 +6,5 @@ public interface LogicalExpression extends Expression {
     Expression getLeft();
     Expression getRight();
     Position getPosition();
+    boolean evaluate(boolean left, boolean right);
 }

@@ -13,5 +13,5 @@ fn gcd(int a, int b): int {
 fn main() {
     int a = 10;
     int b = 15;
-    int result = gcd(a, b);
+    gcd(a, b);
 }

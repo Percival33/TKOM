@@ -1,15 +1,14 @@
 package org.siu.interpreter.state;
 
-import lombok.Value;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.siu.interpreter.error.DuplicatedVariableException;
 import org.siu.interpreter.error.TypesDoNotMatchException;
 
-@Value
+@lombok.Value
 public class Scope {
     Map<String, Variable> variables = new HashMap<>();
 
@@ -20,12 +19,12 @@ public class Scope {
         variables.put(variable.getIdentifier(), variable);
     }
 
-    public boolean updateVariable(String identifier, org.siu.interpreter.state.Value value) {
+    public boolean updateVariable(String identifier, Value value) {
         if (!variables.containsKey(identifier)) {
             return false;
         }
         var previousValue = variables.get(identifier);
-        if (previousValue.getType() != value.getType()) {
+        if (!Objects.equals(previousValue.getType(), value.getType())) {
             throw new TypesDoNotMatchException(value.getType(), previousValue.getType());
         }
         variables.put(identifier, new Variable(previousValue.getType(), identifier, value));

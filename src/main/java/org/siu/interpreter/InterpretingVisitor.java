@@ -15,10 +15,8 @@ import org.siu.ast.expression.relation.*;
 import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.*;
 import org.siu.ast.type.*;
-import org.siu.interpreter.error.ExpressionDidNotEvaluateException;
-import org.siu.interpreter.error.NoVariableException;
-import org.siu.interpreter.error.TypesDoNotMatchException;
-import org.siu.interpreter.error.ArithmeticOperationNotSupportedForNonNumericTypes;
+import org.siu.interpreter.error.*;
+import org.siu.interpreter.error.UnsupportedOperationException;
 import org.siu.interpreter.state.Context;
 import org.siu.interpreter.state.Result;
 import org.siu.interpreter.state.Value;
@@ -32,6 +30,8 @@ import org.siu.token.Position;
 import java.io.PrintStream;
 import java.util.*;
 
+import static org.siu.interpreter.InterpreterConfig.MAIN_FUNCTION_NAME;
+import static org.siu.interpreter.InterpreterConfig.MAX_STACK_SIZE;
 import static org.siu.interpreter.InterpreterUtilities.*;
 
 @Slf4j
@@ -61,7 +61,9 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             callAccept(declaration);
         }
 
-        callAccept(functionDefinitions.get("main"));
+
+        var mainFn = new FunctionCallExpression(MAIN_FUNCTION_NAME, List.of(), currentPosition);
+        callAccept(mainFn);
     }
 
     @Override
@@ -71,7 +73,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         var value = retrieveResult(InterpreterUtilities.BOOL_TYPE);
 
         while (value.isBool()) {
-            callAccept(statement.getBody());
+            callAccept(statement.getBlock());
 
             if (result.isReturned()) {
                 break;
@@ -121,7 +123,17 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(BlockStatement blockStatement) {
+        var context = contexts.getLast();
+        context.incrementScope();
 
+        for (var statement : blockStatement.getStatements()) {
+            callAccept(statement);
+            if(result.isReturned()) {
+                break;
+            }
+        }
+
+        context.decrementScope();
     }
 
     @Override
@@ -158,8 +170,8 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(FunctionDefinitionStatement functionDefinitionStatement) {
-
+    public void visit(FunctionDefinitionStatement statement) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -204,42 +216,99 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(IdentifierExpression identifierExpression) {
+        var context = contexts.getLast();
+        var variable = context.findVariable(identifierExpression.getIdentifier())
+                .or(() -> GLOBAL_CONTEXT.findVariable(identifierExpression.getIdentifier()))
+                .orElseThrow(NoVariableException::new);
 
+        result = Result.ok(variable.getValue());
     }
 
     @Override
-    public void visit(FunctionCallExpression functionCallExpression) {
+    public void visit(FunctionCallExpression expression) {
+        if(!functionDefinitions.containsKey(expression.getIdentifier())) {
+            throw new FunctionNotDefinedException(expression.getIdentifier());
+        }
 
+        var functionDeclaration = functionDefinitions.get(expression.getIdentifier());
+
+        var arguments = expression.getArguments();
+
+        if(arguments.size() != functionDeclaration.getParameters().size()) {
+            throw new InvalidNumberOfArgumentsException(expression);
+        }
+
+        var context = new Context(functionDeclaration.getName(), expression.getPosition());
+
+        for(int i = 0; i < arguments.size(); i++) {
+            callAccept(arguments.get(i));
+            var parameter = functionDeclaration.getParameters().get(i);
+            var value = retrieveResult(parameter.getType());
+
+            context.addVariable(new Variable(parameter.getType(),parameter.getName(), value));
+        }
+
+        contexts.addLast(context);
+        if(contexts.size() > MAX_STACK_SIZE) {
+            throw new FunctionStackLimitException();
+        }
+
+        callAccept(functionDeclaration.getBlock());
+
+        // if return value
+        if(functionDeclaration.getReturnType().isEmpty()) {
+            result = Result.empty();
+        } else if(result.isReturned()) {
+            validateTypes(result.getValue().getType(), functionDeclaration.getReturnType().get());
+            result = result.toBuilder().returned(false).build();
+        } else {
+            throw new FunctionDidNotReturnException();
+        }
+
+        contexts.removeLast();
     }
 
-    @Override
-    public void visit(LessExpression lessExpression) {
+    private static final Map<TypeDeclaration, Function3<RelationExpression, Value, Value, Boolean>>
+        RELATIONAL_OPERATIONS = Map.of(
+            INT_TYPE, (expression, left, right) -> expression.evaluate(left.getInteger(), right.getInteger()),
+            FLOAT_TYPE, (expression, left, right) -> expression.evaluate(left.getFloat(), right.getFloat())
+        );
 
+    @Override
+    public void visit(RelationExpression expression) {
+        callAccept(expression.getLeft());
+        var left = retrieveResult();
+
+        if (RELATIONAL_OPERATIONS.containsKey(left.getType())) {
+            callAccept(expression.getRight());
+            var right = retrieveResult(left.getType());
+            var value = RELATIONAL_OPERATIONS.get(left.getType()).apply(expression, left, right);
+            result = Result.ok(new BoolValue(value));
+        } else {
+            throw new CompareOperationNotSupportedForNonNumericTypes(expression.getPosition());
+        }
     }
 
-    @Override
-    public void visit(GreaterExpression greaterExpression) {
-
-    }
-
-    @Override
-    public void visit(EqualExpression equalExpression) {
-
-    }
+    private static final Map<TypeDeclaration, Function3<EqualityRelationalExpression, Value, Value, Boolean>>
+            EQUALITY_OPERATORS = Map.of(
+            INT_TYPE, (expression, left, right) -> expression.evaluate(left.getInteger(), right.getInteger()),
+            FLOAT_TYPE, (expression, left, right) -> expression.evaluate(left.getFloat(), right.getFloat()),
+            STRING_TYPE, (expression, left, right) -> expression.evaluate(left.getString(), right.getString())
+    );
 
     @Override
-    public void visit(NotEqualExpression notEqualExpression) {
+    public void visit(EqualityRelationalExpression expression) {
+        callAccept(expression.getLeft());
+        var left = retrieveResult();
 
-    }
-
-    @Override
-    public void visit(LessEqualExpression lessEqualExpression) {
-
-    }
-
-    @Override
-    public void visit(GreaterEqualExpression greaterEqualExpression) {
-
+        if (EQUALITY_OPERATORS.containsKey(left.getType())) {
+            callAccept(expression.getRight());
+            var right = retrieveResult();
+            var value = EQUALITY_OPERATORS.get(left.getType()).apply(expression, left, right);
+            result = Result.ok(new BoolValue(value));
+        } else {
+            throw new CompareOperationNotSupportedForNonNumericTypes(expression.getPosition());
+        }
     }
 
     private static final Map<TypeDeclaration, Function3<BinaryArithmeticExpression, Value, Value, Value>>
@@ -259,11 +328,8 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             var value = ARITHMETIC_OPERATIONS.get(left.getType()).apply(expression, left, right);
             result = Result.ok(value);
         } else {
-            throw new ArithmeticOperationNotSupportedForNonNumericTypes();
+            throw new ArithmeticOperationNotSupportedForNonNumericTypes(expression.getPosition());
         }
-
-
-        expression.evaluate(leftValue, rightValue);
     }
 
     @Override
@@ -277,12 +343,12 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(NegateLogicalExpression negateLogicalExpression) {
+    public void visit(OrLogicalExpression orLogicalExpression) {
 
     }
 
     @Override
-    public void visit(OrLogicalExpression orLogicalExpression) {
+    public void visit(NegateLogicalExpression negateLogicalExpression) {
 
     }
 

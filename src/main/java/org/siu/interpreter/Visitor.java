@@ -46,7 +46,7 @@ public interface Visitor {
 
     void visit(final ConstStatement constStatement);
 
-    void visit(final FunctionDefinitionStatement functionDefinitionStatement);
+    void visit(final FunctionDefinitionStatement statement);
 
     //    Match statement
     void visit(final MatchStatement matchStatement);
@@ -70,33 +70,14 @@ public interface Visitor {
 
     void visit(final IdentifierExpression identifierExpression);
 
-    void visit(final FunctionCallExpression functionCallExpression);
+    void visit(final FunctionCallExpression expression);
 
 
     //    RelationExpression
-    void visit(final LessExpression lessExpression);
-
-    void visit(final GreaterExpression greaterExpression);
-
-    void visit(final EqualExpression equalExpression);
-
-    void visit(final NotEqualExpression notEqualExpression);
-
-    void visit(final LessEqualExpression lessEqualExpression);
-
-    void visit(final GreaterEqualExpression greaterEqualExpression);
+    void visit(final RelationExpression expression);
+    void visit(final EqualityRelationalExpression expression);
 
     //    ArithmeticExpression
-//    void visit(final AddArithmeticExpression addArithmeticExpression);
-//
-//    void visit(final DivideArithmeticExpression divideArithmeticExpression);
-//
-//    void visit(final ModuloArithmeticExpression moduloArithmeticExpression);
-//
-//    void visit(final MultiplyArithmeticExpression multiplyArithmeticExpression);
-//
-//    void visit(final SubtractArithmeticExpression expression);
-
     void visit(final BinaryArithmeticExpression expression);
 
     void visit(final NegateArithmeticExpression negateArithmeticExpression);

@@ -10,5 +10,5 @@ import lombok.experimental.FieldDefaults;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class UnexpectedTypeException extends InterpreterException {
+public class UnsupportedOperationException extends InterpreterException {
 }

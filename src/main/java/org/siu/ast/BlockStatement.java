@@ -8,11 +8,11 @@ import org.siu.token.Position;
 
 import java.util.List;
 
-@ToString(exclude = {"statementList"})
+@ToString(exclude = {"statements"})
 @EqualsAndHashCode(exclude = "position")
 @Value
 public class BlockStatement implements Statement {
-    List<Statement> statementList;
+    List<Statement> statements;
     Position position;
 
     @Override

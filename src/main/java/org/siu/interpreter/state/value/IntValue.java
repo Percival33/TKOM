@@ -6,6 +6,6 @@ import org.siu.interpreter.state.Value;
 
 @lombok.Value
 public class IntValue implements Value {
-    Integer integer;
+    int integer;
     TypeDeclaration type = new TypeDeclaration(ValueType.INT);
 }

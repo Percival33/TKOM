@@ -20,4 +20,9 @@ public class AndLogicalExpression implements LogicalExpression {
     public void accept(Visitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public boolean evaluate(boolean left, boolean right) {
+        return left && right;
+    }
 }
