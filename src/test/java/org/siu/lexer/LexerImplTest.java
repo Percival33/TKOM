@@ -146,6 +146,18 @@ class LexerImplTest {
     }
 
     @Test
+    void breakCommand() {
+        Lexer lexer = setup("break");
+        assertEquals(new KeywordToken(TokenType.BREAK, new Position(1, 1)), lexer.nextToken(), "Expected single line comment");
+    }
+
+    @Test
+    void continueCommand() {
+        Lexer lexer = setup("continue");
+        assertEquals(new KeywordToken(TokenType.CONTINUE, new Position(1, 1)), lexer.nextToken(), "Expected single line comment");
+    }
+
+    @Test
     void multiLineComment() {
         Lexer lexer = setup(" /*\naaa\n*/\nbbb");
         assertEquals(new KeywordToken(TokenType.MULTI_LINE_COMMENT_OPEN, new Position(1, 2)), lexer.nextToken(), "Expected single line comment");

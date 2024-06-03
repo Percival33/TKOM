@@ -19,7 +19,6 @@ public class DeclarationStatement implements Statement {
     Parameter parameter;
     Expression expression;
     Position position;
-    public Iterable<Node> getExpression() { return List.of(expression); }
 
     @Override
     public void accept(Visitor visitor) {

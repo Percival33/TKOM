@@ -32,9 +32,9 @@ public interface Visitor {
 
     void visit(final IfStatement statement);
 
-    void visit(final ReturnStatement returnStatement);
+    void visit(final ReturnStatement statement);
 
-    void visit(final DeclarationStatement declarationStatement);
+    void visit(final DeclarationStatement statement);
 
     void visit(final BlockStatement blockStatement);
 
@@ -54,18 +54,18 @@ public interface Visitor {
     void visit(final MatchCaseExpression matchCaseStatement);
 
     //    Simple type expression
-    void visit(final IntegerExpression integerExpression);
+    void visit(final IntegerExpression expression);
 
     void visit(final FloatExpression expression);
 
-    void visit(final StringExpression stringExpression);
+    void visit(final StringExpression expression);
 
-    void visit(final BooleanExpression booleanExpression);
+    void visit(final BooleanExpression expression);
 
     //    Complex type expression
-    void visit(final VariantExpression variantExpression);
+    void visit(final VariantExpression expression);
 
-    void visit(final StructExpression structExpression);
+    void visit(final StructExpression expression);
 
 
     void visit(final IdentifierExpression identifierExpression);
@@ -87,17 +87,17 @@ public interface Visitor {
     void visit(final GreaterEqualExpression greaterEqualExpression);
 
     //    ArithmeticExpression
-    void visit(final AddArithmeticExpression addArithmeticExpression);
+//    void visit(final AddArithmeticExpression addArithmeticExpression);
+//
+//    void visit(final DivideArithmeticExpression divideArithmeticExpression);
+//
+//    void visit(final ModuloArithmeticExpression moduloArithmeticExpression);
+//
+//    void visit(final MultiplyArithmeticExpression multiplyArithmeticExpression);
+//
+//    void visit(final SubtractArithmeticExpression expression);
 
-    void visit(final DivideArithmeticExpression divideArithmeticExpression);
-
-    void visit(final ModuloArithmeticExpression moduloArithmeticExpression);
-
-    void visit(final MultiplyArithmeticExpression multiplyArithmeticExpression);
-
-    void visit(final SubtractArithmeticExpression subtractArithmeticExpression);
-
-    void visit(final BinaryArithmeticExpression twoArgumentArithmeticExpression);
+    void visit(final BinaryArithmeticExpression expression);
 
     void visit(final NegateArithmeticExpression negateArithmeticExpression);
 

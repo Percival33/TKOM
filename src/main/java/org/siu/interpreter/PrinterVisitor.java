@@ -19,11 +19,8 @@ import org.siu.ast.type.IntegerExpression;
 import org.siu.ast.type.StringExpression;
 import org.siu.token.Position;
 
-import javax.naming.Context;
 import java.io.PrintStream;
 import java.util.*;
-
-import static org.siu.interpreter.InterpreterUtilities.*;
 
 @RequiredArgsConstructor
 public class PrinterVisitor implements Visitor, Interpreter {
@@ -80,16 +77,16 @@ public class PrinterVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(ReturnStatement returnStatement) {
+    public void visit(ReturnStatement statement) {
         write("Return Statement");
         indent++;
-        callAccept(returnStatement.getExpression());
+        callAccept(statement.getExpression());
         indent--;
     }
 
     @Override
-    public void visit(DeclarationStatement declarationStatement) {
-        write("Declaration Statement" + declarationStatement.getParameter().getName() + " = " + declarationStatement.getExpression());
+    public void visit(DeclarationStatement statement) {
+        write("Declaration Statement" + statement.getParameter().getName() + " = " + statement.getExpression());
     }
 
     @Override
@@ -168,8 +165,8 @@ public class PrinterVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(IntegerExpression integerExpression) {
-        write("IntegerExpression: " + integerExpression.getValue());
+    public void visit(IntegerExpression expression) {
+        write("IntegerExpression: " + expression.getValue());
     }
 
     @Override
@@ -188,18 +185,18 @@ public class PrinterVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(VariantExpression variantExpression) {
-        write("VariantExpression" + variantExpression.getFieldName());
+    public void visit(VariantExpression expression) {
+        write("VariantExpression" + expression.getFieldName());
         indent++;
-        callAccept(variantExpression.getExpression());
+        callAccept(expression.getExpression());
         indent--;
     }
 
     @Override
-    public void visit(StructExpression structExpression) {
-        write("StructExpression" + structExpression.getStructName());
+    public void visit(StructExpression expression) {
+        write("StructExpression" + expression.getStructName());
         indent++;
-        write("Field" + structExpression.getFieldName());
+        write("Field" + expression.getFieldName());
         indent--;
     }
 
