@@ -14,7 +14,6 @@ import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.*;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.IntegerExpression;
-import org.siu.ast.type.TypeDeclaration;
 import org.siu.ast.type.ValueType;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;

@@ -8,9 +8,8 @@ import org.siu.ast.Node;
 import org.siu.ast.Program;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
-import org.siu.ast.expression.logical.AndLogicalExpression;
+import org.siu.ast.expression.logical.LogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
-import org.siu.ast.expression.logical.OrLogicalExpression;
 import org.siu.ast.expression.relation.*;
 import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.*;
@@ -29,6 +28,7 @@ import org.siu.token.Position;
 
 import java.io.PrintStream;
 import java.util.*;
+import java.util.function.Function;
 
 import static org.siu.interpreter.InterpreterConfig.MAIN_FUNCTION_NAME;
 import static org.siu.interpreter.InterpreterConfig.MAX_STACK_SIZE;
@@ -128,7 +128,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
         for (var statement : blockStatement.getStatements()) {
             callAccept(statement);
-            if(result.isReturned()) {
+            if (result.isReturned()) {
                 break;
             }
         }
@@ -226,7 +226,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(FunctionCallExpression expression) {
-        if(!functionDefinitions.containsKey(expression.getIdentifier())) {
+        if (!functionDefinitions.containsKey(expression.getIdentifier())) {
             throw new FunctionNotDefinedException(expression.getIdentifier());
         }
 
@@ -234,31 +234,31 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
         var arguments = expression.getArguments();
 
-        if(arguments.size() != functionDeclaration.getParameters().size()) {
+        if (arguments.size() != functionDeclaration.getParameters().size()) {
             throw new InvalidNumberOfArgumentsException(expression);
         }
 
         var context = new Context(functionDeclaration.getName(), expression.getPosition());
 
-        for(int i = 0; i < arguments.size(); i++) {
+        for (int i = 0; i < arguments.size(); i++) {
             callAccept(arguments.get(i));
             var parameter = functionDeclaration.getParameters().get(i);
             var value = retrieveResult(parameter.getType());
 
-            context.addVariable(new Variable(parameter.getType(),parameter.getName(), value));
+            context.addVariable(new Variable(parameter.getType(), parameter.getName(), value));
         }
 
         contexts.addLast(context);
-        if(contexts.size() > MAX_STACK_SIZE) {
+        if (contexts.size() > MAX_STACK_SIZE) {
             throw new FunctionStackLimitException();
         }
 
         callAccept(functionDeclaration.getBlock());
 
         // if return value
-        if(functionDeclaration.getReturnType().isEmpty()) {
+        if (functionDeclaration.getReturnType().isEmpty()) {
             result = Result.empty();
-        } else if(result.isReturned()) {
+        } else if (result.isReturned()) {
             validateTypes(result.getValue().getType(), functionDeclaration.getReturnType().get());
             result = result.toBuilder().returned(false).build();
         } else {
@@ -269,10 +269,10 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     private static final Map<TypeDeclaration, Function3<RelationExpression, Value, Value, Boolean>>
-        RELATIONAL_OPERATIONS = Map.of(
+            RELATIONAL_OPERATIONS = Map.of(
             INT_TYPE, (expression, left, right) -> expression.evaluate(left.getInteger(), right.getInteger()),
             FLOAT_TYPE, (expression, left, right) -> expression.evaluate(left.getFloat(), right.getFloat())
-        );
+    );
 
     @Override
     public void visit(RelationExpression expression) {
@@ -338,18 +338,20 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(AndLogicalExpression andLogicalExpression) {
+    public void visit(LogicalExpression expression) {
+        callAccept(expression.getLeft());
+        var left = retrieveResult(BOOL_TYPE);
 
+        callAccept(expression.getRight());
+        var right = retrieveResult(BOOL_TYPE);
+        result = Result.ok(new BoolValue(expression.evaluate(left.isBool(), right.isBool())));
     }
 
     @Override
-    public void visit(OrLogicalExpression orLogicalExpression) {
-
-    }
-
-    @Override
-    public void visit(NegateLogicalExpression negateLogicalExpression) {
-
+    public void visit(NegateLogicalExpression expression) {
+        callAccept(expression.getExpression());
+        var value = retrieveResult(BOOL_TYPE);
+        result = Result.ok(new BoolValue(!value.isBool()));
     }
 
     @Override
@@ -357,9 +359,40 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     }
 
+    private static final Map<TypeDeclaration, Map<TypeDeclaration, Function<Value, Value>>> CAST_OPERATIONS = Map.of(
+            INT_TYPE, Map.of(
+                    BOOL_TYPE, value -> new IntValue(value.isBool() ? 1 : 0),
+                    FLOAT_TYPE, value -> new IntValue((int) value.getFloat()),
+                    STRING_TYPE, value -> new IntValue(value.getString() == "" ? 0 : 1)
+            ),
+            FLOAT_TYPE, Map.of(
+//                    INT_TYPE, value -> new FloatValue(value.getInteger())
+            ),
+            STRING_TYPE, Map.of(
+                    INT_TYPE, value -> new StringValue(String.valueOf(value.getInteger())),
+                    FLOAT_TYPE, value -> new StringValue(String.valueOf(value.getFloat()))
+            )
+    );
+
     @Override
     public void visit(CastedFactorExpression castedFactorExpression) {
+        var type = castedFactorExpression.getType();
 
+        if (!CAST_OPERATIONS.containsKey(type)) {
+            throw new UnsupportedCastException();
+        }
+
+        var castHelper = CAST_OPERATIONS.get(type);
+        var supportedTypes = castHelper.keySet();
+
+        callAccept(castedFactorExpression.getExpression());
+        var toCast = retrieveResult();
+
+        if (!supportedTypes.contains(toCast.getType())) {
+            throw new UnsupportedCastException();
+        }
+        var value = castHelper.get(toCast.getType()).apply(toCast);
+        result = Result.ok(value);
     }
 
     @Override

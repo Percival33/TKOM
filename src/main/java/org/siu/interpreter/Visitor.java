@@ -5,6 +5,7 @@ import org.siu.ast.Program;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.AndLogicalExpression;
+import org.siu.ast.expression.logical.LogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.logical.OrLogicalExpression;
 import org.siu.ast.expression.relation.*;
@@ -83,11 +84,10 @@ public interface Visitor {
     void visit(final NegateArithmeticExpression negateArithmeticExpression);
 
     //    LogicalExpression
-    void visit(final AndLogicalExpression andLogicalExpression);
+    void visit(final LogicalExpression expression);
 
-    void visit(final NegateLogicalExpression negateLogicalExpression);
+    void visit(final NegateLogicalExpression expression);
 
-    void visit(final OrLogicalExpression orLogicalExpression);
 
     //    Factor
     void visit(final UnaryFactorExpression unaryFactorExpression);

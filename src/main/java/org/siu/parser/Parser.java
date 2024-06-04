@@ -715,7 +715,7 @@ public class Parser {
     private Optional<Expression> parseFactor() {
         var position = token.getPosition();
         var factorOptional = Optional.<Expression>empty();
-        var castedType = Optional.<ValueType>empty();
+        var castedType = Optional.<TypeDeclaration>empty();
 
         // CASTED_FACTOR | '(', EXPRESSION, ')'
         if (token.getType() == TokenType.BRACKET_OPEN) {
@@ -735,13 +735,16 @@ public class Parser {
         return parseUnaryFactor();
     }
 
-    private Optional<ValueType> parseCastedSimpleType() {
-        var castedType = ValueType.of(token.getType());
-        if (castedType.isEmpty()) {
-            log.warn("Invalid cast syntax at: {}", token.getPosition());
-        }
-        return castedType.filter(valueType -> valueType != ValueType.CUSTOM);
+    private Optional<TypeDeclaration> parseCastedSimpleType() {
+        return ValueType.of(token.getType())
+                .filter(valueType -> valueType != ValueType.CUSTOM)
+                .map(TypeDeclaration::new)
+                .or(() -> {
+                    log.warn("Invalid cast syntax at: {}", token.getPosition());
+                    return Optional.empty();
+                });
     }
+
 
     /**
      * UNARY_FACTOR            = ["-"], FACTOR;

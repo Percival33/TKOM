@@ -4,7 +4,7 @@ import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
-import org.siu.ast.type.ValueType;
+import org.siu.ast.type.TypeDeclaration;
 import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
@@ -13,7 +13,7 @@ import org.siu.token.Position;
 @RequiredArgsConstructor
 @Value
 public class CastedFactorExpression implements Expression {
-    ValueType type;
+    TypeDeclaration type;
     Expression expression;
     Position position;
 

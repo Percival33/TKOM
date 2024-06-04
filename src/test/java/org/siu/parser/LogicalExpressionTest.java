@@ -16,7 +16,6 @@ import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.IntegerExpression;
-import org.siu.ast.type.TypeDeclaration;
 import org.siu.ast.type.ValueType;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;

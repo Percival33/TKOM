@@ -4,7 +4,6 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.expression.Expression;
-import org.siu.ast.expression.LogicalExpression;
 import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 

@@ -1,5 +1,6 @@
-package org.siu.ast.expression;
+package org.siu.ast.expression.logical;
 
+import org.siu.ast.expression.Expression;
 import org.siu.token.Position;
 
 public interface LogicalExpression extends Expression {
