@@ -216,7 +216,7 @@ print((string) x); # 6
 | `string`       | `float`     | pusty napis (`""`) ma wartość `0.0`  pozostałe napisy przyjmują wartość `1.0`    |
 | `string`       | `int`       | pusty napis (`""`) ma wartość `0`  pozostałe napisy przyjmują wartość `1`        |
 | `bool`         | `int`       | `0` = `false`, `1`=`true`                                                        |
-| `bool`         | `int`       | `0.0` = `false`, `1.0`=`true`                                                    |
+| `bool`         | `float`     | `0.0` = `false`, `1.0`=`true`                                                    |
 | `bool`         | `string`    | zmienia wartosci na napisy o odpowiedniej wartości                               |
 
 

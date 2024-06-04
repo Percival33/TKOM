@@ -12,10 +12,24 @@ public class Variable {
     String identifier;
     Value value;
 
+    boolean constant;
+
     public Variable(TypeDeclaration type, String identifier, Value value) {
         this.type = type;
         this.identifier = identifier;
         this.value = value;
+        this.constant = false;
+
+        if (!Objects.equals(type, value.getType())) {
+            throw new TypesDoNotMatchException(value.getType(), type);
+        }
+    }
+
+    public Variable(TypeDeclaration type, String identifier, Value value, boolean constant) {
+        this.type = type;
+        this.identifier = identifier;
+        this.value = value;
+        this.constant = constant;
 
         if (!Objects.equals(type, value.getType())) {
             throw new TypesDoNotMatchException(value.getType(), type);

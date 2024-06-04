@@ -6,6 +6,6 @@ import org.siu.interpreter.state.Value;
 
 @lombok.Value
 public class FloatValue implements Value {
-    Float floatVal;
+    float floatVal;
     TypeDeclaration type = new TypeDeclaration(ValueType.FLOAT);
 }

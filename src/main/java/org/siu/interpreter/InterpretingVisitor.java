@@ -3,6 +3,7 @@ package org.siu.interpreter;
 import io.vavr.Function3;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Node;
 import org.siu.ast.Program;
@@ -26,6 +27,7 @@ import org.siu.interpreter.state.value.IntValue;
 import org.siu.interpreter.state.value.StringValue;
 import org.siu.token.Position;
 
+import javax.sound.midi.SysexMessage;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.function.Function;
@@ -40,9 +42,9 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private final Program program;
     private final PrintStream out;
     private final Map<String, FunctionDefinitionStatement> functionDefinitions = new HashMap<>();
+    private final Deque<Context> contexts = new ArrayDeque<>(List.of(GLOBAL_CONTEXT));
     private Result result = Result.empty();
     private Position currentPosition = new Position(1, 1);
-    private Deque<Context> contexts = new ArrayDeque<>(List.of(GLOBAL_CONTEXT));
 
     @Override
     public void execute() {
@@ -165,8 +167,18 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(ConstStatement constStatement) {
+    public void visit(ConstStatement statement) {
+        System.out.println("ConstStatement");
+        var context = contexts.getLast();
 
+//        var type = statement.getStatement().getParameter().getType();
+//        var name = statement.getParameter().getName();
+//        var expression = statement.getExpression();
+//
+//        callAccept(expression);
+//        var value = retrieveResult(type);
+//
+//        context.addVariable(new Variable(type, name, value));
     }
 
     @Override
@@ -271,7 +283,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private static final Map<TypeDeclaration, Function3<RelationExpression, Value, Value, Boolean>>
             RELATIONAL_OPERATIONS = Map.of(
             INT_TYPE, (expression, left, right) -> expression.evaluate(left.getInteger(), right.getInteger()),
-            FLOAT_TYPE, (expression, left, right) -> expression.evaluate(left.getFloat(), right.getFloat())
+            FLOAT_TYPE, (expression, left, right) -> expression.evaluate(left.getFloatVal(), right.getFloatVal())
     );
 
     @Override
@@ -292,7 +304,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private static final Map<TypeDeclaration, Function3<EqualityRelationalExpression, Value, Value, Boolean>>
             EQUALITY_OPERATORS = Map.of(
             INT_TYPE, (expression, left, right) -> expression.evaluate(left.getInteger(), right.getInteger()),
-            FLOAT_TYPE, (expression, left, right) -> expression.evaluate(left.getFloat(), right.getFloat()),
+            FLOAT_TYPE, (expression, left, right) -> expression.evaluate(left.getFloatVal(), right.getFloatVal()),
             STRING_TYPE, (expression, left, right) -> expression.evaluate(left.getString(), right.getString())
     );
 
@@ -314,7 +326,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private static final Map<TypeDeclaration, Function3<BinaryArithmeticExpression, Value, Value, Value>>
             ARITHMETIC_OPERATIONS = Map.of(
             INT_TYPE, (expression, left, right) -> new IntValue(expression.evaluate(left.getInteger(), right.getInteger())),
-            FLOAT_TYPE, (expression, left, right) -> new FloatValue(expression.evaluate(left.getFloat(), right.getFloat()))
+            FLOAT_TYPE, (expression, left, right) -> new FloatValue(expression.evaluate(left.getFloatVal(), right.getFloatVal()))
     );
 
     @Override
@@ -334,7 +346,16 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(NegateArithmeticExpression negateArithmeticExpression) {
+        callAccept(negateArithmeticExpression.getExpression());
+        var value = retrieveResult();
 
+        if (Objects.equals(value.getType(), INT_TYPE)) {
+            result = Result.ok(new IntValue(-value.getInteger()));
+        } else if (Objects.equals(value.getType(), FLOAT_TYPE)) {
+            result = Result.ok(new FloatValue(-value.getFloatVal()));
+        } else {
+            throw new ArithmeticOperationNotSupportedForNonNumericTypes(negateArithmeticExpression.getPosition());
+        }
     }
 
     @Override
@@ -362,15 +383,21 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private static final Map<TypeDeclaration, Map<TypeDeclaration, Function<Value, Value>>> CAST_OPERATIONS = Map.of(
             INT_TYPE, Map.of(
                     BOOL_TYPE, value -> new IntValue(value.isBool() ? 1 : 0),
-                    FLOAT_TYPE, value -> new IntValue((int) value.getFloat()),
-                    STRING_TYPE, value -> new IntValue(value.getString() == "" ? 0 : 1)
+                    FLOAT_TYPE, value -> new IntValue((int) value.getFloatVal()),
+                    INT_TYPE, Function.identity(),
+                    STRING_TYPE, value -> new IntValue(StringUtils.equals(value.getString(), "") ? 0 : 1)
             ),
             FLOAT_TYPE, Map.of(
-//                    INT_TYPE, value -> new FloatValue(value.getInteger())
+                    BOOL_TYPE, value -> new FloatValue(value.isBool() ? 1.0F : 0.0F),
+                    FLOAT_TYPE, Function.identity(),
+                    INT_TYPE, value -> new FloatValue(value.getInteger()),
+                    STRING_TYPE, value -> new FloatValue(StringUtils.equals(value.getString(), "") ? 0.0F : 1.0F)
             ),
             STRING_TYPE, Map.of(
+                    BOOL_TYPE, value -> new StringValue(String.valueOf(value.isBool())),
                     INT_TYPE, value -> new StringValue(String.valueOf(value.getInteger())),
-                    FLOAT_TYPE, value -> new StringValue(String.valueOf(value.getFloat()))
+                    FLOAT_TYPE, value -> new StringValue(String.valueOf(value.getFloatVal())),
+                    STRING_TYPE, Function.identity()
             )
     );
 

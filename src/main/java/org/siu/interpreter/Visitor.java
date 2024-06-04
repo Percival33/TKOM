@@ -45,7 +45,7 @@ public interface Visitor {
 
     void visit(final StructStatement structStatement);
 
-    void visit(final ConstStatement constStatement);
+    void visit(final ConstStatement statement);
 
     void visit(final FunctionDefinitionStatement statement);
 

@@ -1,0 +1,5 @@
+fn main() {
+    int a = 5;
+    a = -a;
+    int c = a;
+}

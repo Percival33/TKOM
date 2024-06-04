@@ -16,7 +16,7 @@ public interface Value {
         throw new UnexpectedTypeException();
     }
 
-    default float getFloat() {
+    default float getFloatVal() {
         throw new UnexpectedTypeException();
     }
 
