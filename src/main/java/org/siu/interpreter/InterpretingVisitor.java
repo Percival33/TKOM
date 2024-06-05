@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Node;
 import org.siu.ast.Program;
+import org.siu.ast.Statement;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.LogicalExpression;
@@ -15,6 +16,7 @@ import org.siu.ast.expression.relation.*;
 import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.*;
 import org.siu.ast.type.*;
+import org.siu.interpreter.builtin.PrintFunction;
 import org.siu.interpreter.error.*;
 import org.siu.interpreter.error.UnsupportedOperationException;
 import org.siu.interpreter.state.Context;
@@ -40,7 +42,9 @@ import static org.siu.interpreter.InterpreterUtilities.*;
 public class InterpretingVisitor implements Visitor, Interpreter {
     private final Program program;
     private final PrintStream out;
-    private final Map<String, FunctionDefinitionStatement> functionDefinitions = new HashMap<>();
+    private final Map<String, FunctionDefinitionStatement> functionDefinitions = new HashMap<>(BUILTIN_FUNCTIONS);
+    private final Map<String, Statement> typeDefinitions = new HashMap<>();
+
     private final Deque<Context> contexts = new ArrayDeque<>(List.of(GLOBAL_CONTEXT));
     private Result result = Result.empty();
     private Position currentPosition = new Position(1, 1);
@@ -57,9 +61,14 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     @Override
     public void visit(Program program) {
         functionDefinitions.putAll(program.getFunctionDefinitions());
+        typeDefinitions.putAll(program.getTypeDefinitions());
 
         for (var declaration : program.getDeclarations().values()) {
             callAccept(declaration);
+        }
+
+        for (var typeDefinition : program.getTypeDefinitions().values()) {
+            callAccept(typeDefinition);
         }
 
 
@@ -442,10 +451,22 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     }
 
+    @Override
+    public void visit(PrintFunction expression) {
+        var context = contexts.getLast();
+
+        var message = context.findVariable(PRINT_ARGUMENT)
+            .map(Variable::getValue)
+            .orElseThrow(NoVariableException::new);
+
+        out.println(message.getString());
+    }
+
     private Value retrieveResult(TypeDeclaration type) {
         var value = retrieveResult();
 
         // TODO: struct / variant magic
+        // FIXME: struct value getter
 
         validateTypes(value.getType(), type);
 

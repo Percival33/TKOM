@@ -13,6 +13,7 @@ import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.FloatExpression;
 import org.siu.ast.type.IntegerExpression;
 import org.siu.ast.type.StringExpression;
+import org.siu.interpreter.builtin.PrintFunction;
 
 /**
  * STATEMENT               = IF_STATEMENT
@@ -96,5 +97,8 @@ public interface Visitor {
     void visit(final CastedFactorExpression castedFactorExpression);
 
     void visit(final CopiedValueExpression copiedFactorExpression);
+
+    //    Custom
+    void visit(final PrintFunction expression);
 }
 
