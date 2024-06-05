@@ -157,12 +157,12 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(VariantTypeDefinitionStatement variantTypeDefinitionStatement) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void visit(StructTypeDefinitionStatement structStatement) {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -185,7 +185,16 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(StructDeclarationExpression statement) {
-
+//        var context = contexts.getLast();
+//
+//        var type = statement.getParameter().getType();
+//        var name = statement.getParameter().getName();
+//        var expression = statement.getExpression();
+//
+//        callAccept(expression);
+//        var value = retrieveResult(type);
+//
+//        context.addVariable(new Variable(type, name, value));
     }
 
     @Override

@@ -225,42 +225,6 @@ public class Parser {
                 }
                 return Optional.of(declaration);
             }
-            case CURLY_BRACKET_OPEN -> {
-                throw new RuntimeException("unimplemented type definition");
-//                nextToken();
-//                var members = new ArrayList<Parameter>();
-//                var member = parseParameter();
-//                if (member.isEmpty()) {
-//                    log.error("No member in variant/struct at: {}", position);
-//                    handleParserError(new SyntaxError(position), position);
-//                }
-//                members.add(member.get());
-//
-//                var separator = token.getType();
-//                var isVariant = separator == TokenType.COMMA;
-//
-//                while (token.getType() == separator) {
-//                    nextToken();
-//                    member = parseParameter();
-//                    if (member.isEmpty()) {
-//                        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-//                        break;
-//                    }
-//                    members.add(member.get());
-//                }
-//
-//                if (isVariant) {
-////                    Var v = Var::row(3);
-//                    var variant = new VariantDefinitionStatement(identifier, members, position);
-//                    if (isConst)
-//                        return Optional.of(new ConstStatement(new Parameter(new TypeDeclaration(ValueType.CUSTOM, variant.getName()), identifier), variant, position));
-//                    return Optional.of(variant);
-//                }
-//                var struct = new StructDefinitionStatement(identifier, members, position);
-//                if (isConst)
-//                    return Optional.of(new ConstStatement(new Parameter(new TypeDeclaration(ValueType.CUSTOM, struct.getName()), identifier), struct, position));
-//                return Optional.of(struct);
-            }
             default -> {
                 break;
             }
