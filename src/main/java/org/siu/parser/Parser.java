@@ -49,15 +49,26 @@ public class Parser {
         functions.put(statement.getName(), statement);
     }
 
+    private void saveTypeDefinition(Statement statement, Map<String, Statement> typeDefinitions) {
+        if (typeDefinitions.containsKey(statement.getName())) {
+            handleParserError(new RedefinitionError(typeDefinitions.get(statement.getName()).getPosition()), statement.getPosition());
+        }
+        typeDefinitions.put(statement.getName(), statement);
+    }
+
     private void saveDeclaration(Statement statement, Map<String, Statement> declarations) {
-        String name;
+        String name = statement.getName();
         if (statement instanceof DeclarationStatement) {
             name = ((DeclarationStatement) statement).getParameter().getName();
-        } else if (statement instanceof VariantStatement) {
-            name = ((VariantStatement) statement).getName();
-        } else if (statement instanceof StructDefinitionStatement) {
-            name = ((StructDefinitionStatement) statement).getName();
-        } else if (statement instanceof ConstStatement) {
+        }
+//        TODO: move type definitions
+//        else if (statement instanceof VariantTypeDefinitionStatement) {
+//            name = ((VariantTypeDefinitionStatement) statement).getName();
+//        }
+//        else if (statement instanceof StructTypeDefinitionStatement) {
+//            name = ((StructTypeDefinitionStatement) statement).getName();
+//        }
+        else if (statement instanceof ConstStatement) {
             name = ((ConstStatement) statement).getParameter().getName();
         } else {
             throw new RuntimeException("Invalid declaration statement");
@@ -75,13 +86,21 @@ public class Parser {
         nextToken();
         Map<String, FunctionDefinitionStatement> functions = new HashMap<>();
         Map<String, Statement> declarations = new HashMap<>();
+        Map<String, Statement> typeDefinitions = new HashMap<>();
 
         do {
+            var type = parseTypeDefinitionStatement();
+            if (type.isPresent()) {
+                saveTypeDefinition(type.get(), typeDefinitions);
+                continue;
+            }
+
             var declaration = parseDeclarationStatement();
             if (declaration.isPresent()) {
                 saveDeclaration(declaration.get(), declarations);
                 continue;
             }
+
             var funDef = parseFunctionDefinition();
             if (funDef.isPresent()) {
                 saveFunctionDefinition(funDef.get(), functions);
@@ -90,10 +109,82 @@ public class Parser {
             if (token.getType() == TokenType.SEMICOLON) {
                 continue;
             }
+
+            log.error("Unhandled statement at: {}", token.getPosition());
             break;
         } while (token.getType() != TokenType.END_OF_FILE);
 
-        return new Program(functions, declarations);
+        return new Program(functions, declarations, typeDefinitions);
+    }
+
+    /**
+     * VARIANT_DEFINITION              = "variant", IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";
+     * STRUCT_DEFINITION               = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
+     */
+    private Optional<Statement> parseTypeDefinitionStatement() {
+        switch (token.getType()) {
+            case VARIANT -> {
+                nextToken();
+                return parseVariantTypeDefinition();
+            }
+            case STRUCT -> {
+                nextToken();
+                return parseStructTypeDefinition();
+            }
+            default -> {
+                return Optional.empty();
+            }
+        }
+    }
+
+    /**
+     * STRUCT_DEFINITION               = IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
+     */
+    private Optional<Statement> parseStructTypeDefinition() {
+        var position = token.getPosition();
+        var name = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
+        List<Parameter> members = new ArrayList<>();
+
+        var member = parseParameter();
+
+        while (member.isPresent()) {
+            members.add(member.get());
+            mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
+            member = parseParameter();
+        }
+
+        return Optional.of(new StructTypeDefinitionStatement(name, members, position));
+    }
+
+    /**
+     * VARIANT_DEFINITION              = IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";
+     */
+    private Optional<Statement> parseVariantTypeDefinition() {
+        var position = token.getPosition();
+        var name = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        position = token.getPosition();
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
+        List<Parameter> members = new ArrayList<>();
+
+        var member = parseParameter();
+        if (member.isEmpty()) {
+            log.error("No member in variant at: {}", position);
+            handleParserError(new EmptyVariantException(position), position);
+        }
+        members.add(member.get());
+
+        while (token.getType() == TokenType.COMMA) {
+            nextToken();
+            member = parseParameter();
+            if (member.isEmpty()) {
+                mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+                break;
+            }
+            members.add(member.get());
+        }
+
+        return Optional.of(new VariantTypeDefinitionStatement(name, members, position));
     }
 
     /**
@@ -101,7 +192,6 @@ public class Parser {
      * <p>
      * VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
      * | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
-     * | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "," "}", ";"
      */
     private Optional<Statement> parseDeclarationStatement() {
         var isConst = parseConst();
@@ -136,38 +226,40 @@ public class Parser {
                 return Optional.of(declaration);
             }
             case CURLY_BRACKET_OPEN -> {
-                nextToken();
-                var members = new ArrayList<Parameter>();
-                var member = parseParameter();
-                if (member.isEmpty()) {
-                    log.error("No member in variant/struct at: {}", position);
-                    handleParserError(new SyntaxError(position), position);
-                }
-                members.add(member.get());
-
-                var separator = token.getType();
-                var isVariant = separator == TokenType.COMMA;
-
-                while (token.getType() == separator) {
-                    nextToken();
-                    member = parseParameter();
-                    if (member.isEmpty()) {
-                        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-                        break;
-                    }
-                    members.add(member.get());
-                }
-
-                if (isVariant) {
-                    var variant = new VariantStatement(identifier, members, position);
-                    if (isConst)
-                        return Optional.of(new ConstStatement(new Parameter(new TypeDeclaration(ValueType.CUSTOM, variant.getName()), identifier), variant, position));
-                    return Optional.of(variant);
-                }
-                var struct = new StructDefinitionStatement(identifier, members, position);
-                if (isConst)
-                    return Optional.of(new ConstStatement(new Parameter(new TypeDeclaration(ValueType.CUSTOM, struct.getName()), identifier), struct, position));
-                return Optional.of(struct);
+                throw new RuntimeException("unimplemented type definition");
+//                nextToken();
+//                var members = new ArrayList<Parameter>();
+//                var member = parseParameter();
+//                if (member.isEmpty()) {
+//                    log.error("No member in variant/struct at: {}", position);
+//                    handleParserError(new SyntaxError(position), position);
+//                }
+//                members.add(member.get());
+//
+//                var separator = token.getType();
+//                var isVariant = separator == TokenType.COMMA;
+//
+//                while (token.getType() == separator) {
+//                    nextToken();
+//                    member = parseParameter();
+//                    if (member.isEmpty()) {
+//                        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+//                        break;
+//                    }
+//                    members.add(member.get());
+//                }
+//
+//                if (isVariant) {
+////                    Var v = Var::row(3);
+//                    var variant = new VariantDefinitionStatement(identifier, members, position);
+//                    if (isConst)
+//                        return Optional.of(new ConstStatement(new Parameter(new TypeDeclaration(ValueType.CUSTOM, variant.getName()), identifier), variant, position));
+//                    return Optional.of(variant);
+//                }
+//                var struct = new StructDefinitionStatement(identifier, members, position);
+//                if (isConst)
+//                    return Optional.of(new ConstStatement(new Parameter(new TypeDeclaration(ValueType.CUSTOM, struct.getName()), identifier), struct, position));
+//                return Optional.of(struct);
             }
             default -> {
                 break;
@@ -561,7 +653,7 @@ public class Parser {
         }
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
 
-        if (type.isEmpty() || identifier.isEmpty()) {
+        if (identifier.isEmpty()) {
             log.error("Invalid parameter at: {}", token.getPosition());
             handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
             return Optional.empty();
@@ -881,7 +973,7 @@ public class Parser {
         nextToken();
 
         var arguments = new ArrayList<Expression>();
-        while(token.getType() != TokenType.CURLY_BRACKET_CLOSE) {
+        while (token.getType() != TokenType.CURLY_BRACKET_CLOSE) {
             var expression = parseExpression();
             if (expression.isEmpty()) {
                 log.error("No expression in struct at: {}", token.getPosition());
@@ -895,7 +987,7 @@ public class Parser {
 
         mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
 
-        return Optional.of(new StructDefinitionExpression(arguments, token.getPosition()));
+        return Optional.of(new StructDeclarationExpression(arguments, token.getPosition()));
     }
 
     private boolean parseCopyOperator() {

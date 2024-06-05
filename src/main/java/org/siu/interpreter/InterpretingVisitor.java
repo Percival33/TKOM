@@ -156,28 +156,26 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(VariantStatement variantStatement) {
+    public void visit(VariantTypeDefinitionStatement variantTypeDefinitionStatement) {
 
     }
 
     @Override
-    public void visit(StructDefinitionStatement structStatement) {
+    public void visit(StructTypeDefinitionStatement structStatement) {
 
     }
 
     @Override
-    public void visit(ConstStatement statement) {
-        System.out.println("ConstStatement");
+    public void visit(ConstStatement constStatement) {
         var context = contexts.getLast();
 
-//        var type = statement.getStatement().getParameter().getType();
-//        var name = statement.getParameter().getName();
-//        var expression = statement.getExpression();
-//
-//        callAccept(expression);
-//        var value = retrieveResult(type);
-//
-//        context.addVariable(new Variable(type, name, value));
+        var parameter = constStatement.getParameter();
+        var statement = constStatement.getStatement();
+
+        callAccept(statement.getExpression());
+        var value = retrieveResult(parameter.getType());
+
+        context.addVariable(new Variable(parameter.getType(), parameter.getName(), value, true));
     }
 
     @Override
@@ -186,7 +184,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(StructDefinitionExpression statement) {
+    public void visit(StructDeclarationExpression statement) {
 
     }
 

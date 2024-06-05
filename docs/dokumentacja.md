@@ -366,17 +366,16 @@ SIMPLE_TYPE             = "int"
 ### Instrukcje
 
 ```                        
-TYPE_DEFINITION                 = SIMPLE_TYPE_AS_ARG
-                                | STRUCT_DEFINITION
+TYPE_DEFINITION                 = STRUCT_DEFINITION
                                 | VARIANT_DEFINITION;
 
-VARIANT_DEFINITION              = "variant", IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";                            
-STRUCT_DEFINITION               = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
+VARIANT_DEFINITION              = "variant", IDENTIFIER, "{", STRUCT_TYPE_DEF, {, ",", STRUCT_TYPE_DEF }, "}";                            
+STRUCT_DEFINITION               = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DEF }, "}", ";";
             
-VARIANT_RET_TYPE                = "variant", "{", VARIANT_TYPE_DECL, { ",", VARIANT_TYPE_DECL }, "}"            
+VARIANT_RET_TYPE                = "variant", "{", VARIANT_TYPE_DEF, { ",", VARIANT_TYPE_DEF }, "}"            
                             
-VARIANT_TYPE_DECL               = SIMPLE_TYPE | IDENTIFIER;
-STRUCT_TYPE_DECL                = VARIANT_TYPE_DECL, IDENTIFIER;
+VARIANT_TYPE_DEF               = SIMPLE_TYPE | IDENTIFIER;
+STRUCT_TYPE_DEF                = VARIANT_TYPE_DEF, IDENTIFIER;
                     
 DECLARATION                     = ["const"], VARIABLE_DECLARATION;
 
@@ -462,7 +461,7 @@ FN_ARGUMENTS                    = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };
 ```
 
 ```
-PROGRAM                         = { FN_DEFINITION | DECLARATION | FN_CALL };
+PROGRAM                         = { FN_DEFINITION | DECLARATION | FN_CALL | TYPE_DEFINITION };
 ```
 
 ## Sposób uruchomienia

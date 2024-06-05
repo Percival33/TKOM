@@ -139,64 +139,6 @@ class DeclarationTests {
     }
 
     @Test
-    void testVariantDeclaration() {
-        String sourceCode = "variant Var { int row, int col };";
-        Parser parser = toParser(sourceCode);
-        Program program = parser.buildProgram();
-        VariantStatement expectedVariant = new VariantStatement(
-                "Var",
-                List.of(
-                        new Parameter(new TypeDeclaration(ValueType.INT), "row"),
-                        new Parameter(new TypeDeclaration(ValueType.INT), "col")
-                ),
-                position
-        );
-
-
-        assertEquals(expectedVariant, program.getDeclarations().get("Var"));
-    }
-
-    @Test
-    void testStructDefinitionStatement() {
-        String sourceCode = """
-                struct Dog {\s
-                	int age;\s
-                	string name;\s
-                	Breed breed;\s
-                }
-                """;
-        Parser parser = toParser(sourceCode);
-        Program program = parser.buildProgram();
-        StructDefinitionStatement expectedStruct = new StructDefinitionStatement(
-                "Dog",
-                List.of(
-                        new Parameter(new TypeDeclaration(ValueType.INT), "age"),
-                        new Parameter(new TypeDeclaration(ValueType.STRING), "name"),
-                        new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Breed"), "breed")
-                ),
-                position
-        );
-
-
-        assertEquals(expectedStruct, program.getDeclarations().get("Dog"));
-    }
-
-    @Test
-    void testWrongStructDeclaration() {
-        String sourceCode = """
-            struct Dog {\s
-                int age
-                string name;\s
-                Breed breed;\s
-            }
-            """;
-        Parser parser = toParser(sourceCode);
-
-        Exception exception = assertThrows(RuntimeException.class, parser::buildProgram);
-        assertEquals("org.siu.error.SyntaxError at: Position(line=3, column=16)", exception.getMessage());
-    }
-
-    @Test
     void testConstIntDeclaration() {
         String sourceCode = "const int a = 10;";
         Parser parser = toParser(sourceCode);
@@ -227,7 +169,7 @@ class DeclarationTests {
         Program program = parser.buildProgram();
         DeclarationStatement expectedDeclaration = new DeclarationStatement(
                 new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Point"), "pt"),
-                new StructDefinitionExpression(
+                new StructDeclarationExpression(
                         List.of(
                                 new IdentifierExpression("a", position),
                                 new IdentifierExpression("b", position)

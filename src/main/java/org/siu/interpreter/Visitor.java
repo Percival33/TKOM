@@ -39,15 +39,15 @@ public interface Visitor {
 
     void visit(final AssignmentStatement assignmentStatement);
 
-    void visit(final VariantStatement variantStatement);
+    void visit(final VariantTypeDefinitionStatement variantTypeDefinitionStatement);
 
-    void visit(final StructDefinitionStatement structDefinitionStatement);
+    void visit(final StructTypeDefinitionStatement structTypeDefinitionStatement);
 
     void visit(final ConstStatement statement);
 
     void visit(final FunctionDefinitionStatement statement);
 
-    void visit(StructDefinitionExpression statement);
+    void visit(StructDeclarationExpression statement);
 
     //    Match statement
     void visit(final MatchStatement matchStatement);

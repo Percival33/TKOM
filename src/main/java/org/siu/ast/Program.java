@@ -15,6 +15,7 @@ import java.util.Map;
 public class Program implements Node {
     Map<String, FunctionDefinitionStatement> functionDefinitions;
     Map<String, Statement> declarations;
+    Map<String, Statement> typeDefinitions;
 
     @Override
     public Position getPosition() {

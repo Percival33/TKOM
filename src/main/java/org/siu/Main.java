@@ -16,7 +16,7 @@ public class Main
     public static void main(final String[] args)
     {
         final ErrorHandler errorHandler = new ErrorHandlerImpl();
-        var reader = new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("Cast.txt"));
+        var reader = new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("Const.txt"));
         var lexer = new LexerImpl(new BufferedReader(reader), errorHandler);
         var parser = new Parser(lexer, errorHandler);
         var program = parser.buildProgram();

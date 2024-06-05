@@ -13,7 +13,7 @@ import org.siu.token.Position;
 @ToString(exclude = {"expression"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class DeclarationStatement implements Statement {
+public class DeclarationStatement implements NamedStatement, Statement {
     Parameter parameter;
     Expression expression;
     Position position;
@@ -21,5 +21,10 @@ public class DeclarationStatement implements Statement {
     @Override
     public void accept(Visitor visitor) {
          visitor.visit(this);
+    }
+
+    @Override
+    public String getName() {
+        return parameter.getName();
     }
 }

@@ -12,13 +12,18 @@ import org.siu.token.Position;
 @ToString(exclude = {"statement"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class ConstStatement implements Statement {
+public class ConstStatement implements NamedStatement, Statement {
     Parameter parameter;
-    Statement statement;
+    DeclarationStatement statement;
     Position position;
 
     @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public String getName() {
+        return parameter.getName();
     }
 }
