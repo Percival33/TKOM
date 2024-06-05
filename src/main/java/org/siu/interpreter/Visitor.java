@@ -4,10 +4,8 @@ import org.siu.ast.BlockStatement;
 import org.siu.ast.Program;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
-import org.siu.ast.expression.logical.AndLogicalExpression;
 import org.siu.ast.expression.logical.LogicalExpression;
 import org.siu.ast.expression.logical.NegateLogicalExpression;
-import org.siu.ast.expression.logical.OrLogicalExpression;
 import org.siu.ast.expression.relation.*;
 import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.*;
@@ -43,11 +41,13 @@ public interface Visitor {
 
     void visit(final VariantStatement variantStatement);
 
-    void visit(final StructStatement structStatement);
+    void visit(final StructDefinitionStatement structDefinitionStatement);
 
     void visit(final ConstStatement statement);
 
     void visit(final FunctionDefinitionStatement statement);
+
+    void visit(StructDefinitionExpression statement);
 
     //    Match statement
     void visit(final MatchStatement matchStatement);
@@ -76,6 +76,7 @@ public interface Visitor {
 
     //    RelationExpression
     void visit(final RelationExpression expression);
+
     void visit(final EqualityRelationalExpression expression);
 
     //    ArithmeticExpression

@@ -55,12 +55,11 @@ public class Parser {
             name = ((DeclarationStatement) statement).getParameter().getName();
         } else if (statement instanceof VariantStatement) {
             name = ((VariantStatement) statement).getName();
-        } else if (statement instanceof StructStatement) {
-            name = ((StructStatement) statement).getName();
+        } else if (statement instanceof StructDefinitionStatement) {
+            name = ((StructDefinitionStatement) statement).getName();
         } else if (statement instanceof ConstStatement) {
-            name = ((ConstStatement) statement).getName();
-        }
-        else {
+            name = ((ConstStatement) statement).getParameter().getName();
+        } else {
             throw new RuntimeException("Invalid declaration statement");
         }
 
@@ -102,12 +101,18 @@ public class Parser {
      * <p>
      * VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
      * | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
-     * | IDENTIFIER, IDENTIFIER, "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "," "}", ";"
+     * | IDENTIFIER, IDENTIFIER, "=", "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "," "}", ";"
      */
     private Optional<Statement> parseDeclarationStatement() {
         var isConst = parseConst();
         var typeDeclarationOptional = parseTypeDeclaration();
         if (typeDeclarationOptional.isEmpty()) {
+            if (isConst) {
+                log.error("No type declaration in const statement at: {}", token.getPosition());
+                handleParserError(new MissingTypeAfterConstException(token.getPosition()), token.getPosition());
+            }
+
+
             return Optional.empty();
         }
         var typeDeclaration = typeDeclarationOptional.get();
@@ -126,7 +131,7 @@ public class Parser {
                 var parameter = new Parameter(typeDeclaration, identifier);
                 var declaration = new DeclarationStatement(parameter, expression.get(), position);
                 if (isConst) {
-                    return Optional.of(new ConstStatement(identifier, declaration, position));
+                    return Optional.of(new ConstStatement(parameter, declaration, position));
                 }
                 return Optional.of(declaration);
             }
@@ -155,11 +160,13 @@ public class Parser {
 
                 if (isVariant) {
                     var variant = new VariantStatement(identifier, members, position);
-                    if (isConst) return Optional.of(new ConstStatement(variant.getName(), variant, position));
+                    if (isConst)
+                        return Optional.of(new ConstStatement(new Parameter(new TypeDeclaration(ValueType.CUSTOM, variant.getName()), identifier), variant, position));
                     return Optional.of(variant);
                 }
-                var struct = new StructStatement(identifier, members, position);
-                if (isConst) return Optional.of(new ConstStatement(struct.getName(), struct, position));
+                var struct = new StructDefinitionStatement(identifier, members, position);
+                if (isConst)
+                    return Optional.of(new ConstStatement(new Parameter(new TypeDeclaration(ValueType.CUSTOM, struct.getName()), identifier), struct, position));
                 return Optional.of(struct);
             }
             default -> {
@@ -170,7 +177,7 @@ public class Parser {
     }
 
     private boolean parseConst() {
-        if(token.getType() == TokenType.CONST) {
+        if (token.getType() == TokenType.CONST) {
             nextToken();
             return true;
         }
@@ -310,10 +317,8 @@ public class Parser {
 
     /**
      * ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION
-     *                                 | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
-     *                                 | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
-     *
-     *
+     * | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
+     * | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
      */
     private Optional<Statement> parseAssignmentOrDeclarationOrExpression() {
         if (token.getType() != TokenType.IDENTIFIER) {
@@ -769,6 +774,7 @@ public class Parser {
         // FACTOR
         var factorOptional = parseLiteralExpression()
                 .or(this::parseIdentifierOrFnCallOrVariant)
+                .or(this::parseStructDefinitionExpression)
                 .or(Optional::empty);
 
         if (factorOptional.isEmpty()) {
@@ -863,6 +869,33 @@ public class Parser {
             arguments.add(expression);
         } while (token.getType() == TokenType.COMMA);
         return arguments;
+    }
+
+    /**
+     * '{', EXPRESSION, { ',', EXPRESSION }, '}' ( * struct definition expression *)
+     */
+    private Optional<Expression> parseStructDefinitionExpression() {
+        if (token.getType() != TokenType.CURLY_BRACKET_OPEN) {
+            return Optional.empty();
+        }
+        nextToken();
+
+        var arguments = new ArrayList<Expression>();
+        while(token.getType() != TokenType.CURLY_BRACKET_CLOSE) {
+            var expression = parseExpression();
+            if (expression.isEmpty()) {
+                log.error("No expression in struct at: {}", token.getPosition());
+                handleParserError(new MissingExpressionError(token.getPosition()), token.getPosition());
+            }
+            arguments.add(expression.get());
+            if (token.getType() == TokenType.COMMA) {
+                nextToken();
+            }
+        }
+
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+
+        return Optional.of(new StructDefinitionExpression(arguments, token.getPosition()));
     }
 
     private boolean parseCopyOperator() {

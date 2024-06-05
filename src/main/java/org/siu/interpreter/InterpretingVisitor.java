@@ -27,7 +27,6 @@ import org.siu.interpreter.state.value.IntValue;
 import org.siu.interpreter.state.value.StringValue;
 import org.siu.token.Position;
 
-import javax.sound.midi.SysexMessage;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.function.Function;
@@ -162,7 +161,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(StructStatement structStatement) {
+    public void visit(StructDefinitionStatement structStatement) {
 
     }
 
@@ -184,6 +183,11 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     @Override
     public void visit(FunctionDefinitionStatement statement) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void visit(StructDefinitionExpression statement) {
+
     }
 
     @Override

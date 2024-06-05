@@ -1,10 +1,8 @@
-package org.siu.ast.statement;
+package org.siu.ast.expression;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
-import org.siu.ast.Parameter;
-import org.siu.ast.Statement;
 import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
@@ -13,9 +11,8 @@ import java.util.List;
 @ToString(exclude = {"parameters"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class StructStatement implements Statement {
-    String name;
-    List<Parameter> parameters;
+public class StructDefinitionExpression implements Expression {
+    List<Expression> arguments;
     Position position;
 
     @Override

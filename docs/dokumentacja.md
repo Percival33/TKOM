@@ -382,7 +382,6 @@ DECLARATION                     = ["const"], VARIABLE_DECLARATION;
 
 VARIABLE_DECLARATION            = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
                                 | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
-                                | IDENTIFIER, IDENTIFIER, "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "}", ";"
                         
 STRUCT_MEMBER                   = LITERAL 
                                 | FN_CALL
@@ -449,6 +448,7 @@ UNARY_FACTOR                    = ["-"], FACTOR;
 
 FACTOR                          = LITERAL
                                 | '(', EXPRESSION, ')'
+                                | '{', EXPRESSION, { ',', EXPRESSION }, '}' ( * struct definition *)
                                 | IDENTIFIER_FNCALL_MEM_VARIANT; 
 
 IDENTIFIER_FNCALL_MEM_VARIANT   = IDENTIFIER, 

@@ -4,13 +4,11 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.Parameter;
-import org.siu.ast.Node;
 import org.siu.ast.expression.Expression;
 import org.siu.ast.Statement;
 import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
-import java.util.List;
 
 @ToString(exclude = {"expression"})
 @EqualsAndHashCode(exclude = "position")

@@ -5,16 +5,17 @@ import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.Parameter;
 import org.siu.ast.Statement;
-import org.siu.ast.type.TypeDeclaration;
 import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
-@ToString(exclude = {"statement"})
+import java.util.List;
+
+@ToString(exclude = {"parameters"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class ConstStatement implements Statement {
-    Parameter parameter;
-    Statement statement;
+public class StructDefinitionStatement implements Statement {
+    String name;
+    List<Parameter> parameters;
     Position position;
 
     @Override
