@@ -144,6 +144,10 @@ public class InterpretingVisitor implements Visitor, Interpreter {
                 .or(() -> GLOBAL_CONTEXT.findVariable(statement.getName()))
                 .orElseThrow(NoVariableException::new);
 
+        if(previousValue.isConstant()) {
+            throw new ReassignConstVariableException(previousValue.getIdentifier(), statement.getPosition());
+        }
+
         callAccept(statement.getValue());
         var value = retrieveResult(previousValue.getType());
 

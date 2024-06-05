@@ -58,22 +58,6 @@ public class Parser {
 
     private void saveDeclaration(Statement statement, Map<String, Statement> declarations) {
         String name = statement.getName();
-        if (statement instanceof DeclarationStatement) {
-            name = ((DeclarationStatement) statement).getParameter().getName();
-        }
-//        TODO: move type definitions
-//        else if (statement instanceof VariantTypeDefinitionStatement) {
-//            name = ((VariantTypeDefinitionStatement) statement).getName();
-//        }
-//        else if (statement instanceof StructTypeDefinitionStatement) {
-//            name = ((StructTypeDefinitionStatement) statement).getName();
-//        }
-        else if (statement instanceof ConstStatement) {
-            name = ((ConstStatement) statement).getParameter().getName();
-        } else {
-            throw new RuntimeException("Invalid declaration statement");
-        }
-
 
         if (declarations.containsKey(name)) {
             handleParserError(new RedefinitionError(declarations.get(name).getPosition()), statement.getPosition());
@@ -81,7 +65,9 @@ public class Parser {
         declarations.put(name, statement);
     }
 
-    //    PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
+    /**
+     * PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
+     */
     public Program buildProgram() {
         nextToken();
         Map<String, FunctionDefinitionStatement> functions = new HashMap<>();
@@ -202,34 +188,31 @@ public class Parser {
                 handleParserError(new MissingTypeAfterConstException(token.getPosition()), token.getPosition());
             }
 
-
             return Optional.empty();
         }
+
         var typeDeclaration = typeDeclarationOptional.get();
         var position = token.getPosition();
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
 
-        switch (token.getType()) {
-            case ASSIGN -> {
-                nextToken();
-                var expression = parseExpression();
-                if (expression.isEmpty()) {
-                    log.error("No expression in variable declaration at: {}", position);
-                    handleParserError(new MissingExpressionError(position), position);
-                }
-                mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
-                var parameter = new Parameter(typeDeclaration, identifier);
-                var declaration = new DeclarationStatement(parameter, expression.get(), position);
-                if (isConst) {
-                    return Optional.of(new ConstStatement(parameter, declaration, position));
-                }
-                return Optional.of(declaration);
-            }
-            default -> {
-                break;
-            }
+        if (token.getType() != TokenType.ASSIGN) {
+            log.error("Invalid declaration statement at: {}", position);
+            handleParserError(new SyntaxError(position), position);
         }
-        throw new RuntimeException("Invalid declaration statement at: " + position);
+
+        nextToken();
+        var expression = parseExpression();
+        if (expression.isEmpty()) {
+            log.error("No expression in variable declaration at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
+        }
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+        var parameter = new Parameter(typeDeclaration, identifier);
+        var declaration = new DeclarationStatement(parameter, expression.get(), position);
+        if (isConst) {
+            return Optional.of(new ConstStatement(parameter, declaration, position));
+        }
+        return Optional.of(declaration);
     }
 
     private boolean parseConst() {
@@ -382,34 +365,52 @@ public class Parser {
         }
         var name = token.getValue().toString();
         var position = token.getPosition();
+
         nextToken();
-        if (token.getType() == TokenType.ASSIGN || token.getType() == TokenType.DOT) {
-            var statement = parseAssignmentStatement(name);
-            if (statement.isEmpty()) {
-                log.error("No statement in assignment at: {}", position);
-                handleParserError(new SyntaxError(position), position);
-            }
-            mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
-            return Optional.of((Statement) statement.get());
-        }
-        // fnCall
-        if (token.getType() == TokenType.BRACKET_OPEN) {
-            var arguments = parseFnArguments();
-            mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-            mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
-            return Optional.of(new FunctionCallExpression(name, arguments, position));
-        }
+
+        var statement = parseAssignmentStatement(name, position)
+                .or(() -> parseFnCallStatement(name, position));
+        if (statement.isPresent()) return statement;
 
         var variable = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
         var expression = parseExpression();
+
         if (expression.isEmpty()) {
             log.error("No expression in declaration at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
         }
+
         var type = new TypeDeclaration(ValueType.CUSTOM, name);
         mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+
         return Optional.of(new DeclarationStatement(new Parameter(type, variable), expression.get(), position));
+    }
+
+    private Optional<Statement> parseFnCallStatement(String name, Position position) {
+        if (token.getType() != TokenType.BRACKET_OPEN) {
+            return Optional.empty();
+        }
+
+        var arguments = parseFnArguments();
+
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
+
+        return Optional.of(new FunctionCallExpression(name, arguments, position));
+    }
+
+    private Optional<Statement> parseAssignmentStatement(String name, Position position) {
+        if(!(token.getType() == TokenType.ASSIGN || token.getType() == TokenType.DOT)) {
+            return Optional.empty();
+        }
+        var statement = parseAssignmentStatement(name);
+        if (statement.isEmpty()) {
+            log.error("No statement in assignment at: {}", position);
+            handleParserError(new SyntaxError(position), position);
+        }
+        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
+        return Optional.of(statement.get());
     }
 
 
@@ -431,21 +432,14 @@ public class Parser {
     private Optional<AssignmentStatement> parseAssignmentStatement(String name) {
         var position = token.getPosition();
 
-        if (token.getType() == TokenType.DOT) {
-            nextToken();
-            var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
-            mustBe(token, TokenType.ASSIGN, SyntaxError::new);
-            nextToken();
-            var expression = parseExpression();
-            if (expression.isEmpty()) {
-                log.error("No expression in assignment at: {}", position);
-                handleParserError(new MissingExpressionError(position), position);
-            }
-            return Optional.of(new AssignmentStatement(name + "." + fieldName, expression.get(), position));
+        var member = parseStructMemberAssignmentStatement(name, position);
+        if (member.isPresent()) {
+            return member;
         }
-        // FIXME: expr albo identifier
+
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
         var expression = parseExpression();
+
         if (expression.isEmpty()) {
             log.error("No expression in assignment at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
@@ -456,6 +450,23 @@ public class Parser {
         }
 
         return Optional.of(new AssignmentStatement(name, expression.get(), position));
+    }
+
+    private Optional<AssignmentStatement> parseStructMemberAssignmentStatement(String name, Position position) {
+        if(token.getType() != TokenType.DOT) {
+            return Optional.empty();
+        }
+
+        nextToken();
+        var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.ASSIGN, SyntaxError::new);
+        nextToken();
+        var expression = parseExpression();
+        if (expression.isEmpty()) {
+            log.error("No expression in assignment at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
+        }
+        return Optional.of(new AssignmentStatement(name + "." + fieldName, expression.get(), position));
     }
 
     /**
@@ -868,36 +879,44 @@ public class Parser {
         var name = token.getValue().toString();
         var position = token.getPosition();
         nextToken();
-        Expression expr;
 
-        switch (token.getType()) {
-            case DOT -> {
-                nextToken();
-                var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
-                expr = new StructExpression(name, fieldName, position);
-            }
-            case BRACKET_OPEN -> {
-                var arguments = parseFnArguments();
-                mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-                expr = new FunctionCallExpression(name, arguments, position);
-            }
-            case DOUBLE_COLON -> {
-                nextToken();
-                var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
-                mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
-                var variantExpression = parseExpression();
-                if (variantExpression.isEmpty()) {
-                    log.error("No expression in variant at: {}", position);
-                    handleParserError(new MissingExpressionError(position), position);
-                }
-                mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-                expr = new VariantExpression(fieldName, variantExpression.get(), position);
-            }
-            default -> {
-                expr = new IdentifierExpression(name, position);
-            }
+        return parseStructExpression(name, position)
+                .or(() -> parseFnCallExpression(name, position))
+                .or(() -> parseVariantExpression(name, position))
+                .or(() -> Optional.of(new IdentifierExpression(name, position)));
+    }
+
+    private Optional<Expression> parseStructExpression(String name, Position position) {
+        if(token.getType() != TokenType.DOT) return Optional.empty();
+
+        nextToken();
+        var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        return Optional.of(new StructExpression(name, fieldName, position));
+    }
+
+    private Optional<Expression> parseFnCallExpression(String name, Position position) {
+        if(token.getType() != TokenType.BRACKET_OPEN) return Optional.empty();
+
+        var arguments = parseFnArguments();
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        return Optional.of(new FunctionCallExpression(name, arguments, position));
+    }
+
+    private Optional<Expression> parseVariantExpression(String name, Position position) {
+        if(token.getType() != TokenType.DOUBLE_COLON) return Optional.empty();
+
+        nextToken();
+
+        var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+        var variantExpression = parseExpression();
+
+        if (variantExpression.isEmpty()) {
+            log.error("No expression in variant at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
         }
-        return Optional.of(expr);
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        return Optional.of(new VariantExpression(fieldName, variantExpression.get(), position));
     }
 
     /**

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.siu.ast.Parameter;
 import org.siu.ast.Program;
+import org.siu.ast.Statement;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.statement.*;
@@ -204,5 +205,35 @@ class DeclarationTests {
         );
 
         assertEquals(expectedConst, program.getDeclarations().get("pt2"));
+    }
+
+    @Test
+    void testIntFromStructMember() {
+        String sourceCode = "const int x = pt.x;";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+
+        ConstStatement expectedConst = new ConstStatement(
+                new Parameter(new TypeDeclaration(ValueType.INT), "x"),
+                createDeclaration("x", ValueType.INT, new StructExpression("pt", "x", position)),
+                position
+        );
+
+        assertEquals(expectedConst, program.getDeclarations().get("x"));
+    }
+
+    @Test
+    void testVariantDeclaration() {
+        String sourceCode = "Var v = Var::row(3);";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+
+        Statement expectedDeclaration = createDeclaration(
+                "v",
+                ValueType.CUSTOM, "Var",
+                new VariantExpression("row", new IntegerExpression(3, position), position)
+        );
+
+        assertEquals(expectedDeclaration, program.getDeclarations().get("v"));
     }
 }

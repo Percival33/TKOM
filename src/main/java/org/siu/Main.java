@@ -3,6 +3,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.siu.error.ErrorHandler;
 import org.siu.error.ErrorHandlerImpl;
 import org.siu.interpreter.InterpretingVisitor;
+import org.siu.interpreter.error.InterpreterException;
 import org.siu.lexer.Lexer;
 import org.siu.lexer.LexerImpl;
 import org.siu.parser.Parser;
@@ -26,7 +27,11 @@ public class Main
         try (var out = new PrintStream(output, true, utf8)) {
             var visitor = new InterpretingVisitor(program, System.out);
             visitor.execute();
-        } catch (UnsupportedEncodingException e) {
+        }
+        catch (InterpreterException e) {
+            System.out.println(e.getMessage());
+        }
+        catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
     }
