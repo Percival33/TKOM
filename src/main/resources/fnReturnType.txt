@@ -1,0 +1,9 @@
+fn doNothing() {
+    print("Doing nothing");
+    return 0;
+}
+
+fn main() {
+    int x = doNothing();
+    print((string)x);
+}

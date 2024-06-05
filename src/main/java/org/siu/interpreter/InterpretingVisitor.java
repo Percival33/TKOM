@@ -247,6 +247,11 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(StructExpression expression) {
+        var context = contexts.getLast();
+        var variable = context.findVariable(expression.getStructName())
+                .or(() -> GLOBAL_CONTEXT.findVariable(expression.getStructName()))
+                .orElseThrow(NoVariableException::new);
+
 
     }
 
@@ -465,8 +470,9 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private Value retrieveResult(TypeDeclaration type) {
         var value = retrieveResult();
 
-        // TODO: struct / variant magic
-        // FIXME: struct value getter
+        if(type.getValueType() == ValueType.CUSTOM) {
+            throw new RuntimeException("Custom type not supported.");
+        }
 
         validateTypes(value.getType(), type);
 
