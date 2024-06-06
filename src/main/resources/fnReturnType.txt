@@ -1,6 +1,7 @@
 fn doNothing() {
     print("Doing nothing");
     return 0;
+    # TODO: fix this to print warning
 }
 
 fn main() {

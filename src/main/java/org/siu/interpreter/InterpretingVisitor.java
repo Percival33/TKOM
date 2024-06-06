@@ -4,10 +4,7 @@ import io.vavr.Function3;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.siu.ast.BlockStatement;
-import org.siu.ast.Node;
-import org.siu.ast.Program;
-import org.siu.ast.Statement;
+import org.siu.ast.*;
 import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
 import org.siu.ast.expression.logical.LogicalExpression;
@@ -23,10 +20,7 @@ import org.siu.interpreter.state.Context;
 import org.siu.interpreter.state.Result;
 import org.siu.interpreter.state.Value;
 import org.siu.interpreter.state.Variable;
-import org.siu.interpreter.state.value.BoolValue;
-import org.siu.interpreter.state.value.FloatValue;
-import org.siu.interpreter.state.value.IntValue;
-import org.siu.interpreter.state.value.StringValue;
+import org.siu.interpreter.state.value.*;
 import org.siu.token.Position;
 
 import java.io.PrintStream;
@@ -43,11 +37,12 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private final Program program;
     private final PrintStream out;
     private final Map<String, FunctionDefinitionStatement> functionDefinitions = new HashMap<>(BUILTIN_FUNCTIONS);
-    private final Map<String, Statement> typeDefinitions = new HashMap<>();
+    private final Map<String, CustomTypeStatement> typeDefinitions = new HashMap<>();
 
     private final Deque<Context> contexts = new ArrayDeque<>(List.of(GLOBAL_CONTEXT));
     private Result result = Result.empty();
     private Position currentPosition = new Position(1, 1);
+    private Deque<Parameter> customType = new ArrayDeque<>();
 
     @Override
     public void execute() {
@@ -61,7 +56,6 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     @Override
     public void visit(Program program) {
         functionDefinitions.putAll(program.getFunctionDefinitions());
-        typeDefinitions.putAll(program.getTypeDefinitions());
 
         for (var declaration : program.getDeclarations().values()) {
             callAccept(declaration);
@@ -113,6 +107,11 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(ReturnStatement statement) {
+        if (statement.getExpression() == null) {
+            result = Result.empty().toBuilder().returned(true).build();
+            return;
+        }
+
         callAccept(statement.getExpression());
         result = result.toBuilder().returned(true).build();
     }
@@ -125,8 +124,17 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         var name = statement.getParameter().getName();
         var expression = statement.getExpression();
 
+        if (type.getValueType() == ValueType.CUSTOM) {
+            customType.add(statement.getParameter());
+        }
+
         callAccept(expression);
-        var value = retrieveResult(type);
+        Value value;
+        if (customType.size() > 0) {
+            value = retrieveResult(statement.getParameter());
+        } else {
+            value = retrieveResult(type);
+        }
 
         context.addVariable(new Variable(type, name, value));
     }
@@ -153,7 +161,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
                 .or(() -> GLOBAL_CONTEXT.findVariable(statement.getName()))
                 .orElseThrow(NoVariableException::new);
 
-        if(previousValue.isConstant()) {
+        if (previousValue.isConstant()) {
             throw new ReassignConstVariableException(previousValue.getIdentifier(), statement.getPosition());
         }
 
@@ -171,11 +179,40 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     @Override
     public void visit(VariantTypeDefinitionStatement variantTypeDefinitionStatement) {
         throw new UnsupportedOperationException();
+
+        /*
+        if(typeDefinitions.containsKey(statement.getName())) {
+            throw new StructAlreadyDefinedException(statement.getName());
+        }
+
+        for(var param : statement.getParameters()) {
+            validateParameter(param);
+        }
+
+        typeDefinitions.put(statement.getName(), statement);
+         */
     }
 
     @Override
-    public void visit(StructTypeDefinitionStatement structStatement) {
-        throw new UnsupportedOperationException();
+    public void visit(StructTypeDefinitionStatement statement) {
+        if (typeDefinitions.containsKey(statement.getName())) {
+            throw new StructAlreadyDefinedException(statement.getName());
+        }
+
+        for (var param : statement.getParameters()) {
+            validateParameter(param);
+        }
+
+        typeDefinitions.put(statement.getName(), statement);
+    }
+
+    private void validateParameter(Parameter param) {
+        var type = param.getType();
+        if (type.getValueType() != ValueType.CUSTOM) return;
+
+        if (!typeDefinitions.containsKey(type.getCustomType())) {
+            throw new TypeNotDefinedException(type.getCustomType());
+        }
     }
 
     @Override
@@ -197,17 +234,68 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(StructDeclarationExpression statement) {
-//        var context = contexts.getLast();
-//
-//        var type = statement.getParameter().getType();
-//        var name = statement.getParameter().getName();
-//        var expression = statement.getExpression();
-//
-//        callAccept(expression);
-//        var value = retrieveResult(type);
-//
-//        context.addVariable(new Variable(type, name, value));
+    public void visit(StructDeclarationExpression expression) {
+        var context = contexts.getLast();
+
+        if (customType.isEmpty()) {
+            throw new RuntimeException("Custom type name is empty");
+        }
+
+        var customParameter = customType.getLast();
+        var customTypeName = customParameter.getType().getCustomType();
+
+        if (!typeDefinitions.containsKey(customTypeName)) {
+            throw new TypeNotDefinedException(customTypeName);
+        }
+
+        var struct = typeDefinitions.get(customTypeName);
+        var arguments = expression.getArguments();
+        var parameters = struct.getParameters();
+
+        if (arguments.size() != parameters.size()) {
+            throw new InvalidNumberOfArgumentsException(expression);
+        }
+
+        var members = new HashMap<String, Value>();
+
+        for (int i = 0; i < arguments.size(); i++) {
+            callAccept(arguments.get(i));
+            var value = retrieveResult(parameters.get(i));
+
+            validateTypes(value.getType(), parameters.get(i).getType());
+
+            members.put(parameters.get(i).getName(), value);
+        }
+
+        var value = new StructValue(customParameter.getType(), members);
+        result = Result.ok(value);
+    }
+
+    @Override
+    public void visit(StructMemberAssignmentStatement statement) {
+        var context = contexts.getLast();
+
+        var structName = statement.getStruct().getStructName();
+        var fieldName = statement.getStruct().getFieldName();
+
+        var structVariable = context.findVariable(structName)
+                .or(() -> GLOBAL_CONTEXT.findVariable(structName))
+                .orElseThrow(NoVariableException::new);
+
+        var struct = structVariable.getValue();
+        var value = struct.get(fieldName);
+
+        callAccept(statement.getValue());
+        var newValue = retrieveResult(value.getType());
+
+        validateTypes(newValue.getType(), value.getType());
+
+        struct.put(fieldName, newValue);
+    }
+
+    @Override
+    public void visit(VariantAssignmentStatement statement) {
+        throw new RuntimeException("variant assignment not supported");
     }
 
     @Override
@@ -248,11 +336,15 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     @Override
     public void visit(StructExpression expression) {
         var context = contexts.getLast();
-        var variable = context.findVariable(expression.getStructName())
+
+        var structVariable = context.findVariable(expression.getStructName())
                 .or(() -> GLOBAL_CONTEXT.findVariable(expression.getStructName()))
                 .orElseThrow(NoVariableException::new);
 
+        var struct = structVariable.getValue();
+        var value = struct.get(expression.getFieldName());
 
+        result = Result.ok(value);
     }
 
     @Override
@@ -284,7 +376,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         for (int i = 0; i < arguments.size(); i++) {
             callAccept(arguments.get(i));
             var parameter = functionDeclaration.getParameters().get(i);
-            var value = retrieveResult(parameter.getType());
+            var value = retrieveResult(parameter);
 
             context.addVariable(new Variable(parameter.getType(), parameter.getName(), value));
         }
@@ -461,8 +553,8 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         var context = contexts.getLast();
 
         var message = context.findVariable(PRINT_ARGUMENT)
-            .map(Variable::getValue)
-            .orElseThrow(NoVariableException::new);
+                .map(Variable::getValue)
+                .orElseThrow(NoVariableException::new);
 
         out.println(message.getString());
     }
@@ -470,11 +562,20 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private Value retrieveResult(TypeDeclaration type) {
         var value = retrieveResult();
 
-        if(type.getValueType() == ValueType.CUSTOM) {
+        if (type.getValueType() == ValueType.CUSTOM) {
+            // TODO: find custom type
             throw new RuntimeException("Custom type not supported.");
         }
 
         validateTypes(value.getType(), type);
+
+        return value;
+    }
+
+    private Value retrieveResult(Parameter type) {
+        var value = retrieveResult();
+
+        validateTypes(value.getType(), type.getType());
 
         return value;
     }
@@ -492,6 +593,9 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             throw new TypesDoNotMatchException(provided, expected);
         }
 
+        if (expected.getCustomType() != null && !Objects.equals(provided.getCustomType(), expected.getCustomType())) {
+            throw new TypesDoNotMatchException(provided, expected);
+        }
     }
 
     private <T extends Node> void callAccept(T expression) {

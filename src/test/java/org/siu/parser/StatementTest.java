@@ -280,4 +280,19 @@ class StatementTest {
 
         assertEquals(expectedFunction, actualFunction);
     }
+
+    @Test
+    void testStructMemberAssignment() {
+        String sourceCode = "fn f() { pluto.age = 3; }";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+
+        Statement assignmentStatement = new StructMemberAssignmentStatement(
+                new StructExpression("pluto", "age", position),
+                new IntegerExpression(3, position),
+                position
+        );
+
+        assertEquals(assignmentStatement, program.getFunctionDefinitions().get("f").getBlock().getStatements().get(0));
+    }
 }

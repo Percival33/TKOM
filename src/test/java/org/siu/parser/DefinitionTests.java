@@ -91,7 +91,7 @@ class DefinitionTests {
                 int age
                 string name;\s
                 Breed breed;\s
-            }
+            };
             """;
         Parser parser = toParser(sourceCode);
 
@@ -102,7 +102,7 @@ class DefinitionTests {
     @Test
     void testEmptyStructDeclaration() {
         String sourceCode = """
-            struct Dog {}
+            struct Dog {};
             """;
         Parser parser = toParser(sourceCode);
         Program program = parser.buildProgram();

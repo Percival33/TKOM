@@ -114,7 +114,6 @@ public class Parser {
                 return parseVariantTypeDefinition();
             }
             case STRUCT -> {
-                nextToken();
                 return parseStructTypeDefinition();
             }
             default -> {
@@ -127,6 +126,7 @@ public class Parser {
      * STRUCT_DEFINITION               = IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
      */
     private Optional<Statement> parseStructTypeDefinition() {
+        nextToken();
         var position = token.getPosition();
         var name = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
@@ -139,6 +139,9 @@ public class Parser {
             mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
             member = parseParameter();
         }
+
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
 
         return Optional.of(new StructTypeDefinitionStatement(name, members, position));
     }
@@ -429,7 +432,7 @@ public class Parser {
      * | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
      * | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
      */
-    private Optional<AssignmentStatement> parseAssignmentStatement(String name) {
+    private Optional<Statement> parseAssignmentStatement(String name) {
         var position = token.getPosition();
 
         var member = parseStructMemberAssignmentStatement(name, position);
@@ -452,7 +455,7 @@ public class Parser {
         return Optional.of(new AssignmentStatement(name, expression.get(), position));
     }
 
-    private Optional<AssignmentStatement> parseStructMemberAssignmentStatement(String name, Position position) {
+    private Optional<Statement> parseStructMemberAssignmentStatement(String structName, Position position) {
         if(token.getType() != TokenType.DOT) {
             return Optional.empty();
         }
@@ -460,20 +463,19 @@ public class Parser {
         nextToken();
         var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
-        nextToken();
         var expression = parseExpression();
         if (expression.isEmpty()) {
             log.error("No expression in assignment at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
         }
-        return Optional.of(new AssignmentStatement(name + "." + fieldName, expression.get(), position));
+        return Optional.of(new StructMemberAssignmentStatement(new StructExpression(structName, fieldName, position), expression.get(), position));
     }
 
     /**
      * "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
      * part of variant assignment
      */
-    private Optional<AssignmentStatement> parseVariantAssignment(String name, Position position) {
+    private Optional<Statement> parseVariantAssignment(String name, Position position) {
         nextToken();
         var variantName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
@@ -839,9 +841,9 @@ public class Parser {
         var position = token.getPosition();
 
         // FACTOR
-        var factorOptional = parseLiteralExpression()
+        var factorOptional = parseStructDefinitionExpression()
+                .or(this::parseLiteralExpression)
                 .or(this::parseIdentifierOrFnCallOrVariant)
-                .or(this::parseStructDefinitionExpression)
                 .or(Optional::empty);
 
         if (factorOptional.isEmpty()) {

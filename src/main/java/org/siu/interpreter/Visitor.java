@@ -48,7 +48,11 @@ public interface Visitor {
 
     void visit(final FunctionDefinitionStatement statement);
 
-    void visit(StructDeclarationExpression statement);
+    void visit(final StructDeclarationExpression statement);
+
+    void visit(final StructMemberAssignmentStatement statement);
+
+    void visit(final VariantAssignmentStatement statement);
 
     //    Match statement
     void visit(final MatchStatement matchStatement);
@@ -100,5 +104,6 @@ public interface Visitor {
 
     //    Custom
     void visit(final PrintFunction expression);
+
 }
 

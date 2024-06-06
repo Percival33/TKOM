@@ -11,7 +11,7 @@ import java.util.List;
 
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class VariantTypeDefinitionStatement implements Statement {
+public class VariantTypeDefinitionStatement implements CustomTypeStatement {
     String name;
     List<Parameter> parameters;
     Position position;

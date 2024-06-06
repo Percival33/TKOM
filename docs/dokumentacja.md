@@ -164,8 +164,8 @@ struct Cat {
 	int age;
 	Breed breed;
 }
-Breed golden = Breed { "Golden retriever", 5 };
-Dog pluto = Dog { 14, "pluto", golden };
+Breed golden = { "Golden retriever", 5 };
+Dog pluto = { 14, "pluto", golden };
 
 
 Point pt = { a, f(10) };

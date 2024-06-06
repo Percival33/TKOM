@@ -21,4 +21,20 @@ public interface Value {
     default String getString() {
         throw new UnexpectedTypeException();
     }
+
+    default Value get(String key) {
+        throw new UnexpectedTypeException();
+    }
+
+    default void put(String key, Value value) {
+        throw new UnexpectedTypeException();
+    }
+
+    default Value get() {
+        throw new UnexpectedTypeException();
+    }
+
+    default void put(Value value) {
+        throw new UnexpectedTypeException();
+    }
 }
