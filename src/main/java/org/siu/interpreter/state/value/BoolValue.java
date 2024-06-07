@@ -16,4 +16,9 @@ public class BoolValue implements Value {
     public BoolValue(boolean bool) {
         this.bool = bool;
     }
+
+    @Override
+    public BoolValue copy() {
+        return new BoolValue(bool);
+    }
 }

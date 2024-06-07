@@ -55,4 +55,8 @@ public interface Value {
     default void put(Value value) {
         throw new UnexpectedTypeException();
     }
+
+    default Value copy() {
+        throw new UnexpectedTypeException();
+    }
 }

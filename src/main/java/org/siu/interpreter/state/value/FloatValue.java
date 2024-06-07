@@ -22,4 +22,9 @@ public class FloatValue implements Value {
     public FloatValue(float floatVal) {
         this.floatVal = floatVal;
     }
+
+    @Override
+    public FloatValue copy() {
+        return new FloatValue(floatVal);
+    }
 }

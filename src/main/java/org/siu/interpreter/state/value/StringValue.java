@@ -16,4 +16,9 @@ public class StringValue implements Value {
     public StringValue(String string) {
         this.string = string;
     }
+
+    @Override
+    public StringValue copy() {
+        return new StringValue(string);
+    }
 }

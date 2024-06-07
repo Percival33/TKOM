@@ -15,13 +15,13 @@ public class StructValue implements Value {
 
     @Override
     public Value get(String key) {
-        if(!structMembers.containsKey(key)) {
+        if (!structMembers.containsKey(key)) {
             throw new NotExistingStructMemberException(type.getCustomType(), key);
         }
 
         var value = structMembers.get(key);
 
-        if(value == null) {
+        if (value == null) {
             throw new StructMemberNotInitializedException(type.getCustomType(), key);
         }
 
@@ -35,10 +35,15 @@ public class StructValue implements Value {
             throw new StructMemberNotInitializedException(type.getCustomType(), key);
         }
 
-        if(!previous.getType().equals(value.getType())) {
+        if (!previous.getType().equals(value.getType())) {
             throw new TypesDoNotMatchException(value.getType(), previous.getType());
         }
 
         structMembers.put(key, value);
+    }
+
+    @Override
+    public StructValue copy() {
+        return new StructValue(new TypeDeclaration(type.getValueType(), type.getCustomType()), Map.copyOf(structMembers));
     }
 }

@@ -18,4 +18,9 @@ public class IntValue implements Value {
     public IntValue(int integer) {
         this.integer = integer;
     }
+
+    @Override
+    public IntValue copy() {
+        return new IntValue(integer);
+    }
 }
