@@ -7,7 +7,8 @@ import org.siu.token.Position;
 
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class VariantExpression implements Expression {
+public class VariantDeclarationExpression implements Expression {
+    String typeName;
     String fieldName;
     Expression expression;
     Position position;

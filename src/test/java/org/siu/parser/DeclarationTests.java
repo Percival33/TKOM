@@ -271,7 +271,7 @@ class DeclarationTests {
         Statement expectedDeclaration = createDeclaration(
                 "v",
                 ValueType.CUSTOM, "Var",
-                new VariantExpression("row", new IntegerExpression(3, position), position)
+                new VariantDeclarationExpression("Var", "row", new IntegerExpression(3, position), position)
         );
 
         assertEquals(expectedDeclaration, program.getDeclarations().get("v"));

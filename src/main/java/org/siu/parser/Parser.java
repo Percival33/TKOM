@@ -110,7 +110,6 @@ public class Parser {
     private Optional<Statement> parseTypeDefinitionStatement() {
         switch (token.getType()) {
             case VARIANT -> {
-                nextToken();
                 return parseVariantTypeDefinition();
             }
             case STRUCT -> {
@@ -150,6 +149,7 @@ public class Parser {
      * VARIANT_DEFINITION              = IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";
      */
     private Optional<Statement> parseVariantTypeDefinition() {
+        nextToken();
         var position = token.getPosition();
         var name = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         position = token.getPosition();
@@ -163,15 +163,18 @@ public class Parser {
         }
         members.add(member.get());
 
-        while (token.getType() == TokenType.COMMA) {
+        while (token.getType() == TokenType.SEMICOLON) {
             nextToken();
             member = parseParameter();
             if (member.isEmpty()) {
-                mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
                 break;
             }
+
             members.add(member.get());
         }
+
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
 
         return Optional.of(new VariantTypeDefinitionStatement(name, members, position));
     }
@@ -322,7 +325,7 @@ public class Parser {
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
 
         var expression = parseExpression();
-        if(expression.isEmpty()) {
+        if (expression.isEmpty()) {
             log.error("No expression in match statement at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
         }
@@ -640,8 +643,8 @@ public class Parser {
         if (identifier.isEmpty()) {
             log.error("Invalid parameter at: {}", token.getPosition());
             handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
-            return Optional.empty();
         }
+
         return Optional.of(new Parameter(type.get(), identifier));
     }
 
@@ -925,7 +928,7 @@ public class Parser {
             handleParserError(new MissingExpressionError(position), position);
         }
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-        return Optional.of(new VariantExpression(fieldName, variantExpression.get(), position));
+        return Optional.of(new VariantDeclarationExpression(name, fieldName, variantExpression.get(), position));
     }
 
     /**

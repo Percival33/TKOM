@@ -175,7 +175,7 @@ Point pt2 = pt;
 - variant
 
 ```
-variant Var { int row, int col };
+variant Var { int row; int col; };
 Var v = Var::row(3);
 
 fn inspect(Var v) {
@@ -368,7 +368,7 @@ SIMPLE_TYPE             = "int"
 TYPE_DEFINITION                 = STRUCT_TYPE_DEFINITION
                                 | VARIANT_TYPE_DEFINITION;
 
-VARIANT_TYPE_DEFINITION         = "variant", IDENTIFIER, "{", STRUCT_TYPE_DEF, {, ",", STRUCT_TYPE_DEF }, "}";                            
+VARIANT_TYPE_DEFINITION         = "variant", IDENTIFIER, "{", STRUCT_TYPE_DEF, {, ";", STRUCT_TYPE_DEF, ";" }, "}", ";" ;                            
 STRUCT_TYPE_DEFINITION          = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DEF }, "}", ";";
             
 VARIANT_RET_TYPE                = "variant", "{", VARIANT_TYPE_DEF, { ",", VARIANT_TYPE_DEF }, "}"            

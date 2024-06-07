@@ -69,7 +69,7 @@ public interface Visitor {
     void visit(final BooleanExpression expression);
 
     //    Complex type expression
-    void visit(final VariantExpression expression);
+    void visit(final VariantDeclarationExpression expression);
 
     void visit(final StructExpression expression);
 

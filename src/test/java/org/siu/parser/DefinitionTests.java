@@ -35,7 +35,7 @@ class DefinitionTests {
 
     @Test
     void testVariantDefinition() {
-        String sourceCode = "variant Var { int row, int col };";
+        String sourceCode = "variant Var { int row; int col; };";
         Parser parser = toParser(sourceCode);
         Program program = parser.buildProgram();
         VariantTypeDefinitionStatement expectedVariant = new VariantTypeDefinitionStatement(

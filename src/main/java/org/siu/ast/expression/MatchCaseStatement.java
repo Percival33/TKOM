@@ -14,7 +14,7 @@ import org.siu.token.Position;
 @Value
 public class MatchCaseStatement implements Statement {
     String variantType;
-    String member;
+    String fieldName;
     String variable;
     BlockStatement block;
 

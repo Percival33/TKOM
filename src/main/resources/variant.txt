@@ -1,13 +1,13 @@
 variant Student { int id; string name; };
 
 fn main() {
-    Student debil = Student::id(5);
-
+    # Student debil = Student::id(5);
+    Student debil = Student::name("debil");
     match(debil) {
-        Student::id(x) => {
+        Student::id(x) {
             print((string)x);
         }
-        Student::name(name) => {
+        Student::name(name) {
             print(name);
         }
     }

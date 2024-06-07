@@ -305,7 +305,7 @@ class StatementTest {
     private FunctionDefinitionStatement createVariantDeclarationFunction() {
         Statement declaratioinStatement = new DeclarationStatement(
                 new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Var"), "v"),
-                new VariantExpression("row", new IntegerExpression(3, position), position),
+                new VariantDeclarationExpression("Var", "row", new IntegerExpression(3, position), position),
                 position
         );
 
@@ -316,6 +316,21 @@ class StatementTest {
                 blockOf(declaratioinStatement),
                 position
         );
+    }
+
+    @Test
+    void testInvalidMatchStatement() {
+        String sourceCode = """
+                fn a(Var v): Var {
+                    match(v) => {
+                        Var::row(x) { return x; }
+                        Var::col(y) { return y; }
+                    }
+                    return value;
+                }
+                """;
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> parseAndBuildFunction(sourceCode));
+        assertEquals("org.siu.error.SyntaxError at: Position(line=2, column=14)", thrown.getMessage());
     }
 
     @Test

@@ -15,6 +15,7 @@ public class VariantTypeDefinitionStatement implements CustomTypeStatement {
     String name;
     List<Parameter> parameters;
     Position position;
+    boolean isVariant = true;
 
     @Override
     public void accept(Visitor visitor) {

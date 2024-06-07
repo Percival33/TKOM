@@ -165,7 +165,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
         callAccept(statement.getValue());
         var value = retrieveResult(new Parameter(previousValue.getType(), statement.getName()));
-        for(Iterator<Context> it = contexts.descendingIterator(); it.hasNext(); ) {
+        for (Iterator<Context> it = contexts.descendingIterator(); it.hasNext(); ) {
             var currentContext = it.next();
             var updated = currentContext.updateVariable(statement.getName(), value);
             if (updated) {
@@ -175,20 +175,16 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(VariantTypeDefinitionStatement variantTypeDefinitionStatement) {
-        throw new UnsupportedOperationException();
-
-        /*
-        if(typeDefinitions.containsKey(statement.getName())) {
-            throw new StructAlreadyDefinedException(statement.getName());
+    public void visit(VariantTypeDefinitionStatement statement) {
+        if (typeDefinitions.containsKey(statement.getName())) {
+            throw new VariantAlreadyDefinedException(statement.getName());
         }
 
-        for(var param : statement.getParameters()) {
+        for (var param : statement.getParameters()) {
             validateParameter(param);
         }
 
         typeDefinitions.put(statement.getName(), statement);
-         */
     }
 
     @Override
@@ -302,13 +298,49 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(MatchStatement matchStatement) {
-        throw new RuntimeException("match statement not supported");
+    public void visit(MatchStatement statement) {
+        var context = contexts.getLast();
+        context.incrementScope();
+
+        callAccept(statement.getExpression());
+        var variantArgument = retrieveResult();
+        var variantValue = (VariantValue) variantArgument;
+
+        if (variantArgument.getType().getValueType() != ValueType.CUSTOM) {
+            throw new RuntimeException("match statement supports only custom types");
+        }
+
+        if (!typeDefinitions.containsKey(variantArgument.getType().getCustomType())) {
+            throw new InvalidTypeForMatchException(statement.getPosition());
+        }
+
+        var variantType = typeDefinitions.get(variantArgument.getType().getCustomType());
+
+        if (!variantType.isVariant()) {
+            throw new InvalidTypeForMatchException(statement.getPosition());
+        }
+
+        for (var matchCase : statement.getStatements()) {
+            if (Objects.equals(variantValue.getCurrentField(), matchCase.getFieldName())) {
+
+                var parameter = variantType.getParameters().stream()
+                        .filter(param -> param.getName().equals(matchCase.getFieldName()))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("Field not found in variant type"));
+
+                context.addVariable(new Variable(parameter.getType(), matchCase.getVariable(), variantValue.get()));
+                callAccept(matchCase.getBlock());
+                break;
+            }
+        }
+
+        context.decrementScope();
     }
+
 
     @Override
     public void visit(MatchCaseStatement matchCaseStatement) {
-
+        throw new RuntimeException("match case statement not supported");
     }
 
     @Override
@@ -332,8 +364,33 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(VariantExpression expression) {
-        throw new RuntimeException("VariantExpression not supported");
+    public void visit(VariantDeclarationExpression expression) {
+        if (!typeDefinitions.containsKey(expression.getTypeName())) {
+            throw new TypeNotDefinedException(expression.getTypeName());
+        }
+        var variantType = typeDefinitions.get(expression.getTypeName());
+        Parameter typeOfField = null;
+
+        for (var param : variantType.getParameters()) {
+            if (param.getName().equals(expression.getFieldName())) {
+                typeOfField = new Parameter(param.getType(), param.getName());
+                break;
+            }
+        }
+
+        if (typeOfField == null) {
+            throw new InvalidVariantField(expression.getTypeName(), expression.getFieldName());
+        }
+        callAccept(expression.getExpression());
+        var value = retrieveResult(typeOfField);
+
+        var fields = new HashMap<String, Parameter>();
+        for (var param : variantType.getParameters()) {
+            fields.put(param.getName(), new Parameter(param.getType(), param.getName()));
+        }
+
+        var variant = new VariantValue(new TypeDeclaration(ValueType.CUSTOM, variantType.getName()), fields, expression.getFieldName(), value);
+        result = Result.ok(variant);
     }
 
     @Override
@@ -395,7 +452,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         if (functionDeclaration.getReturnType().isEmpty()) {
             result = Result.empty();
         } else if (result.isReturned()) {
-            if(result.getValue() == null) {
+            if (result.getValue() == null) {
                 throw new FunctionDidNotReturnValueException();
             }
 

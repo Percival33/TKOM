@@ -5,7 +5,7 @@ import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.Statement;
 import org.siu.ast.expression.Expression;
-import org.siu.ast.expression.StructExpression;
+import org.siu.ast.expression.VariantDeclarationExpression;
 import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
@@ -13,7 +13,7 @@ import org.siu.token.Position;
 @EqualsAndHashCode(exclude = "position")
 @Value
 public class VariantAssignmentStatement implements Statement {
-    StructExpression struct;
+    VariantDeclarationExpression variant;
     Expression value;
     Position position;
 
