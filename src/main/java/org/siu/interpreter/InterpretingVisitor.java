@@ -164,16 +164,13 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         }
 
         callAccept(statement.getValue());
-        var value = retrieveResult(previousValue.getType());
+        var value = retrieveResult(new Parameter(previousValue.getType(), statement.getName()));
         for(Iterator<Context> it = contexts.descendingIterator(); it.hasNext(); ) {
             var currentContext = it.next();
-            if(!currentContext.updateVariable(statement.getName(), value)) {
+            var updated = currentContext.updateVariable(statement.getName(), value);
+            if (updated) {
                 return;
             }
-//            var updated = currentContext.updateVariable(statement.getName(), value);
-//            if (updated) {
-//                return;
-//            }
         }
     }
 
@@ -223,8 +220,12 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         var parameter = constStatement.getParameter();
         var statement = constStatement.getStatement();
 
+        if (parameter.getType().getValueType() == ValueType.CUSTOM) {
+            customType.add(parameter);
+        }
+
         callAccept(statement.getExpression());
-        var value = retrieveResult(parameter.getType());
+        var value = retrieveResult(parameter);
 
         var variable = new Variable(parameter.getType(), parameter.getName(), value, true);
         context.addVariable(variable);
@@ -505,11 +506,6 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         result = Result.ok(new BoolValue(!value.isBool()));
     }
 
-    @Override
-    public void visit(UnaryFactorExpression unaryFactorExpression) {
-
-    }
-
     private static final Map<TypeDeclaration, Map<TypeDeclaration, Function<Value, Value>>> CAST_OPERATIONS = Map.of(
             INT_TYPE, Map.of(
                     BOOL_TYPE, value -> new IntValue(value.isBool() ? 1 : 0),
@@ -554,12 +550,10 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(CopiedValueExpression expression) {
-        var context = contexts.getLast();
-        var variable = context.findVariable(expression.getExpression().getIdentifier())
-                .or(() -> GLOBAL_CONTEXT.findVariable(expression.getExpression().getIdentifier()))
-                .orElseThrow(NoVariableException::new);
+        callAccept(expression.getExpression());
+        var variable = retrieveResult();
 
-        result = Result.ok(variable.getValue().copy());
+        result = Result.ok(variable.copy());
     }
 
     @Override
@@ -577,7 +571,6 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         var value = retrieveResult();
 
         if (type.getValueType() == ValueType.CUSTOM) {
-            // TODO: find custom type
             throw new RuntimeException("Custom type not supported.");
         }
 

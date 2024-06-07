@@ -31,6 +31,7 @@ public class InterpreterTests {
             "reference-test.txt, 5",
             "printer-test.txt, 'Hello there!'",
             "pass-by-copy-test.txt, 0",
+            "pass-struct-member-by-copy-test.txt, '2\n2'",
     })
     void testInterpreter(String fileName, String expectedOutput) throws IOException {
         String code = readFileFromResources(fileName);
@@ -54,6 +55,7 @@ public class InterpreterTests {
             "error-fn-donot-return-test.txt, FunctionDidNotReturnException",
             "error-fn-return-no-value-test.txt, FunctionDidNotReturnValueException",
             "error-types-do-not-match.txt, TypesDoNotMatchException",
+            "error-pass-struct-test.txt, Unsupported value type: Point",
     })
     void testInterpreterErrors(String fileName, String expectedError) throws IOException {
         String code = readFileFromResources(fileName);

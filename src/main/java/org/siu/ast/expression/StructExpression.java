@@ -9,10 +9,15 @@ import org.siu.token.Position;
 @Value
 @EqualsAndHashCode(exclude = "position")
 @RequiredArgsConstructor
-public class StructExpression implements Expression {
+public class StructExpression implements NamedExpression, Expression {
     String structName;
     String fieldName;
     Position position;
+
+    @Override
+    public String getName() {
+        return structName;
+    }
 
     @Override
     public void accept(Visitor visitor) {

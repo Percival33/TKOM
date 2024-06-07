@@ -10,7 +10,7 @@ import org.siu.token.Position;
 @EqualsAndHashCode(exclude = "position")
 @Value
 public class CopiedValueExpression implements Expression {
-    IdentifierExpression expression;
+    NamedExpression expression;
     Position position;
 
     @Override

@@ -941,11 +941,11 @@ public class Parser {
             }
             expression = expressionOptional.get();
             if (copy) {
-                if (!(expression instanceof IdentifierExpression)) {
+                if (!(expression instanceof NamedExpression)) {
                     handleParserError(new SyntaxError(token.getPosition(), "Copy operator can only be used with identifiers."), token.getPosition());
                 }
 
-                expression = new CopiedValueExpression((IdentifierExpression) expression, expression.getPosition());
+                expression = new CopiedValueExpression((NamedExpression) expression, expression.getPosition());
             }
             arguments.add(expression);
         } while (token.getType() == TokenType.COMMA);

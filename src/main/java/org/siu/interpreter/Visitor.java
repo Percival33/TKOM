@@ -96,8 +96,6 @@ public interface Visitor {
 
 
     //    Factor
-    void visit(final UnaryFactorExpression unaryFactorExpression);
-
     void visit(final CastedFactorExpression castedFactorExpression);
 
     void visit(final CopiedValueExpression copiedFactorExpression);

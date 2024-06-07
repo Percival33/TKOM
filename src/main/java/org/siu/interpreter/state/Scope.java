@@ -37,7 +37,7 @@ public class Scope {
         if (updateFunction != null) {
             updateFunction.accept(previousValue, newValue);
         } else {
-            throw new IllegalArgumentException("Unsupported value type: " + previousValue.getType().getValueType());
+            throw new RuntimeException("Unsupported value type: " + previousValue.getType().getCustomType());
         }
     }
 
