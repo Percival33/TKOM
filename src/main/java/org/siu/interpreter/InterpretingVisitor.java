@@ -553,9 +553,13 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(CopiedValueExpression copiedFactorExpression) {
-        throw new RuntimeException("copied value expression not supported");
-//        result = Result.ok(retrieveResult()).toBuilder().copy(true).build();
+    public void visit(CopiedValueExpression expression) {
+        var context = contexts.getLast();
+        var variable = context.findVariable(expression.getExpression().getIdentifier())
+                .or(() -> GLOBAL_CONTEXT.findVariable(expression.getExpression().getIdentifier()))
+                .orElseThrow(NoVariableException::new);
+
+        result = Result.ok(variable.getValue().copy());
     }
 
     @Override

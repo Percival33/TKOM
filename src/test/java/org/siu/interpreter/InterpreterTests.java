@@ -30,6 +30,7 @@ public class InterpreterTests {
     @CsvSource({
             "reference-test.txt, 5",
             "printer-test.txt, 'Hello there!'",
+            "pass-by-copy-test.txt, 0",
     })
     void testInterpreter(String fileName, String expectedOutput) throws IOException {
         String code = readFileFromResources(fileName);
