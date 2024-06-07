@@ -45,10 +45,14 @@ public class InterpreterIntegrationTests {
 
     @ParameterizedTest
     @CsvSource({
-            "error-void-fn-value-expected-test.txt, ArithmeticOperationNotSupportedForNonNumericTypes",
+            "error-negate-non-numeric-types.txt, ArithmeticOperationNotSupportedForNonNumericTypes",
+            "error-perform-arithmetic-operation-on-non-numeric-types.txt, ArithmeticOperationNotSupportedForNonNumericTypes",
+            "error-relation-operation-non-numeric-type.txt, CompareOperationNotSupportedForNonNumericTypes",
+            "error-eq-relation-operation-non-numeric-type.txt, CompareOperationNotSupportedForNonNumericTypes",
             "error-void-fn-value-expected-test.txt, ExpressionDidNotEvaluateException",
             "error-fn-donot-return-test.txt, FunctionDidNotReturnException",
             "error-fn-return-no-value-test.txt, FunctionDidNotReturnValueException",
+            "error-types-do-not-match.txt, TypesDoNotMatchException",
     })
     void testInterpreterErrors(String fileName, String expectedError) throws IOException {
         String code = readFileFromResources(fileName);

@@ -62,12 +62,13 @@ public class LexerImpl implements Lexer {
 
     private Token buildComment(Token token) {
         StringBuilder sb = new StringBuilder();
+        var position = token.getPosition().copy();
 
         if (token.getType() == TokenType.SINGLE_LINE_COMMENT) {
             while (!character.equals(LexerConfig.LINE_BREAK) && !character.equals(TokenUtils.END_OF_FILE)) {
                 sb.append(nextCharacter());
             }
-            return new CommentToken(tokenPosition, sb.toString());
+            return new CommentToken(position, sb.toString());
         }
 
         while (!character.equals(TokenUtils.END_OF_FILE)) {
@@ -84,7 +85,7 @@ public class LexerImpl implements Lexer {
             nextCharacter();
         }
 
-        return new CommentToken(tokenPosition, sb.toString());
+        return new CommentToken(position, sb.toString());
     }
 
     /**

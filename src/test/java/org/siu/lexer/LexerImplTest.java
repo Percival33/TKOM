@@ -140,9 +140,8 @@ class LexerImplTest {
 
     @Test
     void singleLineComment() {
-        Lexer lexer = setup(" # \n aaa");
-        assertEquals(new KeywordToken(TokenType.SINGLE_LINE_COMMENT, new Position(1, 2)), lexer.nextToken(), "Expected single line comment");
-        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(2, 2), "aaa"), lexer.nextToken(), "Expected identifier");
+        Lexer lexer = setup(" #  aaa");
+        assertEquals(new CommentToken(new Position(1, 2), " aaa"), lexer.nextToken(), "Expected single line comment");
     }
 
     @Test
@@ -159,16 +158,13 @@ class LexerImplTest {
 
     @Test
     void multiLineComment() {
-        Lexer lexer = setup(" /*\naaa\n*/\nbbb");
-        assertEquals(new KeywordToken(TokenType.MULTI_LINE_COMMENT_OPEN, new Position(1, 2)), lexer.nextToken(), "Expected single line comment");
-        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(2, 1), "aaa"), lexer.nextToken(), "Expected identifier");
-        assertEquals(new KeywordToken(TokenType.MULTI_LINE_COMMENT_CLOSE, new Position(3, 1)), lexer.nextToken(), "Expected single line comment");
-        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(4, 1), "bbb"), lexer.nextToken(), "Expected identifier");
+        Lexer lexer = setup(" /*\naaa\n* /\nbbb */");
+        assertEquals(new CommentToken(new Position(1, 2), "\naaa\n* /\nbbb "), lexer.nextToken(), "Expected multi line comment");
     }
 
     @Test
     void fnDeclaration() {
-        Lexer lexer = setup("fn add(int a, int b): int { return a + b; }");
+        Lexer lexer = setup("fn add(int a, int b): int { # bleble \n return a + b; }");
         assertEquals(new KeywordToken(TokenType.FUNCTION, new Position(1, 1)), lexer.nextToken(), "Expected FUNCTION");
         assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 4), "add"), lexer.nextToken(), "Expected identifier");
         assertEquals(new KeywordToken(TokenType.BRACKET_OPEN, new Position(1, 7)), lexer.nextToken(), "Expected BRACKET_OPEN");
@@ -181,11 +177,12 @@ class LexerImplTest {
         assertEquals(new KeywordToken(TokenType.COLON, new Position(1, 21)), lexer.nextToken(), "Expected COLON");
         assertEquals(new KeywordToken(TokenType.INT, new Position(1, 23)), lexer.nextToken(), "Expected INT");
         assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_OPEN, new Position(1, 27)), lexer.nextToken(), "Expected SQUARE_BRACKET_OPEN");
-        assertEquals(new KeywordToken(TokenType.RETURN, new Position(1, 29)), lexer.nextToken(), "Expected RETURN");
-        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 36), "a"), lexer.nextToken(), "Expected identifier");
-        assertEquals(new KeywordToken(TokenType.PLUS, new Position(1, 38)), lexer.nextToken(), "Expected PLUS");
-        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 40), "b"), lexer.nextToken(), "Expected identifier");
-        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 41)), lexer.nextToken(), "Expected SEMICOLON");
-        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_CLOSE, new Position(1, 43)), lexer.nextToken(), "Expected SQUARE_BRACKET_CLOSE");
+        assertEquals(new CommentToken(new Position(1, 29), "bleble \n"), lexer.nextToken(), "Expected comment");
+        assertEquals(new KeywordToken(TokenType.RETURN, new Position(2, 2)), lexer.nextToken(), "Expected RETURN");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(2, 9), "a"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.PLUS, new Position(2, 11)), lexer.nextToken(), "Expected PLUS");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(2, 13), "b"), lexer.nextToken(), "Expected identifier");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(2, 14)), lexer.nextToken(), "Expected SEMICOLON");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_CLOSE, new Position(2, 16)), lexer.nextToken(), "Expected SQUARE_BRACKET_CLOSE");
     }
 }

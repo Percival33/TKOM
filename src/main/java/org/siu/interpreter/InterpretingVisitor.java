@@ -443,6 +443,9 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         if (EQUALITY_OPERATORS.containsKey(left.getType())) {
             callAccept(expression.getRight());
             var right = retrieveResult();
+            if (!Objects.equals(left.getType(), right.getType())) {
+                throw new TypesDoNotMatchException(left.getType(), right.getType());
+            }
             var value = EQUALITY_OPERATORS.get(left.getType()).apply(expression, left, right);
             result = Result.ok(new BoolValue(value));
         } else {
