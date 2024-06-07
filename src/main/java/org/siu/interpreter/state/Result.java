@@ -15,6 +15,9 @@ public class Result {
     @Builder.Default
     boolean returned = false;
 
+    @Builder.Default
+    boolean copy = false;
+
     public static Result ok(Value value) {
         return Result.builder()
                 .value(value)

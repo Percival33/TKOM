@@ -1,11 +1,15 @@
 package org.siu.interpreter.state;
 
+import lombok.Builder;
+import lombok.Data;
+import lombok.Setter;
 import org.siu.ast.type.TypeDeclaration;
 
 import java.util.Objects;
 
 import org.siu.interpreter.error.TypesDoNotMatchException;
 
+@Builder
 @lombok.Value
 public class Variable {
     TypeDeclaration type;

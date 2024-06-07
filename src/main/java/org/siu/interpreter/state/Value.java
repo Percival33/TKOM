@@ -10,7 +10,15 @@ public interface Value {
         throw new UnexpectedTypeException();
     }
 
+    default void setInteger(int value) {
+        throw new UnexpectedTypeException();
+    }
+
     default boolean isBool() {
+        throw new UnexpectedTypeException();
+    }
+
+    default void setBool(boolean value) {
         throw new UnexpectedTypeException();
     }
 
@@ -18,10 +26,19 @@ public interface Value {
         throw new UnexpectedTypeException();
     }
 
+    default void setFloatVal(float floatVal) {
+        throw new UnexpectedTypeException();
+    }
+
     default String getString() {
         throw new UnexpectedTypeException();
     }
 
+    default void setString(String string) {
+        throw new UnexpectedTypeException();
+    }
+
+    // struct
     default Value get(String key) {
         throw new UnexpectedTypeException();
     }
@@ -30,6 +47,7 @@ public interface Value {
         throw new UnexpectedTypeException();
     }
 
+    // variant
     default Value get() {
         throw new UnexpectedTypeException();
     }

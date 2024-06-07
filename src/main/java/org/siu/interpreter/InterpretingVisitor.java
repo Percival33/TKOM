@@ -16,10 +16,7 @@ import org.siu.ast.type.*;
 import org.siu.interpreter.builtin.PrintFunction;
 import org.siu.interpreter.error.*;
 import org.siu.interpreter.error.UnsupportedOperationException;
-import org.siu.interpreter.state.Context;
-import org.siu.interpreter.state.Result;
-import org.siu.interpreter.state.Value;
-import org.siu.interpreter.state.Variable;
+import org.siu.interpreter.state.*;
 import org.siu.interpreter.state.value.*;
 import org.siu.token.Position;
 
@@ -50,6 +47,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             callAccept(program);
         } catch (Exception e) {
             log.error("Error while interpreting", e);
+            out.println("Error while interpreting: " + e.getMessage());
         }
     }
 
@@ -167,12 +165,15 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
         callAccept(statement.getValue());
         var value = retrieveResult(previousValue.getType());
-
-        for (var currentContext : List.of(context, GLOBAL_CONTEXT)) {
-            var updated = currentContext.updateVariable(statement.getName(), value);
-            if (updated) {
+        for(Iterator<Context> it = contexts.descendingIterator(); it.hasNext(); ) {
+            var currentContext = it.next();
+            if(!currentContext.updateVariable(statement.getName(), value)) {
                 return;
             }
+//            var updated = currentContext.updateVariable(statement.getName(), value);
+//            if (updated) {
+//                return;
+//            }
         }
     }
 
@@ -225,7 +226,8 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         callAccept(statement.getExpression());
         var value = retrieveResult(parameter.getType());
 
-        context.addVariable(new Variable(parameter.getType(), parameter.getName(), value, true));
+        var variable = new Variable(parameter.getType(), parameter.getName(), value, true);
+        context.addVariable(variable);
     }
 
     @Override
@@ -300,7 +302,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(MatchStatement matchStatement) {
-
+        throw new RuntimeException("match statement not supported");
     }
 
     @Override
@@ -330,7 +332,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(VariantExpression expression) {
-
+        throw new RuntimeException("VariantExpression not supported");
     }
 
     @Override
@@ -392,6 +394,10 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         if (functionDeclaration.getReturnType().isEmpty()) {
             result = Result.empty();
         } else if (result.isReturned()) {
+            if(result.getValue() == null) {
+                throw new FunctionDidNotReturnValueException();
+            }
+
             validateTypes(result.getValue().getType(), functionDeclaration.getReturnType().get());
             result = result.toBuilder().returned(false).build();
         } else {
@@ -545,7 +551,8 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(CopiedValueExpression copiedFactorExpression) {
-
+        throw new RuntimeException("copied value expression not supported");
+//        result = Result.ok(retrieveResult()).toBuilder().copy(true).build();
     }
 
     @Override

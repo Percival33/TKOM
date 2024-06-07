@@ -4,6 +4,7 @@ import org.siu.error.ErrorHandler;
 import org.siu.error.ErrorHandlerImpl;
 import org.siu.interpreter.InterpretingVisitor;
 import org.siu.interpreter.error.InterpreterException;
+import org.siu.lexer.FilterCommentsLexer;
 import org.siu.lexer.Lexer;
 import org.siu.lexer.LexerImpl;
 import org.siu.parser.Parser;
@@ -17,9 +18,10 @@ public class Main
     public static void main(final String[] args)
     {
         final ErrorHandler errorHandler = new ErrorHandlerImpl();
-        var reader = new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("StructWithFnCall.txt"));
+        var reader = new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("fnReturnType.txt"));
         var lexer = new LexerImpl(new BufferedReader(reader), errorHandler);
-        var parser = new Parser(lexer, errorHandler);
+        var filteredLexer = new FilterCommentsLexer(lexer);
+        var parser = new Parser(filteredLexer, errorHandler);
         var program = parser.buildProgram();
 
         var output = new ByteArrayOutputStream();

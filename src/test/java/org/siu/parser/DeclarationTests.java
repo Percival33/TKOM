@@ -165,7 +165,7 @@ class DeclarationTests {
 
     @Test
     void testStructDeclaration() {
-        String sourceCode = "Point pt = { a, b };";
+        String sourceCode = "Point pt = { a, b, f() };";
         Parser parser = toParser(sourceCode);
         Program program = parser.buildProgram();
         DeclarationStatement expectedDeclaration = new DeclarationStatement(
@@ -173,7 +173,8 @@ class DeclarationTests {
                 new StructDeclarationExpression(
                         List.of(
                                 new IdentifierExpression("a", position),
-                                new IdentifierExpression("b", position)
+                                new IdentifierExpression("b", position),
+                                new FunctionCallExpression("f", List.of(), position)
                         ),
                         position
                 ),
