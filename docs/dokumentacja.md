@@ -175,13 +175,13 @@ Point pt2 = pt;
 - variant
 
 ```
-variant Var { int row, int col, };
+variant Var { int row, int col };
 Var v = Var::row(3);
 
 fn inspect(Var v) {
     match(v) {
-        Var::row(x) { x }
-        Var::col(y) { y }
+        Var::row(x) { return x; }
+        Var::col(y) { return y; }
     }
 }
 ```
@@ -218,7 +218,6 @@ print((string) x); # 6
 | `bool`         | `int`       | `0` = `false`, `1`=`true`                                                        |
 | `bool`         | `float`     | `0.0` = `false`, `1.0`=`true`                                                    |
 | `bool`         | `string`    | zmienia wartosci na napisy o odpowiedniej wartości                               |
-
 
 operator rzutowania wygląda następująco: `(nowy typ) zmienna` i obsługuje wyłącznie typy proste jak w przykładzie
 poniżej:
@@ -366,18 +365,18 @@ SIMPLE_TYPE             = "int"
 ### Instrukcje
 
 ```                        
-TYPE_DEFINITION                 = STRUCT_DEFINITION
-                                | VARIANT_DEFINITION;
+TYPE_DEFINITION                 = STRUCT_TYPE_DEFINITION
+                                | VARIANT_TYPE_DEFINITION;
 
-VARIANT_DEFINITION              = "variant", IDENTIFIER, "{", STRUCT_TYPE_DEF, {, ",", STRUCT_TYPE_DEF }, "}";                            
-STRUCT_DEFINITION               = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DEF }, "}", ";";
+VARIANT_TYPE_DEFINITION         = "variant", IDENTIFIER, "{", STRUCT_TYPE_DEF, {, ",", STRUCT_TYPE_DEF }, "}";                            
+STRUCT_TYPE_DEFINITION          = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DEF }, "}", ";";
             
 VARIANT_RET_TYPE                = "variant", "{", VARIANT_TYPE_DEF, { ",", VARIANT_TYPE_DEF }, "}"            
                             
-VARIANT_TYPE_DEF               = SIMPLE_TYPE | IDENTIFIER;
 STRUCT_TYPE_DEF                = VARIANT_TYPE_DEF, IDENTIFIER;
+VARIANT_TYPE_DEF               = SIMPLE_TYPE | IDENTIFIER;
                     
-DECLARATION                     = ["const"], VARIABLE_DECLARATION;
+DECLARATION                     = ["const"], VARIABLE_DECLARATION, ";";
 
 VARIABLE_DECLARATION            = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
                                 | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
@@ -387,7 +386,7 @@ STRUCT_MEMBER                   = LITERAL
                                 | IDENTIFIER_OR_STRUCT
 
 IDENTIFIER_OR_STRUCT            = IDENTIFIER, [ "{", STRUCT_MEMBER, { ",",  STRUCT_MEMBER }, "}" ]; 
- 
+                        
 IF_STATEMENT                    = "if", "(", EXPRESSION, ")", BLOCK, 
                                     { "elif", "(", EXPRESSION, ")", BLOCK, },
                                     [ "else", BLOCK ];
@@ -399,7 +398,8 @@ FN_PARAMS                       = SIMPLE_TYPE_AS_ARG
                                 | STRUCT_AS_ARG
                                 | VARIANT_AS_ARG;
                         
-VARIANT_AS_ARG                  = VARIANT_DEFINITION;                            
+                                                
+VARIANT_AS_ARG                  = VARIANT_TYPE_DEFINITION;                            
 STRUCT_AS_ARG                   = IDENTIFIER, IDENTIFIER;
 SIMPLE_TYPE_AS_ARG              = SIMPLE_TYPE, IDENTIFIER;                        
                         
@@ -410,12 +410,12 @@ FN_RET_TYPES                    = SIMPLE_TYPE
 RETURN_STATEMENT                = "return", EXPRESSION, ";"
                                 | "return", ";";
 
-MATCH                           = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
-MATCH_EXP                       = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
+MATCH                           = "match", "(", EXPRESSION, ")", "{", { MATCH_EXP }, "}"
+MATCH_CASE_STATEMENT            = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", BLOCK;
 
-ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION
-                                | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
-                                | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
+ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION, ";"
+                                | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION, ";"
+                                | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
 
 STATEMENT                       = IF_STATEMENT
                                 | WHILE_STATEMENT
@@ -425,7 +425,7 @@ STATEMENT                       = IF_STATEMENT
                                 | EXPRESSION, ";"
                                 | MATCH;
 
-BLOCK                           = "{", { STATEMENT, ";" }, "}";
+BLOCK                           = "{", { STATEMENT }, "}";
 ```
 
 ### Wyrażenia
@@ -448,7 +448,8 @@ UNARY_FACTOR                    = ["-"], FACTOR;
 FACTOR                          = LITERAL
                                 | '(', EXPRESSION, ')'
                                 | '{', EXPRESSION, { ',', EXPRESSION }, '}' ( * struct definition *)
-                                | IDENTIFIER_FNCALL_MEM_VARIANT; 
+                                | IDENTIFIER_FNCALL_MEM_VARIANT
+                                | STRUCT_MEMBER
 
 IDENTIFIER_FNCALL_MEM_VARIANT   = IDENTIFIER, 
                                 [

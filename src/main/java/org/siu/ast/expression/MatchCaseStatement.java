@@ -3,19 +3,20 @@ package org.siu.ast.expression;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
+import org.siu.ast.BlockStatement;
 import org.siu.ast.Statement;
 import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
 
-@ToString(exclude = {"expression"})
+@ToString(exclude = {"block"})
 @EqualsAndHashCode(exclude = "position")
 @Value
-public class MatchCaseExpression implements Statement {
+public class MatchCaseStatement implements Statement {
     String variantType;
     String member;
     String variable;
-    Expression expression;
+    BlockStatement block;
 
     Position position;
 

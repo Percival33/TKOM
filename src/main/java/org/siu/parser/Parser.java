@@ -283,10 +283,10 @@ public class Parser {
     }
 
     /**
-     * BLOCK                   = "{", { STATEMENT, ";" }, "}";
+     * BLOCK                   = "{", { STATEMENT }, "}";
      */
     private Optional<BlockStatement> parseBlock() {
-        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, MissingBlockStatementException::new);
         var position = token.getPosition();
         List<Statement> statements = new ArrayList<>();
 
@@ -310,7 +310,7 @@ public class Parser {
     );
 
     /**
-     * MATCH                           = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
+     * MATCH                           = "match", "(", EXPRESSION, ")", "{", { MATCH_EXP }, "}"
      */
     private Optional<MatchStatement> parseMatchStatement() {
         if (token.getType() != TokenType.MATCH) {
@@ -318,24 +318,31 @@ public class Parser {
         }
         var position = token.getPosition();
         nextToken();
+
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
-        var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+
+        var expression = parseExpression();
+        if(expression.isEmpty()) {
+            log.error("No expression in match statement at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
+        }
+
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
         mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
-        List<MatchCaseExpression> matchCases = new ArrayList<>();
+        List<MatchCaseStatement> matchCases = new ArrayList<>();
         var matchCase = parseMatchCase();
         while (matchCase.isPresent()) {
             matchCases.add(matchCase.get());
             matchCase = parseMatchCase();
         }
         mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-        return Optional.of(new MatchStatement(identifier, matchCases, position));
+        return Optional.of(new MatchStatement(expression.get(), matchCases, position));
     }
 
     /**
      * MATCH_EXP                       = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
      */
-    private Optional<MatchCaseExpression> parseMatchCase() {
+    private Optional<MatchCaseStatement> parseMatchCase() {
         if (token.getType() != TokenType.IDENTIFIER) {
             return Optional.empty();
         }
@@ -347,20 +354,20 @@ public class Parser {
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
         var variable = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
-        var expression = parseExpression();
-        if (expression.isEmpty()) {
-            log.error("No expression in match case at: {}", position);
-            handleParserError(new MissingExpressionError(position), position);
+
+        var block = parseBlock();
+        if (block.isEmpty()) {
+            log.error("No block statement in match case at: {}", position);
+            handleParserError(new MissingBlockStatementException(position), position);
         }
-        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-        return Optional.of(new MatchCaseExpression(variantType, member, variable, expression.get(), position));
+
+        return Optional.of(new MatchCaseStatement(variantType, member, variable, block.get(), position));
     }
 
     /**
-     * ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION
-     * | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
-     * | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
+     * ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION, ";"
+     * | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION, ";"
+     * | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
      */
     private Optional<Statement> parseAssignmentOrDeclarationOrExpression() {
         if (token.getType() != TokenType.IDENTIFIER) {
@@ -404,7 +411,7 @@ public class Parser {
     }
 
     private Optional<Statement> parseAssignmentStatement(String name, Position position) {
-        if(!(token.getType() == TokenType.ASSIGN || token.getType() == TokenType.DOT)) {
+        if (!(token.getType() == TokenType.ASSIGN || token.getType() == TokenType.DOT)) {
             return Optional.empty();
         }
         var statement = parseAssignmentStatement(name);
@@ -456,7 +463,7 @@ public class Parser {
     }
 
     private Optional<Statement> parseStructMemberAssignmentStatement(String structName, Position position) {
-        if(token.getType() != TokenType.DOT) {
+        if (token.getType() != TokenType.DOT) {
             return Optional.empty();
         }
 
@@ -504,13 +511,13 @@ public class Parser {
 
         var position = token.getPosition();
         nextToken();
-        mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+        mustBe(token, TokenType.BRACKET_OPEN, InvalidConditionExpressionException::new);
         var condition = parseExpression();
         if (condition.isEmpty()) {
             log.error("No condition in if statement at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
         }
-        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.BRACKET_CLOSE, InvalidConditionExpressionException::new);
         var block = parseBlock();
         if (block.isEmpty()) {
             log.error("Block cannot be empty at: {}", position);
@@ -889,7 +896,7 @@ public class Parser {
     }
 
     private Optional<Expression> parseStructExpression(String name, Position position) {
-        if(token.getType() != TokenType.DOT) return Optional.empty();
+        if (token.getType() != TokenType.DOT) return Optional.empty();
 
         nextToken();
         var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
@@ -897,7 +904,7 @@ public class Parser {
     }
 
     private Optional<Expression> parseFnCallExpression(String name, Position position) {
-        if(token.getType() != TokenType.BRACKET_OPEN) return Optional.empty();
+        if (token.getType() != TokenType.BRACKET_OPEN) return Optional.empty();
 
         var arguments = parseFnArguments();
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
@@ -905,7 +912,7 @@ public class Parser {
     }
 
     private Optional<Expression> parseVariantExpression(String name, Position position) {
-        if(token.getType() != TokenType.DOUBLE_COLON) return Optional.empty();
+        if (token.getType() != TokenType.DOUBLE_COLON) return Optional.empty();
 
         nextToken();
 

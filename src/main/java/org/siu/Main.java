@@ -18,6 +18,7 @@ public class Main
     public static void main(final String[] args)
     {
         final ErrorHandler errorHandler = new ErrorHandlerImpl();
+
         var reader = new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("Copy.txt"));
         var lexer = new LexerImpl(new BufferedReader(reader), errorHandler);
         var filteredLexer = new FilterCommentsLexer(lexer);

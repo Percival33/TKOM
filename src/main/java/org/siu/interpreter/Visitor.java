@@ -57,7 +57,7 @@ public interface Visitor {
     //    Match statement
     void visit(final MatchStatement matchStatement);
 
-    void visit(final MatchCaseExpression matchCaseStatement);
+    void visit(final MatchCaseStatement matchCaseStatement);
 
     //    Simple type expression
     void visit(final IntegerExpression expression);
@@ -102,6 +102,5 @@ public interface Visitor {
 
     //    Custom
     void visit(final PrintFunction expression);
-
 }
 
