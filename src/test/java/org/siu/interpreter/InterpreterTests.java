@@ -31,6 +31,7 @@ public class InterpreterTests {
             "printer-test.txt, 'Hello there!'",
             "pass-by-copy-test.txt, 0",
             "pass-struct-member-by-copy-test.txt, '2\n2'",
+            "variant-test.txt, 33"
     })
     void testInterpreter(String fileName, String expectedOutput) throws IOException {
         String code = readFileFromResources(fileName);
