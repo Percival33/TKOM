@@ -9,6 +9,8 @@ import org.siu.ast.Program;
 import org.siu.ast.Statement;
 import org.siu.ast.expression.FunctionCallExpression;
 import org.siu.ast.expression.IdentifierExpression;
+import org.siu.ast.expression.StructDeclarationExpression;
+import org.siu.ast.expression.StructExpression;
 import org.siu.ast.expression.arithmetic.AddArithmeticExpression;
 import org.siu.ast.expression.arithmetic.MultiplyArithmeticExpression;
 import org.siu.ast.function.FunctionDefinitionStatement;
@@ -107,6 +109,33 @@ class FunctionDefinitionTest {
                 "fun",
                 List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a"), new Parameter(new TypeDeclaration(ValueType.INT), "b")),
                 Optional.of(new TypeDeclaration(ValueType.FLOAT)),
+                block,
+                position);
+
+        assertEquals(expected.getName(), fn.getName());
+        assertEquals(expected.getParameters(), fn.getParameters());
+        assertEquals(expected.getReturnType(), fn.getReturnType());
+        assertEquals(expected.getBlock(), fn.getBlock());
+    }
+
+    @Test
+    void fnDefinitionWithCustomTypeReturnTest() {
+        String s = "fn fun(int a): Point { return { 1, 2 }; }";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+        var fn = program.getFunctionDefinitions().get("fun");
+        BlockStatement block = new BlockStatement(
+                List.of(
+                        new ReturnStatement(
+                                new StructDeclarationExpression(List.of(new IntegerExpression(1, position), new IntegerExpression(2, position)), position),
+                                position
+                        )),
+                        position
+                );
+        FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
+                "fun",
+                List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a")),
+                Optional.of(new TypeDeclaration(ValueType.CUSTOM, "Point")),
                 block,
                 position);
 

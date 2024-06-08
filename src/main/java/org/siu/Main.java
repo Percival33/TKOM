@@ -19,7 +19,7 @@ public class Main
     {
         final ErrorHandler errorHandler = new ErrorHandlerImpl();
 
-        var reader = new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("StructWithFnCall.txt"));
+        var reader = new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("tmp.txt"));
         var lexer = new LexerImpl(new BufferedReader(reader), errorHandler);
         var filteredLexer = new FilterCommentsLexer(lexer);
         var parser = new Parser(filteredLexer, errorHandler);

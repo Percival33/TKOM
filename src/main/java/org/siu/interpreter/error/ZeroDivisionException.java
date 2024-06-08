@@ -7,13 +7,13 @@ import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import org.siu.token.Position;
 
+
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class UnsupportedCastException extends InterpreterException {
-    public UnsupportedCastException(Position position) {
-        super();
-        this.position = position;
+public class ZeroDivisionException extends InterpreterException {
+    public ZeroDivisionException(Position position) {
+        super(position);
     }
 }

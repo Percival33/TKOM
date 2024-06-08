@@ -32,7 +32,11 @@ public class InterpreterTests {
             "pass-by-copy-test.txt, 0",
             "pass-struct-member-by-copy-test.txt, '2\n2'",
             "variant-test.txt, 33",
-            "variant-as-fncall-test.txt, Marcin"
+            "variant-as-fncall-test.txt, Marcin",
+            "return-struct.txt, '3\n4'",
+            "modify-struct-and-return.txt, '-1\n-2'",
+            "test-return-flow-test.txt, '10\n9\n8\n7\n6\n5\n4\n-1'",
+            "test-scope-shadowing.txt, '2\n5'",
     })
     void testInterpreter(String fileName, String expectedOutput) throws IOException {
         String code = readFileFromResources(fileName);
@@ -53,6 +57,10 @@ public class InterpreterTests {
     TODO: przekazuwanie variantu jako fn call
     TODO: przekazuwanie match na nie istniejacym typie
     TODO: przekazuwanie match na nie istniejacym typie
+    TODO: print nie stringa
+    TODO: print stringa z wartosci
+    TODO: print string z palce "aaaa"
+    TODO: fn call kotrego nei ma
      */
 
     @ParameterizedTest
@@ -65,7 +73,15 @@ public class InterpreterTests {
             "error-fn-donot-return-test.txt, FunctionDidNotReturnException",
             "error-fn-return-no-value-test.txt, FunctionDidNotReturnValueException",
             "error-types-do-not-match.txt, TypesDoNotMatchException",
-            "error-pass-struct-test.txt, Unsupported value type: Point",
+            "error-declaration-types-do-not-match-test.txt, TypesDoNotMatchException",
+            "error-duplicated-variable-test.txt, DuplicatedVariableException",
+            "error-duplicated-variable2-test.txt, DuplicatedVariableException",
+            "error-invalid-fn-call-not-enough-args-test.txt, InvalidNumberOfArgumentsException",
+            "error-invalid-fn-call-too-many-args-test.txt, InvalidNumberOfArgumentsException",
+            "error-no-variable-in-scope-test.txt, NoVariableException",
+            "error-zerodivision-test.txt, ZeroDivisionException",
+            "test-tunneling-error-no-variable-exception.txt, NoVariableException",
+            "test-pass-const-reference.txt, ReassignConstVariableException"
     })
     void testInterpreterErrors(String fileName, String expectedError) throws IOException {
         String code = readFileFromResources(fileName);

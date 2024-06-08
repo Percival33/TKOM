@@ -3,6 +3,7 @@ package org.siu.lexer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.siu.error.ErrorHandler;
+import org.siu.error.InvalidTokenException;
 import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
@@ -49,8 +50,7 @@ public class LexerImpl implements Lexer {
 
         if (token == null) {
             log.error("Invalid token");
-            errorHandler.handleLexerError(new Exception("Invalid token"), tokenPosition);
-            throw new RuntimeException("Could not parse token.");
+            throw new InvalidTokenException();
         }
 
         if (token.getType() == TokenType.SINGLE_LINE_COMMENT || token.getType() == TokenType.MULTI_LINE_COMMENT_OPEN) {

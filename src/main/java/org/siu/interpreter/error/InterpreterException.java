@@ -10,7 +10,12 @@ import org.siu.token.Position;
 @EqualsAndHashCode(callSuper = false)
 @ToString
 public class InterpreterException extends RuntimeException {
-    private Position position;
+    protected Position position;
+
+    public InterpreterException(Position position) {
+        super();
+        this.position = position;
+    }
 
     @Override
     public String getMessage() {

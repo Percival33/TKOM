@@ -3,15 +3,12 @@ struct Point {
     int y;
 };
 
-fn foo(Point x): Point {
-    x = { 3, 4 };
-    return x;
+fn foo(): Point {
+    return { 3, 4 };
 }
 
 fn main() {
-    Point p = { 1, 2 };
-    foo(p);
-
+    Point p = foo();
     print((string)p.x);
     print((string)p.y);
 }

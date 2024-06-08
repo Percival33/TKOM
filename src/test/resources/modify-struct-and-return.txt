@@ -1,0 +1,16 @@
+struct Point {
+    int x;
+    int y;
+};
+
+fn foo(Point p): Point {
+    p = { -1, -2 };
+    return p;
+}
+
+fn main() {
+    Point a = { 1, 2 };
+    a = foo(a);
+    print((string)a.x);
+    print((string)a.y);
+}

@@ -414,7 +414,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
                 .or(() -> GLOBAL_CONTEXT.findVariable(identifierExpression.getIdentifier()))
                 .orElseThrow(NoVariableException::new);
 
-        result = Result.ok(variable.getValue());
+        result = Result.ok(variable.getValue()).toBuilder().constant(variable.isConstant()).build();
     }
 
     @Override
@@ -438,7 +438,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             var parameter = functionDeclaration.getParameters().get(i);
             var value = retrieveResult(parameter);
 
-            context.addVariable(new Variable(parameter.getType(), parameter.getName(), value));
+            context.addVariable(new Variable(parameter.getType(), parameter.getName(), value, retrieveIsConstant()));
         }
 
         contexts.addLast(context);
@@ -447,8 +447,9 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         }
 
         if(functionDeclaration.getReturnType().isPresent()) {
-            customType.add(new Parameter(functionDeclaration.getReturnType().get(), null));
+            customType.add(new Parameter(functionDeclaration.getReturnType().get(), functionDeclaration.getReturnType().get().getCustomType()));
         }
+
         callAccept(functionDeclaration.getBlock());
 
         // if return value
@@ -592,7 +593,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         var type = castedFactorExpression.getType();
 
         if (!CAST_OPERATIONS.containsKey(type)) {
-            throw new UnsupportedCastException();
+            throw new UnsupportedCastException(castedFactorExpression.getPosition());
         }
 
         var castHelper = CAST_OPERATIONS.get(type);
@@ -602,7 +603,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         var toCast = retrieveResult();
 
         if (!supportedTypes.contains(toCast.getType())) {
-            throw new UnsupportedCastException();
+            throw new UnsupportedCastException(castedFactorExpression.getPosition());
         }
         var value = castHelper.get(toCast.getType()).apply(toCast);
         result = Result.ok(value);
@@ -653,6 +654,14 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         }
 
         return result.getValue();
+    }
+
+    private boolean retrieveIsConstant() {
+        if (!result.isPresent()) {
+            throw new ExpressionDidNotEvaluateException();
+        }
+
+        return result.isConstant();
     }
 
     private void validateTypes(TypeDeclaration provided, TypeDeclaration expected) {

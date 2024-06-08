@@ -1,0 +1,12 @@
+fn test(int a) {
+    if(true) {
+        int a = 2;
+        print((string)a);
+    }
+    print((string)a);
+}
+
+
+fn main() {
+    test(5);
+}
