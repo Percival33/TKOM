@@ -1,10 +1,12 @@
 variant Student { int id; string name; };
 
+fn foo(): Student {
+    return Student::id(0);
+}
+
 fn main() {
-     Student student = Student::id(33);
-    # Student student = Student::name("percival");
     int a = 0;
-    match(student) {
+    match(foo()) {
         Student::id(x) {
             a = x + 1;
         }
