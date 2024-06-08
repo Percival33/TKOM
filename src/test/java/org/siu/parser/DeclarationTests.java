@@ -102,7 +102,7 @@ class DeclarationTests {
 
         ConstStatement expectedConst = new ConstStatement(
                 new Parameter(new TypeDeclaration(ValueType.INT), "x"),
-                createDeclaration("x", ValueType.INT, new StructExpression("pt", "x", position)),
+                createDeclaration("x", ValueType.INT, new StructMemberExpression("pt", "x", position)),
                 position
         );
 

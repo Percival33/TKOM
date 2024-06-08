@@ -9,7 +9,7 @@ import org.siu.token.Position;
 @Value
 @EqualsAndHashCode(exclude = "position")
 @RequiredArgsConstructor
-public class StructExpression implements NamedExpression, Expression {
+public class StructMemberExpression implements NamedExpression, Expression {
     String structName;
     String fieldName;
     Position position;

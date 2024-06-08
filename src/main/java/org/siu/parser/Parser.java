@@ -478,7 +478,7 @@ public class Parser {
             log.error("No expression in assignment at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
         }
-        return Optional.of(new StructMemberAssignmentStatement(new StructExpression(structName, fieldName, position), expression.get(), position));
+        return Optional.of(new StructMemberAssignmentStatement(new StructMemberExpression(structName, fieldName, position), expression.get(), position));
     }
 
     /**
@@ -903,7 +903,7 @@ public class Parser {
 
         nextToken();
         var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
-        return Optional.of(new StructExpression(name, fieldName, position));
+        return Optional.of(new StructMemberExpression(name, fieldName, position));
     }
 
     private Optional<Expression> parseFnCallExpression(String name, Position position) {

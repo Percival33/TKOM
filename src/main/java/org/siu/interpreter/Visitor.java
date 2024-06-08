@@ -71,7 +71,7 @@ public interface Visitor {
     //    Complex type expression
     void visit(final VariantDeclarationExpression expression);
 
-    void visit(final StructExpression expression);
+    void visit(final StructMemberExpression expression);
 
 
     void visit(final IdentifierExpression identifierExpression);

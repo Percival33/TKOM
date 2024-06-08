@@ -10,10 +10,10 @@ import org.siu.ast.Statement;
 import org.siu.ast.expression.FunctionCallExpression;
 import org.siu.ast.expression.IdentifierExpression;
 import org.siu.ast.expression.StructDeclarationExpression;
-import org.siu.ast.expression.StructExpression;
 import org.siu.ast.expression.arithmetic.AddArithmeticExpression;
 import org.siu.ast.expression.arithmetic.MultiplyArithmeticExpression;
 import org.siu.ast.function.FunctionDefinitionStatement;
+import org.siu.ast.statement.AssignmentStatement;
 import org.siu.ast.statement.DeclarationStatement;
 import org.siu.ast.statement.ReturnStatement;
 import org.siu.ast.type.IntegerExpression;
@@ -50,22 +50,28 @@ class FunctionDefinitionTest {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("add");
-        assertEquals(new FunctionDefinitionStatement(
-                        "add",
-                        List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a"), new Parameter(new TypeDeclaration(ValueType.INT), "b")),
-                        Optional.of(new TypeDeclaration(ValueType.INT)),
-                        new BlockStatement(
-                                List.of(new ReturnStatement(
-                                        new AddArithmeticExpression(
-                                                new IdentifierExpression("a", position),
-                                                new IdentifierExpression("b", position),
-                                                position
-                                        ),
-                                        position)),
+
+        BlockStatement block = new BlockStatement(
+                List.of(new ReturnStatement(
+                        new AddArithmeticExpression(
+                                new IdentifierExpression("a", position),
+                                new IdentifierExpression("b", position),
                                 position
                         ),
-                        position),
-                fn);
+                        position
+                )),
+                position
+        );
+
+        FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
+                "add",
+                List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a"), new Parameter(new TypeDeclaration(ValueType.INT), "b")),
+                Optional.of(new TypeDeclaration(ValueType.INT)),
+                block,
+                position
+        );
+
+        assertEquals(expected, fn);
     }
 
     @Test
@@ -74,13 +80,16 @@ class FunctionDefinitionTest {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("add");
-        assertEquals(new FunctionDefinitionStatement(
-                        "add",
-                        List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a")),
-                        Optional.empty(),
-                        new BlockStatement(List.of(), position),
-                        position),
-                fn);
+
+        FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
+                "add",
+                List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a")),
+                Optional.empty(),
+                new BlockStatement(List.of(), position),
+                position
+        );
+
+        assertEquals(expected, fn);
     }
 
     @Test
@@ -89,13 +98,21 @@ class FunctionDefinitionTest {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("add");
-        assertEquals(new FunctionDefinitionStatement(
-                        "add",
-                        List.of(),
-                        Optional.empty(),
-                        new BlockStatement(List.of(new FunctionCallExpression("f", List.of(new IntegerExpression(1, position)), position)), position),
-                        position),
-                fn);
+
+        BlockStatement block = new BlockStatement(
+                List.of(new FunctionCallExpression("f", List.of(new IntegerExpression(1, position)), position)),
+                position
+        );
+
+        FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
+                "add",
+                List.of(),
+                Optional.empty(),
+                block,
+                position
+        );
+
+        assertEquals(expected, fn);
     }
 
     @Test
@@ -104,18 +121,18 @@ class FunctionDefinitionTest {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("fun");
+
         BlockStatement block = getBlockStatement();
+
         FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
                 "fun",
                 List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a"), new Parameter(new TypeDeclaration(ValueType.INT), "b")),
                 Optional.of(new TypeDeclaration(ValueType.FLOAT)),
                 block,
-                position);
+                position
+        );
 
-        assertEquals(expected.getName(), fn.getName());
-        assertEquals(expected.getParameters(), fn.getParameters());
-        assertEquals(expected.getReturnType(), fn.getReturnType());
-        assertEquals(expected.getBlock(), fn.getBlock());
+        assertEquals(expected, fn);
     }
 
     @Test
@@ -124,30 +141,77 @@ class FunctionDefinitionTest {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
         var fn = program.getFunctionDefinitions().get("fun");
+
         BlockStatement block = new BlockStatement(
-                List.of(
-                        new ReturnStatement(
-                                new StructDeclarationExpression(List.of(new IntegerExpression(1, position), new IntegerExpression(2, position)), position),
-                                position
-                        )),
+                List.of(new ReturnStatement(
+                        new StructDeclarationExpression(List.of(new IntegerExpression(1, position), new IntegerExpression(2, position)), position),
                         position
-                );
+                )),
+                position
+        );
+
         FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
                 "fun",
                 List.of(new Parameter(new TypeDeclaration(ValueType.INT), "a")),
                 Optional.of(new TypeDeclaration(ValueType.CUSTOM, "Point")),
                 block,
-                position);
+                position
+        );
 
-        assertEquals(expected.getName(), fn.getName());
-        assertEquals(expected.getParameters(), fn.getParameters());
-        assertEquals(expected.getReturnType(), fn.getReturnType());
-        assertEquals(expected.getBlock(), fn.getBlock());
+        assertEquals(expected, fn);
+    }
+
+    @Test
+    void fnDefinitionCustomTypeParameterTest() {
+        String s = "fn fun(Point p): Point { p = { 1, 2 }; return p; }";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+        var fn = program.getFunctionDefinitions().get("fun");
+
+        BlockStatement block = new BlockStatement(
+                List.of(
+                        new AssignmentStatement(
+                                "p",
+                                new StructDeclarationExpression(List.of(new IntegerExpression(1, position), new IntegerExpression(2, position)), position),
+                                position
+                        ),
+                        new ReturnStatement(
+                                new IdentifierExpression("p", position),
+                                position
+                        )
+                ),
+                position
+        );
+
+        FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
+                "fun",
+                List.of(new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Point"), "p")),
+                Optional.of(new TypeDeclaration(ValueType.CUSTOM, "Point")),
+                block,
+                position
+        );
+
+        assertEquals(expected, fn);
     }
 
     private BlockStatement getBlockStatement() {
-        Statement declarationStatement = new DeclarationStatement(new Parameter(new TypeDeclaration(ValueType.INT), "c"), new IntegerExpression(5, position), position);
-        Statement returnStatement = new ReturnStatement(new AddArithmeticExpression(new IdentifierExpression("a", position), new MultiplyArithmeticExpression(new IdentifierExpression("b", position), new IdentifierExpression("c", position), position), position), position);
+        Statement declarationStatement = new DeclarationStatement(
+                new Parameter(new TypeDeclaration(ValueType.INT), "c"),
+                new IntegerExpression(5, position),
+                position
+        );
+        Statement returnStatement = new ReturnStatement(
+                new AddArithmeticExpression(
+                        new IdentifierExpression("a", position),
+                        new MultiplyArithmeticExpression(
+                                new IdentifierExpression("b", position),
+                                new IdentifierExpression("c", position),
+                                position
+                        ),
+                        position
+                ),
+                position
+        );
         return new BlockStatement(List.of(declarationStatement, returnStatement), position);
     }
 }

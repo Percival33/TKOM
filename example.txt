@@ -1,3 +1,16 @@
+variant Student { int id; string name; };
+
+fn inspect(Student s): int {
+    match(s) {
+        Student::id(x) {
+            return x;
+        }
+    }
+    print("plz not print");
+}
+
 fn main() {
-    print("Hello there!");
+    Student s = Student::id(1);
+    int a = inspect(s);
+    print((string)a);
 }

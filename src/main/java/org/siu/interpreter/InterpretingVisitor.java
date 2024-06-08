@@ -394,7 +394,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     }
 
     @Override
-    public void visit(StructExpression expression) {
+    public void visit(StructMemberExpression expression) {
         var context = contexts.getLast();
 
         var structVariable = context.findVariable(expression.getStructName())

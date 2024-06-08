@@ -388,7 +388,7 @@ class StatementTest {
 
     private FunctionDefinitionStatement createStructMemberAssignmentFunction() {
         Statement assignmentStatement = new StructMemberAssignmentStatement(
-                new StructExpression("pluto", "age", position),
+                new StructMemberExpression("pluto", "age", position),
                 new IntegerExpression(3, position),
                 position
         );
@@ -400,5 +400,93 @@ class StatementTest {
                 blockOf(assignmentStatement),
                 position
         );
+    }
+
+    @Test
+    void returnStatementTest() {
+        String sourceCode = "fn a() { return 1; }";
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement expectedFunction = createReturnStatementFunction();
+
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    private FunctionDefinitionStatement createReturnStatementFunction() {
+        Statement returnStatement = new ReturnStatement(new IntegerExpression(1, position), position);
+
+        return new FunctionDefinitionStatement(
+                "a",
+                List.of(),
+                Optional.empty(),
+                blockOf(returnStatement),
+                position
+        );
+    }
+
+    @Test
+    void emptyReturnStatementTest() {
+        String sourceCode = "fn a() { return; }";
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement expectedFunction = createEmptyReturnStatment();
+
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    private FunctionDefinitionStatement createEmptyReturnStatment() {
+        Statement returnStatement = new ReturnStatement(null, position);
+
+        return new FunctionDefinitionStatement(
+                "a",
+                List.of(),
+                Optional.empty(),
+                blockOf(returnStatement),
+                position
+        );
+    }
+
+    @Test
+    void emptyBlockTest() {
+        String sourceCode = "fn a() {}";
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement expectedFunction = createEmptyBlockFunction();
+
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    private FunctionDefinitionStatement createEmptyBlockFunction() {
+        return new FunctionDefinitionStatement(
+                "a",
+                List.of(),
+                Optional.empty(),
+                blockOf(),
+                position
+        );
+    }
+
+    @Test
+    void multipleStatementsInblockTest() {
+        String sourceCode = "fn a() { int a = 1; a = 2; return a; }";
+        FunctionDefinitionStatement actualFunction = parseAndBuildFunction(sourceCode);
+        FunctionDefinitionStatement expectedFunction = createMultipleStatementsInBlockFunction();
+
+        assertEquals(expectedFunction, actualFunction);
+    }
+
+    private FunctionDefinitionStatement createMultipleStatementsInBlockFunction() {
+        DeclarationStatement declarationStatement = new DeclarationStatement(
+                new Parameter(new TypeDeclaration(ValueType.INT), "a"),
+                new IntegerExpression(1, position),
+                position
+        );
+
+        AssignmentStatement assignmentStatement = new AssignmentStatement(
+                "a",
+                new IntegerExpression(2, position),
+                position
+        );
+
+        ReturnStatement returnStatement = new ReturnStatement(new IdentifierExpression("a", position), position);
+
+        return new FunctionDefinitionStatement("a", List.of(), Optional.empty(), blockOf(declarationStatement, assignmentStatement, returnStatement), position);
     }
 }

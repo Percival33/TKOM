@@ -331,7 +331,7 @@ non_zero_digit          = [1-9];
 digit                   = [0-9];
 zero                    = "0";
 relation_operator       = ">" | ">=" | "<" | "<=" | "!=" | "==";
-arithmetic_operator     = "+" | "-";
+additive_operator       = "+" | "-";
 multiplication_operator = "*" | "/" | "%";
 character               = ?;
 ```
@@ -385,8 +385,6 @@ STRUCT_MEMBER                   = LITERAL
                                 | FN_CALL
                                 | IDENTIFIER_OR_STRUCT
 
-IDENTIFIER_OR_STRUCT            = IDENTIFIER, [ "{", STRUCT_MEMBER, { ",",  STRUCT_MEMBER }, "}" ]; 
-                        
 IF_STATEMENT                    = "if", "(", EXPRESSION, ")", BLOCK, 
                                     { "elif", "(", EXPRESSION, ")", BLOCK, },
                                     [ "else", BLOCK ];
@@ -399,13 +397,12 @@ FN_PARAMS                       = SIMPLE_TYPE_AS_ARG
                                 | VARIANT_AS_ARG;
                         
                                                 
-VARIANT_AS_ARG                  = VARIANT_TYPE_DEFINITION;                            
+VARIANT_AS_ARG                  = IDENTIFIER, IDENTIFIER;                            
 STRUCT_AS_ARG                   = IDENTIFIER, IDENTIFIER;
 SIMPLE_TYPE_AS_ARG              = SIMPLE_TYPE, IDENTIFIER;                        
                         
 FN_RET_TYPES                    = SIMPLE_TYPE 
                                 | IDENTIFIER;
-                                | VARIANT_RET_TYPE;
                         
 RETURN_STATEMENT                = "return", EXPRESSION, ";"
                                 | "return", ";";
@@ -415,7 +412,6 @@ MATCH_CASE_STATEMENT            = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER,
 
 ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION, ";"
                                 | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION, ";"
-                                | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
 
 STATEMENT                       = IF_STATEMENT
                                 | WHILE_STATEMENT
@@ -437,9 +433,9 @@ AND_EXPRESSION                  = RELATION_EXPRESSION, { "and", RELATION_EXPRESS
 
 RELATION_EXPRESSION             = ["not"], MATH_EXPRESSION, [ relation_operator, MATH_EXPRESSION ];
                         
-MATH_EXPRESSION                 = TERM, { arithmetic_operator, TERM };
+MATH_EXPRESSION                 = TERM, { additive_operator, TERM };
 
-TERM                            = UNARY_FACTOR, { multiplication_operator, UNARY_FACTOR };    
+TERM                            = CASTED_FACTOR, { multiplication_operator, CASTED_FACTOR };    
 
 CASTED_FACTOR                   = [ "(", SIMPLE_TYPE, ")" ], UNARY_FACTOR;
 
@@ -449,13 +445,13 @@ FACTOR                          = LITERAL
                                 | '(', EXPRESSION, ')'
                                 | '{', EXPRESSION, { ',', EXPRESSION }, '}' ( * struct definition *)
                                 | IDENTIFIER_FNCALL_MEM_VARIANT
-                                | STRUCT_MEMBER
 
 IDENTIFIER_FNCALL_MEM_VARIANT   = IDENTIFIER, 
                                 [
                                     ".", IDENTIFIER,
                                     | "(", [ FN_ARGUMENTS ], ")",
                                     | "::", IDENTIFIER, "(", EXPRESSION ")"
+                                    | "{", STRUCT_MEMBER, { ",",  STRUCT_MEMBER }, "}" (* struct *)
                                 ]     
 
 FN_ARGUMENTS                    = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };  
