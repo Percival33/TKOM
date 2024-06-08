@@ -1,8 +1,11 @@
 variant Student { int id; string name; };
 
+fn foo(): Student {
+    return Student::name("Marcin");
+}
+
 fn main() {
-    Student student = Student::id(33);
-    match(student) {
+    match(foo()) {
         Student::id(x) {
             print((string)x);
         }

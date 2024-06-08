@@ -1,5 +1,6 @@
 package org.siu.interpreter.state;
 
+import lombok.Getter;
 import org.siu.ast.type.TypeDeclaration;
 import org.siu.interpreter.error.UnexpectedTypeException;
 
@@ -59,4 +60,6 @@ public interface Value {
     default Value copy() {
         throw new UnexpectedTypeException();
     }
+
+    default boolean isStruct() { throw new UnexpectedTypeException(); }
 }

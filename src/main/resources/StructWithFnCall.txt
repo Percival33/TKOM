@@ -4,10 +4,17 @@ struct Dog {
 };
 
 fn foo(): int { return 5; }
-fn bar() { return; }
-
+fn bar() { /* */ return; }
+fn baz(): Dog {
+    return { 1, "fido" };
+}
 fn main() {
     bar();
     Dog pluto = { foo(), "pluto" };
     print((string)pluto.age);
+    print(pluto.name);
+    pluto = baz();
+    print("\n");
+    print((string)pluto.age);
+    print(pluto.name);
 }

@@ -45,21 +45,6 @@ public class VariantValue implements Value {
         return value;
     }
 
-//    @Override
-//    public void put(String key, Value value) {
-//        var parameter = variantMembers.get(key);
-//        if (parameter == null) {
-//            throw new NotExistingVariantTypeException(type.getCustomType(), key);
-//        }
-//
-//        if (!parameter.getType().equals(value.getType())) {
-//            throw new TypesDoNotMatchException(value.getType(), parameter.getType());
-//        }
-//
-//        this.value = value;
-//    }
-
-    // This function creates a deep copy of the VariantValue
     @Override
     public VariantValue copy() {
         Map<String, Parameter> copiedVariantMembers = new HashMap<>();

@@ -8,10 +8,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import io.vavr.Function2;
+import org.apache.commons.lang3.StringUtils;
 import org.siu.ast.type.ValueType;
 import org.siu.interpreter.error.DuplicatedVariableException;
+import org.siu.interpreter.error.InvalidTypeAssignmentException;
 import org.siu.interpreter.error.TypesDoNotMatchException;
 import org.siu.interpreter.state.value.IntValue;
+import org.siu.interpreter.state.value.StructValue;
 
 @lombok.Value
 public class Scope {
@@ -24,7 +27,6 @@ public class Scope {
         variables.put(variable.getIdentifier(), variable);
     }
 
-    // Create a private static final map with mappers for each Value type that will update the value of the variable
     private final static Map<ValueType, BiConsumer<Value, Value>> MAPPERS = Map.of(
             ValueType.INT, (previousValue, newValue) -> previousValue.setInteger(newValue.getInteger()),
             ValueType.FLOAT, (previousValue, newValue) -> previousValue.setFloatVal(newValue.getFloatVal()),
@@ -37,7 +39,23 @@ public class Scope {
         if (updateFunction != null) {
             updateFunction.accept(previousValue, newValue);
         } else {
-            throw new RuntimeException("Unsupported value type: " + previousValue.getType().getCustomType());
+            if (!newValue.isStruct()) {
+                throw new InvalidTypeAssignmentException();
+            }
+            if(!StringUtils.equals(previousValue.getType().getCustomType(), newValue.getType().getCustomType())) {
+                throw new TypesDoNotMatchException(newValue.getType(), previousValue.getType());
+            }
+
+            var previousStructValue = (StructValue) previousValue;
+            var newStructValue = (StructValue) newValue;
+
+            previousStructValue.getStructMembers().forEach((key, value) -> {
+                var newValueForKey = newStructValue.getStructMembers().get(key);
+                if (newValueForKey == null) {
+                    throw new TypesDoNotMatchException(previousValue.getType(), newValue.getType());
+                }
+                previousStructValue.put(key, newValueForKey);
+            });
         }
     }
 

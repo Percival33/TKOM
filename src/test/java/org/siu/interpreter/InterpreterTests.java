@@ -31,7 +31,8 @@ public class InterpreterTests {
             "printer-test.txt, 'Hello there!'",
             "pass-by-copy-test.txt, 0",
             "pass-struct-member-by-copy-test.txt, '2\n2'",
-            "variant-test.txt, 33"
+            "variant-test.txt, 33",
+            "variant-as-fncall-test.txt, Marcin"
     })
     void testInterpreter(String fileName, String expectedOutput) throws IOException {
         String code = readFileFromResources(fileName);
@@ -44,6 +45,15 @@ public class InterpreterTests {
         visitor.execute();
         assertEquals(expectedOutput.trim(), output.toString().trim());
     }
+
+    /*
+    TODO: dodanie structow roznych typow
+    TODO: zmiana wartości w wariancie
+    TODO: przekazywanie structa przez referencje
+    TODO: przekazuwanie variantu jako fn call
+    TODO: przekazuwanie match na nie istniejacym typie
+    TODO: przekazuwanie match na nie istniejacym typie
+     */
 
     @ParameterizedTest
     @CsvSource({

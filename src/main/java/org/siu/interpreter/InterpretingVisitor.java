@@ -446,6 +446,9 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             throw new FunctionStackLimitException();
         }
 
+        if(functionDeclaration.getReturnType().isPresent()) {
+            customType.add(new Parameter(functionDeclaration.getReturnType().get(), null));
+        }
         callAccept(functionDeclaration.getBlock());
 
         // if return value

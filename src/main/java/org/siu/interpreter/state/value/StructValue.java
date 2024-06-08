@@ -1,5 +1,6 @@
 package org.siu.interpreter.state.value;
 
+import lombok.Getter;
 import org.siu.ast.type.TypeDeclaration;
 import org.siu.interpreter.error.NotExistingStructMemberException;
 import org.siu.interpreter.error.StructMemberNotInitializedException;
@@ -11,6 +12,7 @@ import java.util.Map;
 @lombok.Value
 public class StructValue implements Value {
     TypeDeclaration type;
+    @Getter
     Map<String, Value> structMembers;
 
     @Override
@@ -45,5 +47,10 @@ public class StructValue implements Value {
     @Override
     public StructValue copy() {
         return new StructValue(new TypeDeclaration(type.getValueType(), type.getCustomType()), Map.copyOf(structMembers));
+    }
+
+    @Override
+    public boolean isStruct() {
+        return true;
     }
 }
