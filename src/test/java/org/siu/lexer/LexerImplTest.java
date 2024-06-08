@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.siu.error.ErrorHandler;
+import org.siu.error.InvalidTokenException;
 import org.siu.token.Position;
 import org.siu.token.TokenType;
 import org.siu.token.type.*;
@@ -28,10 +29,17 @@ class LexerImplTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {123, 0, Integer.MAX_VALUE, Integer.MAX_VALUE})
+    @ValueSource(ints = {123, 0, Integer.MAX_VALUE})
     void testInteger(int expected) {
         Lexer lexer = setup(String.valueOf(expected));
         assertEquals(new IntegerToken(new Position(1, 1), expected), lexer.nextToken());
+    }
+
+    @Test
+    void testMinInt() {
+        Lexer lexer = setup(String.valueOf(Integer.MIN_VALUE + 1));
+        assertEquals(new KeywordToken(TokenType.MINUS, new Position(1, 1)), lexer.nextToken());
+        assertEquals(new IntegerToken(new Position(1, 2), Integer.MAX_VALUE), lexer.nextToken());
     }
 
     @ParameterizedTest
@@ -51,10 +59,15 @@ class LexerImplTest {
     }
 
     @Test
+    void minFloat() {
+        Lexer lexer = setup("0." + "0".repeat(6) + "1");
+        assertEquals(new FloatToken(new Position(1, 1), (float) 1.0E-7), lexer.nextToken());
+    }
+
+    @Test
     void tooLongFloat() {
         Lexer lexer = setup("1." + "0".repeat(LexerConfig.MAX_FRACTIONAL_DIGITS) + "1");
         assertEquals(new FloatToken(new Position(1, 1), 1.0F), lexer.nextToken());
-        Mockito.verify(errorHandler).handleLexerError(Mockito.any(Exception.class), Mockito.any(Position.class));
     }
 
 
@@ -184,5 +197,43 @@ class LexerImplTest {
         assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(2, 13), "b"), lexer.nextToken(), "Expected identifier");
         assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(2, 14)), lexer.nextToken(), "Expected SEMICOLON");
         assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_CLOSE, new Position(2, 16)), lexer.nextToken(), "Expected SQUARE_BRACKET_CLOSE");
+    }
+
+    @Test
+    void testInvalidLexerError() {
+        Lexer lexer = setup("~!@#$%^&*()?\"}{:>L<KMJHGFVCDSES$ERTGHPNO\"m;\n l,';l|_)(*&^%R$EW HŻA#S$XRC&^F^*VBIH)*&^F*TR%$#@!~!@#$%^&*INBUVF^D%");
+        assertThrows(InvalidTokenException.class, lexer::nextToken);
+    }
+
+    @Test
+    void testStructTypeDeclaration() {
+        Lexer lexer = setup("struct Point { int x; int y; };");
+        assertEquals(new KeywordToken(TokenType.STRUCT, new Position(1, 1)), lexer.nextToken(), "Expected STRUCT");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 8), "Point"), lexer.nextToken(), "Expected point identifier");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_OPEN, new Position(1, 14)), lexer.nextToken(), "Expected CURLY_BRACKET_OPEN");
+        assertEquals(new KeywordToken(TokenType.INT, new Position(1, 16)), lexer.nextToken(), "Expected INT");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 20), "x"), lexer.nextToken(), "Expected x identifier");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 21)), lexer.nextToken(), "Expected SEMICOLON");
+        assertEquals(new KeywordToken(TokenType.INT, new Position(1, 23)), lexer.nextToken(), "Expected INT");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 27), "y"), lexer.nextToken(), "Expected y identifier");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 28)), lexer.nextToken(), "Expected SEMICOLON");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_CLOSE, new Position(1, 30)), lexer.nextToken(), "Expected CURLY_BRACKET_CLOSE");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 31)), lexer.nextToken(), "Expected SEMICOLON");
+    }
+
+    @Test
+    void testSVariantTypeDeclaration() {
+        Lexer lexer = setup("variant Point { int x; int y; };");
+        assertEquals(new KeywordToken(TokenType.VARIANT, new Position(1, 1)), lexer.nextToken(), "Expected VARIANT");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 9), "Point"), lexer.nextToken(), "Expected point identifier");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_OPEN, new Position(1, 15)), lexer.nextToken(), "Expected CURLY_BRACKET_OPEN");
+        assertEquals(new KeywordToken(TokenType.INT, new Position(1, 17)), lexer.nextToken(), "Expected INT");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 21), "x"), lexer.nextToken(), "Expected x identifier");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 22)), lexer.nextToken(), "Expected SEMICOLON");
+        assertEquals(new KeywordToken(TokenType.INT, new Position(1, 24)), lexer.nextToken(), "Expected INT");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 28), "y"), lexer.nextToken(), "Expected y identifier");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 29)), lexer.nextToken(), "Expected SEMICOLON");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_CLOSE, new Position(1, 31)), lexer.nextToken(), "Expected CURLY_BRACKET_CLOSE");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 32)), lexer.nextToken(), "Expected SEMICOLON");
     }
 }

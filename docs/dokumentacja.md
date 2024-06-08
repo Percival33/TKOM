@@ -50,7 +50,7 @@ referencje.
 
 | Typy proste | Wartości                                            |
 |-------------|-----------------------------------------------------|
-| int         | od -2.147.483.648 do 2.147.483.647                  |
+| int         | od -2.147.483.647 do 2.147.483.647                  |
 | float       | pojedyncza precyzja 32-bit IEEE 754 floating point. |
 | bool        | true / false                                        |
 | string      | "A", "pies", "imię pies to\t\"Pluto\"!\nWow!"       |
@@ -470,7 +470,7 @@ PROGRAM                         = { FN_DEFINITION | DECLARATION | FN_CALL | TYPE
 Uruchomienie poprzez podanie pliku do uruchomienia
 
 ```
-./prog file.txt
+java -jar siulang-1.0.0-fat.jar example.txt
 ```
 
 ## Środowisko programistyczne
