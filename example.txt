@@ -1,8 +1,6 @@
-struct A { int a; int a; };
-
+fn foo(int x) {}
 fn main() {
-   A a = A { 5, 6 };
-   print((string)a.a);
+   foo(true);
 }
 
 #fn main() {

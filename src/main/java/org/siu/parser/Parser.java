@@ -137,12 +137,12 @@ public class Parser {
 
         while (member.isPresent()) {
             members.add(member.get());
-            mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
+            mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
             member = parseParameter();
         }
 
         mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
 
         return Optional.of(new StructTypeDefinitionStatement(name, members, position));
     }
@@ -176,7 +176,7 @@ public class Parser {
         }
 
         mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
 
         return Optional.of(new VariantTypeDefinitionStatement(name, members, position));
     }
@@ -410,7 +410,7 @@ public class Parser {
         var arguments = parseFnArguments();
 
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
 
         return Optional.of(new FunctionCallExpression(name, arguments, position));
     }
@@ -424,7 +424,7 @@ public class Parser {
             log.error("No statement in assignment at: {}", position);
             handleParserError(new SyntaxError(position), position);
         }
-        mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
         return Optional.of(statement.get());
     }
 

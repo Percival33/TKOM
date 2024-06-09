@@ -55,10 +55,10 @@ referencje.
 | bool        | true / false                                                                          |
 | string      | "A", "pies", "imię pies to\t\"Pluto\"!\nWow!"                                         |
 
-| Typy złożone | Przykłady                                              |                                                                                             |
-|--------------|--------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| struct       | struct Car {<br>    int age;<br>    string model;<br>} | struktura, której polami mogą być również inne struktury                                    |
-| variant      | variant V { int, float };                              | typ wariantowy, który pozwala przechowywać wartość jednego z wymienionych w definicji typów |
+| Typy złożone | Przykłady                                               |                                                                                             |
+|--------------|---------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| struct       | struct Car {<br>    int age;<br>    string model;<br>}; | struktura, której polami mogą być również inne struktury                                    |
+| variant      | variant V { int, float };                               | typ wariantowy, który pozwala przechowywać wartość jednego z wymienionych w definicji typów |
 
 ### Operatory
 
@@ -260,7 +260,8 @@ Funkcji nie da się przeciążać.
 
 ### Kombinacja typów
 
-Operatory wieloargumentowe, np. porównania wymagają tego samego typu zmiennych.
+Operatory wieloargumentowe, np. porównania, wymagają tego samego typu zmiennych. Przy czym nie da porównywać się
+własnych typów
 
 ### Słowa kluczowe
 
@@ -285,16 +286,37 @@ Wyróżniam 3 rodzaje błędów
       inta `error: number is too big for this type at line:15`.
     - za długi identyfikator `error: Identificator is too long at line:19`
 1. błędy analizatora składniowego
-    - dodanie różnych typów bez rzutowania `error: cannot perform operation on different types at line:3`
-    - przypisanie nowej wartości do zmiennej oznaczonej `const`, `error: change const value`
-    - przekazanie złego typu zmiennej jako parameter
-      funkcji: `error: function parameter and provided types mismatch at line:20`
-2. błędy analizatora semantycznego
     - redefinicja funkcji `error: function already declared at line:5`
+    - pusty typ wariantowy `EmptyVariantException`
+    - brak warunku w instrukcji warunkowej `InvalidConditionExpressionException`
+    - token, którego nie da się obsłużyć w parserze `InvalidTokenException`
+    - brak bloku w instrukcji warunkowej / ciele funkcji `InvalidBlockException`
+    - brak wyrażenia `MissingExpressionException`
+    - brak średnika `MissingSemicolonException`
+    - brak instrukcji po `const`
+    - brak składni `SyntaxException`
+2. błędy analizatora semantycznego
     - użycie `return` w funkcji nie zwracającej typu
 1. błędy interpretera
-    - błąd operacji matematycznych `error: divide by zero at line:3.`
-    - błąd `variant`, np. `error: variant wrong type at line:5.`
+    - błąd operacji
+      matematycznych `Error while interpreting: ZeroDivisionException(super=InterpreterException(position=Position(line=2, column=15))).`
+      oraz `ArithmeticOperationNotSupportedForNonNumericTypes` i `CompareOperationNotSupportedForNonNumericTypes` dla
+      operacji na innych typach niż liczbowe oraz
+    - powtórzenie zmiennych w argumentach funkcji oraz w definicji struktury
+    - przypisanie nowej wartości do zmiennej
+      oznaczonej `const`, `Error while interpreting: ReassignConstVariableException`
+    - wyrażenie nie zwracające wartości
+    - dodanie różnych typów bez rzutowania `Error while interpreting: TypesDoNotMatchException`
+    - przekroczenie limitu stosu wywołań
+    - niepoprawna liczba argumentów funkcji
+    - podanie złego typu argumentu do instrukcji match
+    - próba przypisania wartości do zmiennej (w tym typu w strukturze), która nie istnieje
+    - próba użycia zmiennej, która nie istnieje
+    - próba przypisania nowej wartości do już zdefiniowanej stałej
+    - próba przypisania do zmiennej wartości innego typu
+    - dzielenie przez zero
+    - przekazanie złego typu zmiennej jako parameter
+      funkcji: `error: function parameter and provided types mismatch at line:20`
 
 ## Struktura projektu
 
@@ -318,13 +340,16 @@ Wyróżniam 3 rodzaje błędów
 ### Testowanie
 
 - lekser
-    - Testy będą polegały na przyjmowaniu napisów i porównywaniu wygenerowanych tokenów
+    - Testy polegają na przyjmowaniu napisów i porównywaniu wygenerowanych tokenów
         - test: niepoprawnego napisu, który zakończony jest końcem pliku
 - parser
-    - Testy będą porównywały wyjściową konstrukcje z oczekiwaną konstrukcją drzewa składniowego.
+    - Testy porównują wyjściową konstrukcje z oczekiwaną konstrukcją drzewa składniowego.
 - interpreter
-    - Testy będą symulować błędy, które mogą powstać w kodzie użytkownika sprawdzane będzie sposób obsługi takich
+    - Testy symulują błędy, które mogą powstać w kodzie użytkownika sprawdzane będzie sposób obsługi takich
       błędów.
+    - Testy symulują przypadki użycia i sprawdzają czy wynik jest zgodny z oczekiwaniami.
+
+Łącznie testów jednostkowych i integracyjnych jest 174.
 
 ## Gramatyka języka
 

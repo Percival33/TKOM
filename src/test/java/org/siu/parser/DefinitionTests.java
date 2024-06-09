@@ -114,7 +114,7 @@ class DefinitionTests {
         Parser parser = toParser(sourceCode);
 
         Exception exception = assertThrows(RuntimeException.class, parser::buildProgram);
-        assertEquals("org.siu.error.SyntaxError at: Position(line=3, column=5)", exception.getMessage());
+        assertEquals("Missing semicolon at the end of the statement at: Position(line=3, column=5)", exception.getMessage());
     }
 
     @Test
