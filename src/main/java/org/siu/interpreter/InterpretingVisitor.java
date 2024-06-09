@@ -188,8 +188,13 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(StructTypeDefinitionStatement statement) {
+        Map<String, Boolean> fields = new HashMap<>();
         for (var param : statement.getParameters()) {
+            if(fields.containsKey(param.getName())) {
+                throw new StructMemberAlreadyDefined(statement.getName(), param.getName(), statement.getPosition());
+            }
             validateParameter(param);
+            fields.put(param.getName(), true);
         }
 
         typeDefinitions.put(statement.getName(), statement);

@@ -83,6 +83,7 @@ public class InterpreterTests {
             "error-invalid-operation-on-string-test.txt,                    OperationNotSupported",
             "error-pass-const-reference.txt,                                ReassignConstVariableException",
             "error-reassign-const.txt,                                      ReassignConstVariableException",
+            "error-duplicate-struct-members.txt,                            StructMemberAlreadyDefined",
             "error-declaration-types-do-not-match-test.txt,                 TypesDoNotMatchException",
             "error-print-not-string.txt,                                    TypesDoNotMatchException",
             "error-eq-types-do-not-match.txt,                               TypesDoNotMatchException",
