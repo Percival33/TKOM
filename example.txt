@@ -1,3 +1,10 @@
+struct A { int a; };
+
 fn main() {
-    print("Hello there!");
+   int a = 5;
+   A b = (A)b;
 }
+
+#fn main() {
+#    print("Hello there!");
+#}

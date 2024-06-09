@@ -4,7 +4,6 @@ import io.vavr.Tuple3;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.siu.ast.BlockStatement;
 import org.siu.ast.Node;
 import org.siu.ast.Program;
@@ -20,6 +19,7 @@ import org.siu.ast.statement.*;
 import org.siu.ast.type.*;
 import org.siu.interpreter.builtin.PrintFunction;
 import org.siu.interpreter.error.FunctionNotDefinedException;
+import org.siu.interpreter.error.FunctionStackLimitException;
 import org.siu.interpreter.error.InvalidReturnTypeException;
 import org.siu.interpreter.error.UnsupportedOperationException;
 import org.siu.token.Position;
@@ -42,6 +42,7 @@ public class FunctionReturnTypeVisitor implements Visitor, Interpreter {
     private final Deque<Tuple3<String, Position, Optional<TypeDeclaration>>> functionCallStack = new ArrayDeque<>();
     private Position currentPosition = new Position(1, 1);
     private boolean errorOccurred = false;
+
     @Getter
     private String errorDetails = "";
 
@@ -210,8 +211,12 @@ public class FunctionReturnTypeVisitor implements Visitor, Interpreter {
         }
         var functionDeclaration = functionDefinitions.get(expression.getIdentifier());
 
-
         functionCallStack.add(new Tuple3<>(expression.getIdentifier(), functionDeclaration.getPosition(), functionDeclaration.getReturnType()));
+
+        if(functionCallStack.size() > InterpreterConfig.MAX_STACK_SIZE) {
+            throw new FunctionStackLimitException(expression.getIdentifier(), expression.getPosition());
+        }
+
         callAccept(functionDeclaration.getBlock());
         functionCallStack.removeLast();
     }

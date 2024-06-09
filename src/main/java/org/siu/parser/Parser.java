@@ -44,14 +44,14 @@ public class Parser {
 
     private void saveFunctionDefinition(FunctionDefinitionStatement statement, Map<String, FunctionDefinitionStatement> functions) {
         if (functions.containsKey(statement.getName())) {
-            handleParserError(new RedefinitionError(functions.get(statement.getName()).getPosition()), statement.getPosition());
+            handleParserError(new RedefinitionError(statement.getName() + " is already defined", functions.get(statement.getName()).getPosition()), statement.getPosition());
         }
         functions.put(statement.getName(), statement);
     }
 
     private void saveTypeDefinition(Statement statement, Map<String, Statement> typeDefinitions) {
         if (typeDefinitions.containsKey(statement.getName())) {
-            handleParserError(new RedefinitionError(typeDefinitions.get(statement.getName()).getPosition()), statement.getPosition());
+            handleParserError(new RedefinitionError(statement.getName() + " is already defined", typeDefinitions.get(statement.getName()).getPosition()), statement.getPosition());
         }
         typeDefinitions.put(statement.getName(), statement);
     }
@@ -60,7 +60,7 @@ public class Parser {
         String name = statement.getName();
 
         if (declarations.containsKey(name)) {
-            handleParserError(new RedefinitionError(declarations.get(name).getPosition()), statement.getPosition());
+            handleParserError(new RedefinitionError(statement.getName() + " is already defined", declarations.get(name).getPosition()), statement.getPosition());
         }
         declarations.put(name, statement);
     }

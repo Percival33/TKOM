@@ -188,10 +188,6 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(StructTypeDefinitionStatement statement) {
-        if (typeDefinitions.containsKey(statement.getName())) {
-            throw new StructAlreadyDefinedException(statement.getName());
-        }
-
         for (var param : statement.getParameters()) {
             validateParameter(param);
         }
@@ -300,10 +296,9 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
         callAccept(statement.getExpression());
         var variantArgument = retrieveResult();
-        var variantValue = (VariantValue) variantArgument;
 
         if (variantArgument.getType().getValueType() != ValueType.CUSTOM) {
-            throw new RuntimeException("match statement supports only custom types");
+            throw new InvalidTypeForMatchException(statement.getPosition());
         }
 
         if (!typeDefinitions.containsKey(variantArgument.getType().getCustomType())) {
@@ -316,6 +311,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             throw new InvalidTypeForMatchException(statement.getPosition());
         }
 
+        var variantValue = (VariantValue) variantArgument;
         for (var matchCase : statement.getStatements()) {
             if (Objects.equals(variantValue.getCurrentField(), matchCase.getFieldName())) {
 

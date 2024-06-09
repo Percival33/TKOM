@@ -277,4 +277,12 @@ class DeclarationTests {
 
         assertEquals(expectedDeclaration, program.getDeclarations().get("v"));
     }
+
+    @Test
+    void testInvalidCast() {
+        String sourceCode = "int v = (A)(x + 1);";
+        Parser parser = toParser(sourceCode);
+        RuntimeException thrown = assertThrows(RuntimeException.class, parser::buildProgram);
+        assertEquals("Missing semicolon at the end of the statement at: Position(line=1, column=12)", thrown.getMessage());
+    }
 }

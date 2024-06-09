@@ -41,6 +41,22 @@ public class ReturnTypeVisitorTests {
     }
 
     @Test
+    void fnCallStackException() throws IOException {
+        String code = readFileFromResources("error-stack-limit.txt");
+        var program = buildProgram(code);
+        var output = new ByteArrayOutputStream();
+        final String utf8 = StandardCharsets.UTF_8.name();
+        PrintStream out = new PrintStream(output, true, utf8);
+        var visitor = new FunctionReturnTypeVisitor(program, out);
+        visitor.execute();
+
+        String oi = output.toString().trim();
+        String errorName = extractErrorName(oi);
+
+        assertEquals("FunctionStackLimitException".trim(), errorName.trim());
+    }
+
+    @Test
     void voidFnNestedReturn() throws IOException {
         var program = buildProgram("""
                 fn foo() {

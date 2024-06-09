@@ -60,6 +60,24 @@ class DefinitionTests {
     }
 
     @Test
+    void testRedefinitionStruct() {
+        String sourceCode = "struct A { int a; };\n" +
+                "struct A { int a; };";
+        Parser parser = toParser(sourceCode);
+        Exception exception = assertThrows(RuntimeException.class, parser::buildProgram);
+        assertEquals("RedefinitionError(details=A is already defined) at: Position(line=2, column=8)", exception.getMessage());
+    }
+
+    @Test
+    void testRedefinitionVariant() {
+        String sourceCode = "variant A { int a; };\n" +
+                "variant A { int a; };";
+        Parser parser = toParser(sourceCode);
+        Exception exception = assertThrows(RuntimeException.class, parser::buildProgram);
+        assertEquals("RedefinitionError(details=A is already defined) at: Position(line=2, column=11)", exception.getMessage());
+    }
+
+    @Test
     void testStructDefinitionStatement() {
         String sourceCode = """
                 struct Dog {\s

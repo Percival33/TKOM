@@ -7,8 +7,7 @@ import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.siu.ast.Parameter;
 import org.siu.ast.type.TypeDeclaration;
-import org.siu.interpreter.error.NotExistingVariantTypeException;
-import org.siu.interpreter.error.TypesDoNotMatchException;
+import org.siu.interpreter.error.TypeNotDefinedException;
 import org.siu.interpreter.state.Value;
 
 import java.util.HashMap;
@@ -33,7 +32,7 @@ public class VariantValue implements Value {
         this.value = value;
 
         if (!variantMembers.containsKey(field)) {
-            throw new NotExistingVariantTypeException(type.getCustomType(), field);
+            throw new TypeNotDefinedException(field);
         }
     }
 
