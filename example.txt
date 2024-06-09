@@ -1,16 +1,18 @@
-variant Student { int id; string name; };
+struct Breed {
+	string name;
+	int popularity;
+};
 
-fn inspect(Student s): int {
-    match(s) {
-        Student::id(x) {
-            return x;
-        }
-    }
-    print("plz not print");
-}
+struct Cat {
+	int age;
+	Breed breed;
+};
 
 fn main() {
-    Student s = Student::id(1);
-    int a = inspect(s);
-    print((string)a);
+    Breed persian = Breed { "Persian", 5 };
+    Cat pluto = Cat { 14, persian };
+
+    Breed tmp = pluto.breed;
+
+    print(tmp.name);
 }

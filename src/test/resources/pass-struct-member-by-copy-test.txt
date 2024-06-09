@@ -8,7 +8,7 @@ fn foo(int x) {
 }
 
 fn main() {
-    const Point p = { 1, 2 };
+    const Point p = Point { 1, 2 };
     foo(p.x);
     foo(@p.y);
     print((string)p.x);

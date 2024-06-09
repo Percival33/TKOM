@@ -1,0 +1,22 @@
+struct Breed {
+	string name;
+	int popularity;
+};
+
+struct Cat {
+	int age;
+	Breed breed;
+};
+
+fn foo(): Point {
+    return Point { 3, 4 };
+}
+
+fn main() {
+    #Breed golden = Breed { "Golden retriever", 5 };
+    Breed golden = { "Golden retriever", 5 };
+    #Dog pluto = Dog { 14, "pluto", golden };
+    Dog pluto = { 14, "pluto", golden };
+
+    print(pluto.breed.name);
+}

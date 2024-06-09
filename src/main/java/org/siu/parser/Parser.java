@@ -92,7 +92,9 @@ public class Parser {
                 saveFunctionDefinition(funDef.get(), functions);
                 continue;
             }
+
             if (token.getType() == TokenType.SEMICOLON) {
+                nextToken();
                 continue;
             }
 
@@ -282,7 +284,6 @@ public class Parser {
         }
 
         return Optional.of(new FunctionDefinitionStatement(name.toString(), params, returnType, block.get(), position));
-//        return Optional.empty();
     }
 
     /**
@@ -382,7 +383,8 @@ public class Parser {
         nextToken();
 
         var statement = parseAssignmentStatement(name, position)
-                .or(() -> parseFnCallStatement(name, position));
+                .or(() -> parseFunctionCallStatement(name, position));
+
         if (statement.isPresent()) return statement;
 
         var variable = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
@@ -400,7 +402,7 @@ public class Parser {
         return Optional.of(new DeclarationStatement(new Parameter(type, variable), expression.get(), position));
     }
 
-    private Optional<Statement> parseFnCallStatement(String name, Position position) {
+    private Optional<Statement> parseFunctionCallStatement(String name, Position position) {
         if (token.getType() != TokenType.BRACKET_OPEN) {
             return Optional.empty();
         }
@@ -851,10 +853,10 @@ public class Parser {
         var position = token.getPosition();
 
         // FACTOR
-        var factorOptional = parseStructDefinitionExpression()
-                .or(this::parseLiteralExpression)
+        var factorOptional = parseLiteralExpression()
                 .or(this::parseIdentifierOrFnCallOrVariant)
                 .or(Optional::empty);
+
 
         if (factorOptional.isEmpty()) {
             return Optional.empty();
@@ -892,7 +894,8 @@ public class Parser {
         var position = token.getPosition();
         nextToken();
 
-        return parseStructExpression(name, position)
+        return parseStructDefinitionExpression(name, position)
+                .or(() -> parseStructExpression(name, position))
                 .or(() -> parseFnCallExpression(name, position))
                 .or(() -> parseVariantExpression(name, position))
                 .or(() -> Optional.of(new IdentifierExpression(name, position)));
@@ -965,7 +968,7 @@ public class Parser {
     /**
      * '{', EXPRESSION, { ',', EXPRESSION }, '}' ( * struct definition expression *)
      */
-    private Optional<Expression> parseStructDefinitionExpression() {
+    private Optional<Expression> parseStructDefinitionExpression(String identifier, Position position) {
         if (token.getType() != TokenType.CURLY_BRACKET_OPEN) {
             return Optional.empty();
         }
@@ -986,7 +989,7 @@ public class Parser {
 
         mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
 
-        return Optional.of(new StructDeclarationExpression(arguments, token.getPosition()));
+        return Optional.of(new StructDeclarationExpression(identifier, arguments, position));
     }
 
     private boolean parseCopyOperator() {

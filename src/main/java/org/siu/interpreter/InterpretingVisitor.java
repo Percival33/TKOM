@@ -234,20 +234,17 @@ public class InterpretingVisitor implements Visitor, Interpreter {
 
     @Override
     public void visit(StructDeclarationExpression expression) {
-        var context = contexts.getLast();
-
         if (customType.isEmpty()) {
             throw new RuntimeException("Custom type name is empty");
         }
 
-        var customParameter = customType.getLast();
-        var customTypeName = customParameter.getType().getCustomType();
+        var typeName = expression.getIdentifier();
 
-        if (!typeDefinitions.containsKey(customTypeName)) {
-            throw new TypeNotDefinedException(customTypeName);
+        if (!typeDefinitions.containsKey(typeName)) {
+            throw new TypeNotDefinedException(typeName);
         }
 
-        var struct = typeDefinitions.get(customTypeName);
+        var struct = typeDefinitions.get(typeName);
         var arguments = expression.getArguments();
         var parameters = struct.getParameters();
 
@@ -266,7 +263,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             members.put(parameters.get(i).getName(), value);
         }
 
-        var value = new StructValue(customParameter.getType(), members);
+        var value = new StructValue(new TypeDeclaration(ValueType.CUSTOM, typeName), members);
         result = Result.ok(value);
     }
 

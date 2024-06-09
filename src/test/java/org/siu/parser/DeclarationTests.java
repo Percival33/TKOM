@@ -234,12 +234,13 @@ class DeclarationTests {
 
     @Test
     void testStructDeclaration() {
-        String sourceCode = "Point pt = { a, b, f() };";
+        String sourceCode = "Point pt = Point { a, b, f() };";
         Parser parser = toParser(sourceCode);
         Program program = parser.buildProgram();
         DeclarationStatement expectedDeclaration = new DeclarationStatement(
                 new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Point"), "pt"),
                 new StructDeclarationExpression(
+                        "Point",
                         List.of(
                                 new IdentifierExpression("a", position),
                                 new IdentifierExpression("b", position),

@@ -12,7 +12,7 @@ import java.util.List;
 @EqualsAndHashCode(exclude = "position")
 @Value
 public class StructDeclarationExpression implements Expression {
-// TODO: dodac nazwe struktury
+    String identifier;
     List<Expression> arguments;
     Position position;
 

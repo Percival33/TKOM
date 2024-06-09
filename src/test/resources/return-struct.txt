@@ -4,7 +4,7 @@ struct Point {
 };
 
 fn foo(): Point {
-    return { 3, 4 };
+    return Point { 3, 4 };
 }
 
 fn main() {

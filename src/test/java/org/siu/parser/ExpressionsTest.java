@@ -3,10 +3,11 @@ package org.siu.parser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.siu.ast.BlockStatement;
 import org.siu.ast.Parameter;
 import org.siu.ast.Program;
-import org.siu.ast.expression.CastedFactorExpression;
-import org.siu.ast.expression.Expression;
+import org.siu.ast.Statement;
+import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.AddArithmeticExpression;
 import org.siu.ast.expression.arithmetic.NegateArithmeticExpression;
 import org.siu.ast.expression.arithmetic.SubtractArithmeticExpression;
@@ -15,15 +16,13 @@ import org.siu.ast.expression.logical.NegateLogicalExpression;
 import org.siu.ast.expression.logical.OrLogicalExpression;
 import org.siu.ast.expression.relation.LessExpression;
 import org.siu.ast.statement.DeclarationStatement;
-import org.siu.ast.type.BooleanExpression;
-import org.siu.ast.type.IntegerExpression;
-import org.siu.ast.type.TypeDeclaration;
-import org.siu.ast.type.ValueType;
+import org.siu.ast.type.*;
 import org.siu.error.ErrorHandler;
-import org.siu.error.MissingExpressionError;
 import org.siu.lexer.Lexer;
 import org.siu.lexer.LexerImpl;
 import org.siu.token.Position;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,6 +43,11 @@ public class ExpressionsTest {
 
     private DeclarationStatement createDeclaration(String name, ValueType type, Expression expression) {
         Parameter parameter = new Parameter(new TypeDeclaration(type), name);
+        return new DeclarationStatement(parameter, expression, position);
+    }
+
+    private DeclarationStatement createDeclaration(String name, ValueType type, String typeName, Expression expression) {
+        Parameter parameter = new Parameter(new TypeDeclaration(type, typeName), name);
         return new DeclarationStatement(parameter, expression, position);
     }
 
@@ -166,5 +170,75 @@ public class ExpressionsTest {
         Program program = parseAndBuildProgram("bool b = (int)-1;");
         Expression expression = new CastedFactorExpression(new TypeDeclaration(ValueType.INT), new NegateArithmeticExpression(new IntegerExpression(1, position), position), position);
         assertEquals(createDeclaration("b", ValueType.BOOL, expression), program.getDeclarations().get("b"));
+    }
+
+    @Test
+    void testStringLiteral() {
+        Program program = parseAndBuildProgram("string b = \"AAda2da\";");
+        Expression expression = new StringExpression("AAda2da", position);
+        assertEquals(createDeclaration("b", ValueType.STRING, expression), program.getDeclarations().get("b"));
+    }
+
+    @Test
+    void testFloatLiteral() {
+        Program program = parseAndBuildProgram("float b = 0.12345678;");
+        Expression expression = new FloatExpression(0.1234567F, position); // Lexer will trim the float to 7 digits after the dot
+        assertEquals(createDeclaration("b", ValueType.FLOAT, expression), program.getDeclarations().get("b"));
+    }
+
+    @Test
+    void testBoolLiteral() {
+        Program program = parseAndBuildProgram("bool b = true;");
+        Expression expression = new BooleanExpression(true, position);
+        assertEquals(createDeclaration("b", ValueType.BOOL, expression), program.getDeclarations().get("b"));
+    }
+
+    @Test
+    void testExpressionInParenthesis() {
+        Program program = parseAndBuildProgram("int b = (1 + 2);");
+        Expression expression = new AddArithmeticExpression(new IntegerExpression(1, position), new IntegerExpression(2, position), position);
+        assertEquals(createDeclaration("b", ValueType.INT, expression), program.getDeclarations().get("b"));
+    }
+
+    @Test
+    void testIdentifierExpression() {
+        Program program = parseAndBuildProgram("int p = x;");
+        Expression expression = new IdentifierExpression("x", position);
+        assertEquals(createDeclaration("p", ValueType.INT, expression), program.getDeclarations().get("p"));
+    }
+
+    @Test
+    void testStructMemberExpression() {
+        Program program = parseAndBuildProgram("int p = p.x;");
+        Expression expression = new StructMemberExpression("p", "x", position);
+        assertEquals(createDeclaration("p", ValueType.INT, expression), program.getDeclarations().get("p"));
+    }
+
+    @Test
+    void testFnCallExpression() {
+        Program program = parseAndBuildProgram("int p = a(1);");
+        Expression expression = new FunctionCallExpression("a", List.of(new IntegerExpression(1, position)), position);
+        assertEquals(createDeclaration("p", ValueType.INT, expression), program.getDeclarations().get("p"));
+    }
+
+    @Test
+    void testVariantExpression() {
+        Program program = parseAndBuildProgram("int p = Student::id(33);");
+        Expression expression = new VariantDeclarationExpression("Student", "id", new IntegerExpression(33, position), position);
+        assertEquals(createDeclaration("p", ValueType.INT, expression), program.getDeclarations().get("p"));
+    }
+
+    @Test
+    void testStructExpression() {
+        Program program = parseAndBuildProgram("Point p = Point { 4, 3 };");
+        Expression expression = new StructDeclarationExpression("Point", List.of(new IntegerExpression(4, position), new IntegerExpression(3, position)), position);
+        assertEquals(createDeclaration("p", ValueType.CUSTOM, "Point", expression), program.getDeclarations().get("p"));
+    }
+
+    @Test
+    void testCopyExpression() {
+        Program program = parseAndBuildProgram("fn foo() { f(@a); }");
+        Statement statement = new FunctionCallExpression("f", List.of(new CopiedValueExpression(new IdentifierExpression("a", position), position)), position);
+        assertEquals(statement, program.getFunctionDefinitions().get("foo").getBlock().getStatements().get(0));
     }
 }

@@ -44,24 +44,27 @@ class FunctionDefinitionTest {
         return new Parser(lexer, errorHandler);
     }
 
+    private Program parseAndBuildProgram(String s) {
+        Parser parser = toParser(s);
+        return parser.buildProgram();
+    }
+
+    private BlockStatement blockOf(Statement... statements) {
+        return new BlockStatement(List.of(statements), position);
+    }
+
     @Test
     void fnDefinitionTest() {
         String s = "fn add(int a, int b): int { return a + b; }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-        var fn = program.getFunctionDefinitions().get("add");
+        var fn = parseAndBuildProgram(s).getFunctionDefinitions().get("add");
 
-        BlockStatement block = new BlockStatement(
-                List.of(new ReturnStatement(
-                        new AddArithmeticExpression(
-                                new IdentifierExpression("a", position),
-                                new IdentifierExpression("b", position),
-                                position
-                        ),
+        BlockStatement block = blockOf(new ReturnStatement(
+                new AddArithmeticExpression(
+                        new IdentifierExpression("a", position),
+                        new IdentifierExpression("b", position),
                         position
-                )),
-                position
-        );
+                ),
+                position));
 
         FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
                 "add",
@@ -77,9 +80,7 @@ class FunctionDefinitionTest {
     @Test
     void fnDefinitionWithNoReturnValue() {
         String s = "fn add(int a) {}";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-        var fn = program.getFunctionDefinitions().get("add");
+        var fn = parseAndBuildProgram(s).getFunctionDefinitions().get("add");
 
         FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
                 "add",
@@ -95,14 +96,9 @@ class FunctionDefinitionTest {
     @Test
     void fnDefinitionWithNoArguments() {
         String s = "fn add() { f(1); }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-        var fn = program.getFunctionDefinitions().get("add");
+        var fn = parseAndBuildProgram(s).getFunctionDefinitions().get("add");
 
-        BlockStatement block = new BlockStatement(
-                List.of(new FunctionCallExpression("f", List.of(new IntegerExpression(1, position)), position)),
-                position
-        );
+        BlockStatement block = blockOf(new FunctionCallExpression("f", List.of(new IntegerExpression(1, position)), position));
 
         FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
                 "add",
@@ -118,9 +114,7 @@ class FunctionDefinitionTest {
     @Test
     void fnDefinitionTest2() {
         String s = "fn fun(int a, int b): float { int c = 5; return a + b * c; }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-        var fn = program.getFunctionDefinitions().get("fun");
+        var fn = parseAndBuildProgram(s).getFunctionDefinitions().get("fun");
 
         BlockStatement block = getBlockStatement();
 
@@ -137,18 +131,12 @@ class FunctionDefinitionTest {
 
     @Test
     void fnDefinitionWithCustomTypeReturnTest() {
-        String s = "fn fun(int a): Point { return { 1, 2 }; }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-        var fn = program.getFunctionDefinitions().get("fun");
+        String s = "fn fun(int a): Point { return Point { 1, 2 }; }";
+        var fn = parseAndBuildProgram(s).getFunctionDefinitions().get("fun");
 
-        BlockStatement block = new BlockStatement(
-                List.of(new ReturnStatement(
-                        new StructDeclarationExpression(List.of(new IntegerExpression(1, position), new IntegerExpression(2, position)), position),
-                        position
-                )),
-                position
-        );
+        BlockStatement block = blockOf(new ReturnStatement(
+                new StructDeclarationExpression("Point", List.of(new IntegerExpression(1, position), new IntegerExpression(2, position)), position),
+                position));
 
         FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
                 "fun",
@@ -163,25 +151,18 @@ class FunctionDefinitionTest {
 
     @Test
     void fnDefinitionCustomTypeParameterTest() {
-        String s = "fn fun(Point p): Point { p = { 1, 2 }; return p; }";
-        Parser parser = toParser(s);
-        Program program = parser.buildProgram();
-        var fn = program.getFunctionDefinitions().get("fun");
+        String s = "fn fun(Point p): Point { p = Point { 1, 2 }; return p; }";
+        var fn = parseAndBuildProgram(s).getFunctionDefinitions().get("fun");
 
-        BlockStatement block = new BlockStatement(
-                List.of(
-                        new AssignmentStatement(
-                                "p",
-                                new StructDeclarationExpression(List.of(new IntegerExpression(1, position), new IntegerExpression(2, position)), position),
-                                position
-                        ),
-                        new ReturnStatement(
-                                new IdentifierExpression("p", position),
-                                position
-                        )
+        BlockStatement block = blockOf(new AssignmentStatement(
+                        "p",
+                        new StructDeclarationExpression("Point", List.of(new IntegerExpression(1, position), new IntegerExpression(2, position)), position),
+                        position
                 ),
-                position
-        );
+                new ReturnStatement(
+                        new IdentifierExpression("p", position),
+                        position
+                ));
 
         FunctionDefinitionStatement expected = new FunctionDefinitionStatement(
                 "fun",
@@ -212,6 +193,15 @@ class FunctionDefinitionTest {
                 ),
                 position
         );
-        return new BlockStatement(List.of(declarationStatement, returnStatement), position);
+
+        return blockOf(declarationStatement, returnStatement);
     }
+
+    @Test
+    void testInvalidSemicolon() {
+        Program program = parseAndBuildProgram("fn foo() {};");
+        FunctionDefinitionStatement statement = new FunctionDefinitionStatement("foo", List.of(), Optional.empty(), new BlockStatement(List.of(), position), position);
+        assertEquals(statement, program.getFunctionDefinitions().get("foo"));
+    }
+
 }

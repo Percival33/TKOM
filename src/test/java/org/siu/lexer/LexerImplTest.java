@@ -206,6 +206,27 @@ class LexerImplTest {
     }
 
     @Test
+    void testFunctionWithInvalidSemicolonAtTheEnd() {
+        Lexer lexer = setup("fn foo() { f(@a); };");
+
+        assertEquals(new KeywordToken(TokenType.FUNCTION, new Position(1, 1)), lexer.nextToken(), "Expected FUNCTION");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 4), "foo"), lexer.nextToken(), "Expected foo identifier");
+        assertEquals(new KeywordToken(TokenType.BRACKET_OPEN, new Position(1, 7)), lexer.nextToken(), "Expected BRACKET_OPEN");
+        assertEquals(new KeywordToken(TokenType.BRACKET_CLOSE, new Position(1, 8)), lexer.nextToken(), "Expected BRACKET_CLOSE");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_OPEN, new Position(1, 10)), lexer.nextToken(), "Expected CURLY_BRACKET_OPEN");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 12), "f"), lexer.nextToken(), "Expected f identifier");
+        assertEquals(new KeywordToken(TokenType.BRACKET_OPEN, new Position(1, 13)), lexer.nextToken(), "Expected BRACKET_OPEN");
+        assertEquals(new KeywordToken(TokenType.COPY_OPERATOR, new Position(1, 14)), lexer.nextToken(), "Expected COPY_OPERATOR");
+        assertEquals(new StringToken(TokenType.IDENTIFIER, new Position(1, 15), "a"), lexer.nextToken(), "Expected a identifier");
+        assertEquals(new KeywordToken(TokenType.BRACKET_CLOSE, new Position(1, 16)), lexer.nextToken(), "Expected BRACKET_CLOSE");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 17)), lexer.nextToken(), "Expected SEMICOLON");
+        assertEquals(new KeywordToken(TokenType.CURLY_BRACKET_CLOSE, new Position(1, 19)), lexer.nextToken(), "Expected CURLY_BRACKET_CLOSE");
+        assertEquals(new KeywordToken(TokenType.SEMICOLON, new Position(1, 20)), lexer.nextToken(), "Expected SEMICOLON");
+        assertEquals(new KeywordToken(TokenType.END_OF_FILE, new Position(1, 21)), lexer.nextToken(), "Expected END_OF_FILE");
+    }
+
+
+    @Test
     void testStructTypeDeclaration() {
         Lexer lexer = setup("struct Point { int x; int y; };");
         assertEquals(new KeywordToken(TokenType.STRUCT, new Position(1, 1)), lexer.nextToken(), "Expected STRUCT");

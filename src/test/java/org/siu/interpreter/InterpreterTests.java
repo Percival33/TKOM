@@ -34,6 +34,7 @@ public class InterpreterTests {
             "variant-test.txt, 33",
             "variant-as-fncall-test.txt, Marcin",
             "return-struct.txt, '3\n4'",
+            "nested-struct.txt, '3\n4'",
             "modify-struct-and-return.txt, '-1\n-2'",
             "test-return-flow-test.txt, '10\n9\n8\n7\n6\n5\n4\n-1'",
             "test-scope-shadowing.txt, '2\n5'",
@@ -80,8 +81,9 @@ public class InterpreterTests {
             "error-invalid-fn-call-too-many-args-test.txt, InvalidNumberOfArgumentsException",
             "error-no-variable-in-scope-test.txt, NoVariableException",
             "error-zerodivision-test.txt, ZeroDivisionException",
-            "test-tunneling-error-no-variable-exception.txt, NoVariableException",
-            "test-pass-const-reference.txt, ReassignConstVariableException"
+            "error-tunneling-no-variable-exception.txt, NoVariableException",
+            "error-pass-const-reference.txt, ReassignConstVariableException",
+            "error-reassign-const.txt, ReassignConstVariableException"
     })
     void testInterpreterErrors(String fileName, String expectedError) throws IOException {
         String code = readFileFromResources(fileName);
