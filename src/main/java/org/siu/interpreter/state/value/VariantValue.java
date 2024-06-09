@@ -19,6 +19,7 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VariantValue implements Value {
     TypeDeclaration type;
+    @Getter
     Map<String, Parameter> variantMembers;
     @Setter
     Value value;
@@ -58,5 +59,9 @@ public class VariantValue implements Value {
                 currentField,
                 value == null ? null : value.copy()
         );
+    }
+    @Override
+    public boolean isVariant() {
+        return true;
     }
 }

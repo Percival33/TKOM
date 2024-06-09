@@ -1,14 +1,21 @@
 package org.siu.interpreter.error;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.siu.token.Position;
 
-@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class InvalidTypeAssignmentException extends InterpreterException {
+    String typeName = "";
+    public InvalidTypeAssignmentException(Position position) {
+        super(position);
+    }
+
+    public InvalidTypeAssignmentException(String typeName) {
+        super();
+        this.typeName = typeName;
+    }
 }

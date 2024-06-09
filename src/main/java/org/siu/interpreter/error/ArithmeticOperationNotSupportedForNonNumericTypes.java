@@ -7,10 +7,12 @@ import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import org.siu.token.Position;
 
-@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ArithmeticOperationNotSupportedForNonNumericTypes extends InterpreterException {
-    Position position;
+    public ArithmeticOperationNotSupportedForNonNumericTypes(Position position) {
+        super(position);
+        this.position = position;
+    }
 }

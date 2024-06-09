@@ -27,17 +27,25 @@ public class InterpreterTests {
 
     @ParameterizedTest
     @CsvSource({
-            "reference-test.txt, 5",
-            "printer-test.txt, 'Hello there!'",
+            "match-fn-call.txt, 'x'",
+            "match-invalid-type.txt, ''",
+            "modify-struct-and-return.txt, '-1\n-2'",
+            "nested-struct.txt, 'Persian'",
             "pass-by-copy-test.txt, 0",
             "pass-struct-member-by-copy-test.txt, '2\n2'",
-            "variant-test.txt, 33",
-            "variant-as-fncall-test.txt, Marcin",
+            "print-fn-return.txt, 'General Kenobi!'",
+            "reference-test.txt, 5",
             "return-struct.txt, '3\n4'",
-            "nested-struct.txt, 'Persian'",
-            "modify-struct-and-return.txt, '-1\n-2'",
+            "test-pass-struct-by-copy.txt, 1",
+            "test-pass-struct-by-ref.txt, 2",
+            "test-pass-variant-by-copy.txt, 1",
+            "test-pass-variant-by-ref.txt, 3",
+            "test-print-string-expression.txt, 'Hello there!'",
             "test-return-flow-test.txt, '10\n9\n8\n7\n6\n5\n4\n-1'",
             "test-scope-shadowing.txt, '2\n5'",
+            "test-string-concatenation.txt, 'AB'",
+            "variant-as-fncall-test.txt, Marcin",
+            "variant-test.txt, 33"
     })
     void testInterpreter(String fileName, String expectedOutput) throws IOException {
         String code = readFileFromResources(fileName);
@@ -51,41 +59,32 @@ public class InterpreterTests {
         assertEquals(expectedOutput.trim(), output.toString().trim());
     }
 
-    /*
-    TODO: dodanie structow roznych typow
-    TODO: zmiana wartości w wariancie
-    TODO: przekazywanie structa przez referencje
-    TODO: przekazuwanie variantu jako fn call
-    TODO: przekazuwanie match na nie istniejacym typie
-    TODO: przekazuwanie match na nie istniejacym typie
-    TODO: print nie stringa
-    TODO: print stringa z wartosci
-    TODO: print string z palce "aaaa"
-    TODO: fn call kotrego nei ma
-    TODO: dopisać test na dodawanie stringow
-    TODO: test na odejmowanie stringow -> error
-     */
-
     @ParameterizedTest
     @CsvSource({
-            "error-negate-non-numeric-types.txt, ArithmeticOperationNotSupportedForNonNumericTypes",
-            "error-perform-arithmetic-operation-on-non-numeric-types.txt, ArithmeticOperationNotSupportedForNonNumericTypes",
-            "error-relation-operation-non-numeric-type.txt, CompareOperationNotSupportedForNonNumericTypes",
-            "error-eq-relation-operation-non-numeric-type.txt, CompareOperationNotSupportedForNonNumericTypes",
-            "error-void-fn-value-expected-test.txt, ExpressionDidNotEvaluateException",
-            "error-fn-donot-return-test.txt, FunctionDidNotReturnException",
-            "error-fn-return-no-value-test.txt, FunctionDidNotReturnValueException",
-            "error-types-do-not-match.txt, TypesDoNotMatchException",
-            "error-declaration-types-do-not-match-test.txt, TypesDoNotMatchException",
-            "error-duplicated-variable-test.txt, DuplicatedVariableException",
-            "error-duplicated-variable2-test.txt, DuplicatedVariableException",
-            "error-invalid-fn-call-not-enough-args-test.txt, InvalidNumberOfArgumentsException",
-            "error-invalid-fn-call-too-many-args-test.txt, InvalidNumberOfArgumentsException",
-            "error-no-variable-in-scope-test.txt, NoVariableException",
-            "error-zerodivision-test.txt, ZeroDivisionException",
-            "error-tunneling-no-variable-exception.txt, NoVariableException",
-            "error-pass-const-reference.txt, ReassignConstVariableException",
-            "error-reassign-const.txt, ReassignConstVariableException"
+            "error-negate-non-numeric-types.txt,                            ArithmeticOperationNotSupportedForNonNumericTypes",
+            "error-perform-arithmetic-operation-on-non-numeric-types.txt,   ArithmeticOperationNotSupportedForNonNumericTypes",
+            "error-add-structs.txt,                                         ArithmeticOperationNotSupportedForNonNumericTypes",
+            "error-relation-operation-non-numeric-type.txt,                 CompareOperationNotSupportedForNonNumericTypes",
+            "error-eq-relation-operation-non-numeric-type.txt,              CompareOperationNotSupportedForNonNumericTypes",
+            "error-duplicated-variable-test.txt,                            DuplicatedVariableException",
+            "error-duplicated-variable2-test.txt,                           DuplicatedVariableException",
+            "error-void-fn-value-expected-test.txt,                         ExpressionDidNotEvaluateException",
+            "error-fn-donot-return-test.txt,                                FunctionDidNotReturnException",
+            "error-fn-return-no-value-test.txt,                             FunctionDidNotReturnValueException",
+            "error-call-non-function.txt,                                   FunctionNotDefinedException",
+            "error-invalid-fn-call-not-enough-args-test.txt,                InvalidNumberOfArgumentsException",
+            "error-invalid-fn-call-too-many-args-test.txt,                  InvalidNumberOfArgumentsException",
+            "error-no-variable-in-scope-test.txt,                           NoVariableException",
+            "error-tunneling-no-variable-exception.txt,                     NoVariableException",
+            "error-invalid-operation-on-string-test.txt,                    OperationNotSupported",
+            "error-pass-const-reference.txt,                                ReassignConstVariableException",
+            "error-reassign-const.txt,                                      ReassignConstVariableException",
+            "error-declaration-types-do-not-match-test.txt,                 TypesDoNotMatchException",
+            "error-print-not-string.txt,                                    TypesDoNotMatchException",
+            "error-eq-types-do-not-match.txt,                               TypesDoNotMatchException",
+            "error-change-variant-type.txt,                                 TypesDoNotMatchException",
+            "error-invalid-variant-get-value.txt,                           UnexpectedTypeException",
+            "error-zerodivision-test.txt,                                   ZeroDivisionException",
     })
     void testInterpreterErrors(String fileName, String expectedError) throws IOException {
         String code = readFileFromResources(fileName);
@@ -102,6 +101,7 @@ public class InterpreterTests {
 
         assertEquals(expectedError.trim(), errorName.trim());
     }
+    // format CsvSource and sort alphabeticaly by Error name
 
     private String extractErrorName(String output) {
         String prefix = "Error while interpreting: ";

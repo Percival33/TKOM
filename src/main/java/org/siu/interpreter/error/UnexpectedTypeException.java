@@ -1,14 +1,21 @@
 package org.siu.interpreter.error;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.siu.token.Position;
 
-@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class UnexpectedTypeException extends InterpreterException {
+    String typeName = "";
+    public UnexpectedTypeException(Position position) {
+        super(position);
+    }
+
+    public UnexpectedTypeException(String typeName, Position position) {
+        super(position);
+        this.typeName = typeName;
+    }
 }

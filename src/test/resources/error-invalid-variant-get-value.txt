@@ -1,0 +1,11 @@
+variant A { int a; };
+
+fn foo(A a) {
+    a = A::a(2);
+}
+
+fn main() {
+    A a = A::a(1);
+    foo(a);
+    print((string) a.a);
+}

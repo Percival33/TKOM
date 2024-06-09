@@ -1,0 +1,5 @@
+fn main() {
+    string ab = "ab";
+    string b = "b";
+    print(ab - b);
+}

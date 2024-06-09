@@ -8,6 +8,7 @@ import org.siu.interpreter.error.TypesDoNotMatchException;
 import org.siu.interpreter.state.Value;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @lombok.Value
 public class StructValue implements Value {
@@ -46,7 +47,12 @@ public class StructValue implements Value {
 
     @Override
     public StructValue copy() {
-        return new StructValue(new TypeDeclaration(type.getValueType(), type.getCustomType()), Map.copyOf(structMembers));
+        var newStructMembers = this.structMembers.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().copy()
+                ));
+        return new StructValue(new TypeDeclaration(type.getValueType(), type.getCustomType()), newStructMembers);
     }
 
     @Override

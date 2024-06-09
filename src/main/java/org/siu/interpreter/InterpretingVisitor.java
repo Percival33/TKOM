@@ -20,7 +20,6 @@ import org.siu.interpreter.state.*;
 import org.siu.interpreter.state.value.*;
 import org.siu.token.Position;
 
-import javax.print.DocFlavor;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.function.Function;
@@ -204,7 +203,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
         var type = param.getType();
         if (type.getValueType() != ValueType.CUSTOM) return;
 
-        if (!typeDefinitions.containsKey(type.getCustomType())) {
+        if (!typeDefinitions.containsKey(type.getCustomType()) && !program.getTypeDefinitions().containsKey(type.getCustomType())) {
             throw new TypeNotDefinedException(type.getCustomType());
         }
     }
@@ -325,7 +324,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
                         .findFirst()
                         .orElseThrow(() -> new RuntimeException("Field not found in variant type"));
 
-                context.addVariable(new Variable(parameter.getType(), matchCase.getVariable(), variantValue.get()));
+                context.addVariable(new Variable(parameter.getType(), matchCase.getVariable(), variantValue.get(), false, true));
                 callAccept(matchCase.getBlock());
                 break;
             }
@@ -435,7 +434,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
             var parameter = functionDeclaration.getParameters().get(i);
             var value = retrieveResult(parameter);
 
-            context.addVariable(new Variable(parameter.getType(), parameter.getName(), value, retrieveIsConstant()));
+            context.addVariable(new Variable(parameter.getType(), parameter.getName(), value, retrieveIsConstant(), value.isVariant()));
         }
 
         contexts.addLast(context);

@@ -61,5 +61,6 @@ public interface Value {
         throw new UnexpectedTypeException();
     }
 
-    default boolean isStruct() { throw new UnexpectedTypeException(); }
+    default boolean isStruct() { return false; }
+    default boolean isVariant() { return false; }
 }

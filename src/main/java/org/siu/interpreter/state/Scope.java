@@ -15,6 +15,7 @@ import org.siu.interpreter.error.InvalidTypeAssignmentException;
 import org.siu.interpreter.error.TypesDoNotMatchException;
 import org.siu.interpreter.state.value.IntValue;
 import org.siu.interpreter.state.value.StructValue;
+import org.siu.interpreter.state.value.VariantValue;
 
 @lombok.Value
 public class Scope {
@@ -39,24 +40,46 @@ public class Scope {
         if (updateFunction != null) {
             updateFunction.accept(previousValue, newValue);
         } else {
-            if (!newValue.isStruct()) {
-                throw new InvalidTypeAssignmentException();
+            if (!newValue.isStruct() && !previousValue.isVariant()) {
+                throw new InvalidTypeAssignmentException(newValue.getType().toString());
             }
+
             if(!StringUtils.equals(previousValue.getType().getCustomType(), newValue.getType().getCustomType())) {
                 throw new TypesDoNotMatchException(newValue.getType(), previousValue.getType());
             }
 
-            var previousStructValue = (StructValue) previousValue;
-            var newStructValue = (StructValue) newValue;
-
-            previousStructValue.getStructMembers().forEach((key, value) -> {
-                var newValueForKey = newStructValue.getStructMembers().get(key);
-                if (newValueForKey == null) {
-                    throw new TypesDoNotMatchException(previousValue.getType(), newValue.getType());
-                }
-                previousStructValue.put(key, newValueForKey);
-            });
+            updateStruct(previousValue, newValue);
+            updateVariant(previousValue, newValue);
         }
+    }
+
+    private void updateVariant(Value previousValue, Value newValue) {
+        if(!newValue.isVariant()) return;
+
+        var previousVariantValue = (VariantValue) previousValue;
+        var newVariantValue = (VariantValue) newValue;
+
+        if(previousVariantValue.getVariantMembers().containsKey(newVariantValue.getCurrentField())) {
+            previousVariantValue.setCurrentField(newVariantValue.getCurrentField());
+            previousVariantValue.setValue(newVariantValue.getValue());
+        } else {
+            throw new TypesDoNotMatchException(previousValue.getType(), newValue.getType());
+        }
+    }
+
+    private void updateStruct(Value previousValue, Value newValue) {
+        if(!newValue.isStruct()) return;
+
+        var previousStructValue = (StructValue) previousValue;
+        var newStructValue = (StructValue) newValue;
+
+        previousStructValue.getStructMembers().forEach((key, value) -> {
+            var newValueForKey = newStructValue.getStructMembers().get(key);
+            if (newValueForKey == null) {
+                throw new TypesDoNotMatchException(previousValue.getType(), newValue.getType());
+            }
+            previousStructValue.put(key, newValueForKey);
+        });
     }
 
     public boolean updateVariable(String identifier, Value value) {
