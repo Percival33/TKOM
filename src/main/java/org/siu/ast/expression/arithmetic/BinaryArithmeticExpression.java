@@ -14,4 +14,7 @@ public interface BinaryArithmeticExpression extends ArithmeticExpression {
 
     int evaluate(int first, int second);
     float evaluate(float first, float second);
+    default String evaluate(String first, String second) {
+        throw new UnsupportedOperationException(this.getClass().getName() + " is not supported for 'string' type at " + this.getPosition());
+    }
 }

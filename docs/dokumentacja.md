@@ -48,12 +48,12 @@ referencje.
 
 - dostępne typy danych
 
-| Typy proste | Wartości                                            |
-|-------------|-----------------------------------------------------|
-| int         | od -2.147.483.647 do 2.147.483.647                  |
-| float       | pojedyncza precyzja 32-bit IEEE 754 floating point. |
-| bool        | true / false                                        |
-| string      | "A", "pies", "imię pies to\t\"Pluto\"!\nWow!"       |
+| Typy proste | Wartości                                                                              |
+|-------------|---------------------------------------------------------------------------------------|
+| int         | od -2.147.483.647 do 2.147.483.647                                                    |
+| float       | pojedyncza precyzja 32-bit IEEE 754 floating point. (7 cyfr znacznących po przecinku) |
+| bool        | true / false                                                                          |
+| string      | "A", "pies", "imię pies to\t\"Pluto\"!\nWow!"                                         |
 
 | Typy złożone | Przykłady                                              |                                                                                             |
 |--------------|--------------------------------------------------------|---------------------------------------------------------------------------------------------|
@@ -121,7 +121,7 @@ while(a < 10) {
 
 ```
 fn factorial(int n): int {
-	if (n == 1) return 1;
+	if (n == 1) { return 1; }
 	return n * factorial(n - 1);
 }
 
@@ -130,14 +130,14 @@ fn foo() { # funkcja bezargumentowa, nie zwracająca wartości
 }
 
 fn bar(): float { # funkcja bezargumentowa, zwaracająca wartość
-	return 3.14159
+	return 3.14159;
 }
 ```
 
 - napisy i operacje na nich
 
 ```
-string text = "Hello there!\nGeneral Kenobi"
+string text = "Hello there!\nGeneral Kenobi";
 
 string A = "Try not.";
 string B = "Do or do not.";
@@ -167,8 +167,12 @@ struct Cat {
 Breed golden = Breed { "Golden retriever", 5 };
 Dog pluto = Dog { 14, "pluto", golden };
 
+struct Point {
+    int x;
+    int y;
+};
 
-Point pt = { a, f(10) };
+Point pt = Point { a, f(10) };
 Point pt2 = pt;
 ```
 
@@ -458,15 +462,15 @@ FN_ARGUMENTS                    = ["@"] EXPRESSION, { "," ["@"], EXPRESSION };
 ```
 
 ```
-PROGRAM                         = { FN_DEFINITION | DECLARATION | FN_CALL | TYPE_DEFINITION };
+PROGRAM                         = { TYPE_DEFINITION | FN_DEFINITION | DECLARATION | FN_CALL };
 ```
 
 ## Sposób uruchomienia
 
-Uruchomienie poprzez podanie pliku do uruchomienia
+Uruchomienie poprzez podanie pliku do uruchomienia. Przykłady znajdują się w folderze `examples`.
 
 ```
-java -jar siulang-1.0.0-fat.jar example.txt
+java -jar siulang-1.0.0-fat.jar <file>
 ```
 
 ## Środowisko programistyczne

@@ -1,10 +1,13 @@
 package org.siu;
 
 import lombok.extern.slf4j.Slf4j;
+import org.siu.ast.Program;
 import org.siu.error.ErrorHandler;
 import org.siu.error.ErrorHandlerImpl;
+import org.siu.interpreter.FunctionReturnTypeVisitor;
 import org.siu.interpreter.InterpretingVisitor;
 import org.siu.interpreter.error.InterpreterException;
+import org.siu.interpreter.error.InvalidReturnTypeException;
 import org.siu.lexer.FilterCommentsLexer;
 import org.siu.lexer.Lexer;
 import org.siu.lexer.LexerImpl;
@@ -16,7 +19,7 @@ import java.io.*;
 public class Main {
     public static void main(final String[] args) {
         if (args.length != 1) {
-            System.err.println("Usage: java -jar <jar-file> <path-to-source-file>");
+            log.error("Usage: java -jar <jar-file> <path-to-source-file>");
             System.exit(1);
         }
 
@@ -29,15 +32,39 @@ public class Main {
             Parser parser = new Parser(filteredLexer, errorHandler);
             var program = parser.buildProgram();
 
-            InterpretingVisitor visitor = new InterpretingVisitor(program, System.out);
-            visitor.execute();
-
+            checkReturnTypes(program);
+            interpretProgram(program);
+        } catch (InvalidReturnTypeException e) {
+            log.error("Invalid return type: {}", e.getMessage());
+            System.exit(2);
         } catch (FileNotFoundException e) {
-            System.err.println("File not found: " + filePath);
+            log.error("File not found: {}", filePath);
+            System.exit(3);
         } catch (IOException e) {
-            System.err.println("Error reading file: " + filePath);
+            log.error("Error reading file: {}", filePath);
+            System.exit(4);
         } catch (InterpreterException e) {
-            System.err.println("Interpreter error: " + e.getMessage());
+            log.error("Interpreter error: {}", e.getMessage());
+            System.exit(5);
+        } catch (UnsupportedOperationException e) {
+            log.error("Unsupported operation: {}", e.getMessage());
+            System.exit(6);
+        } catch (RuntimeException e) {
+            log.error("Error while interpreting: {}", e.getMessage());
+            System.exit(7);
         }
+    }
+
+    private static void checkReturnTypes(Program program) throws InvalidReturnTypeException {
+        FunctionReturnTypeVisitor returnTypeVisitor = new FunctionReturnTypeVisitor(program, System.out);
+        returnTypeVisitor.execute();
+        if (returnTypeVisitor.hasErrorOccurred()) {
+            throw new RuntimeException(returnTypeVisitor.getErrorDetails());
+        }
+    }
+
+    private static void interpretProgram(Program program) throws InterpreterException {
+        InterpretingVisitor visitor = new InterpretingVisitor(program, System.out);
+        visitor.execute();
     }
 }

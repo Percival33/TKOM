@@ -20,6 +20,7 @@ import org.siu.interpreter.state.*;
 import org.siu.interpreter.state.value.*;
 import org.siu.token.Position;
 
+import javax.print.DocFlavor;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.function.Function;
@@ -55,14 +56,13 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     public void visit(Program program) {
         functionDefinitions.putAll(program.getFunctionDefinitions());
 
-        for (var declaration : program.getDeclarations().values()) {
-            callAccept(declaration);
-        }
-
         for (var typeDefinition : program.getTypeDefinitions().values()) {
             callAccept(typeDefinition);
         }
 
+        for (var declaration : program.getDeclarations().values()) {
+            callAccept(declaration);
+        }
 
         var mainFn = new FunctionCallExpression(MAIN_FUNCTION_NAME, List.of(), currentPosition);
         callAccept(mainFn);
@@ -363,7 +363,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     @Override
     public void visit(VariantDeclarationExpression expression) {
         if (!typeDefinitions.containsKey(expression.getTypeName())) {
-            throw new TypeNotDefinedException(expression.getTypeName());
+            throw new TypeNotDefinedException(expression.getTypeName(), expression.getPosition());
         }
         var variantType = typeDefinitions.get(expression.getTypeName());
         Parameter typeOfField = null;
@@ -417,7 +417,7 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     @Override
     public void visit(FunctionCallExpression expression) {
         if (!functionDefinitions.containsKey(expression.getIdentifier())) {
-            throw new FunctionNotDefinedException(expression.getIdentifier());
+            throw new FunctionNotDefinedException(expression.getIdentifier(), expression.getPosition());
         }
 
         var functionDeclaration = functionDefinitions.get(expression.getIdentifier());
@@ -515,7 +515,8 @@ public class InterpretingVisitor implements Visitor, Interpreter {
     private static final Map<TypeDeclaration, Function3<BinaryArithmeticExpression, Value, Value, Value>>
             ARITHMETIC_OPERATIONS = Map.of(
             INT_TYPE, (expression, left, right) -> new IntValue(expression.evaluate(left.getInteger(), right.getInteger())),
-            FLOAT_TYPE, (expression, left, right) -> new FloatValue(expression.evaluate(left.getFloatVal(), right.getFloatVal()))
+            FLOAT_TYPE, (expression, left, right) -> new FloatValue(expression.evaluate(left.getFloatVal(), right.getFloatVal())),
+            STRING_TYPE, (expression, left, right) -> new StringValue(expression.evaluate(left.getString(), right.getString()))
     );
 
     @Override

@@ -34,7 +34,7 @@ public class InterpreterTests {
             "variant-test.txt, 33",
             "variant-as-fncall-test.txt, Marcin",
             "return-struct.txt, '3\n4'",
-            "nested-struct.txt, '3\n4'",
+            "nested-struct.txt, 'Persian'",
             "modify-struct-and-return.txt, '-1\n-2'",
             "test-return-flow-test.txt, '10\n9\n8\n7\n6\n5\n4\n-1'",
             "test-scope-shadowing.txt, '2\n5'",
@@ -62,6 +62,8 @@ public class InterpreterTests {
     TODO: print stringa z wartosci
     TODO: print string z palce "aaaa"
     TODO: fn call kotrego nei ma
+    TODO: dopisać test na dodawanie stringow
+    TODO: test na odejmowanie stringow -> error
      */
 
     @ParameterizedTest

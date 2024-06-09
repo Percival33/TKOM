@@ -23,11 +23,17 @@ public class SubtractArithmeticExpression implements BinaryArithmeticExpression 
 
     @Override
     public int evaluate(int left, int right) {
+        if(left < Integer.MIN_VALUE + right + 1) {
+            throw new ArithmeticException("Integer underflow at " + position.toString());
+        }
         return left - right;
     }
 
     @Override
     public float evaluate(float left, float right) {
+        if(left < Integer.MIN_VALUE + right + 1) {
+            throw new ArithmeticException("Integer underflow at " + position.toString());
+        }
         return left - right;
     }
 }

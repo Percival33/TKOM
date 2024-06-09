@@ -4,5 +4,5 @@ fn factorial(int n): int {
 }
 
 fn main() {
-    print((string)factorial(5));
+    print((string)factorial(5)); # 120
 }

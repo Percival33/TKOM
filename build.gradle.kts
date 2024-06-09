@@ -30,7 +30,7 @@ tasks.test {
 tasks.jar {
     archiveBaseName.set("siulang")
     manifest {
-        attributes["Main-Class"] = "org.siu.Main" 
+        attributes["Main-Class"] = "org.siu.Main"
     }
 }
 
@@ -50,6 +50,25 @@ tasks.register<Jar>("fatJar") {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {
-        attributes["Main-Class"] = "org.siu.Main" 
+        attributes["Main-Class"] = "org.siu.Main"
     }
+}
+
+tasks.register<Copy>("copyLog4jConfig") {
+    from("src/main/resources/log4j2.xml")
+    into("$buildDir/classes/java/main")
+}
+
+tasks.register<Copy>("copyFatJarLog4jConfig") {
+    from("src/main/resources/log4j2-fatjar.xml")
+    into("$buildDir/classes/java/main")
+    rename { "log4j2.xml" }
+}
+
+tasks.named<ProcessResources>("processResources") {
+    dependsOn("copyLog4jConfig")
+}
+
+tasks.named<Jar>("fatJar") {
+    dependsOn("copyFatJarLog4jConfig")
 }

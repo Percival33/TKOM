@@ -15,7 +15,9 @@ import org.siu.ast.expression.arithmetic.MultiplyArithmeticExpression;
 import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.statement.AssignmentStatement;
 import org.siu.ast.statement.DeclarationStatement;
+import org.siu.ast.statement.IfStatement;
 import org.siu.ast.statement.ReturnStatement;
+import org.siu.ast.type.BooleanExpression;
 import org.siu.ast.type.IntegerExpression;
 import org.siu.ast.type.TypeDeclaration;
 import org.siu.ast.type.ValueType;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FunctionDefinitionTest {
     private ErrorHandler errorHandler;
@@ -204,4 +207,24 @@ class FunctionDefinitionTest {
         assertEquals(statement, program.getFunctionDefinitions().get("foo"));
     }
 
+    @Test
+    void testReturnValueFromIntFunction() {
+        Program program = parseAndBuildProgram("""
+                fn foo(): int {
+                    if(true) {
+                        return 1;
+                    }
+                }
+                """);
+        FunctionDefinitionStatement statement = new FunctionDefinitionStatement("foo", List.of(), Optional.of(new TypeDeclaration(ValueType.INT)), new BlockStatement(List.of(
+                new IfStatement(
+                        List.of(new BooleanExpression(true, position)),
+                        List.of(blockOf(new ReturnStatement(new IntegerExpression(1, position), position))),
+                        Optional.empty(),
+                        position
+                )
+        ), position), position);
+
+        assertEquals(statement, program.getFunctionDefinitions().get("foo"));
+    }
 }

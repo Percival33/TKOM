@@ -23,11 +23,17 @@ public class ModuloArithmeticExpression implements BinaryArithmeticExpression {
 
     @Override
     public int evaluate(int left, int right) {
+        if(right == 0) {
+            throw new ArithmeticException("Modulo by zero at " + position.toString());
+        }
         return left % right;
     }
 
     @Override
     public float evaluate(float left, float right) {
+        if(right == 0) {
+            throw new ArithmeticException("Modulo by zero at " + position.toString());
+        }
         return left % right;
     }
 }
