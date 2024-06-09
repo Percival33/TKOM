@@ -1,8 +1,3 @@
-fn foo(int x) {}
 fn main() {
-   foo(true);
+    print("Hello there!");
 }
-
-#fn main() {
-#    print("Hello there!");
-#}
