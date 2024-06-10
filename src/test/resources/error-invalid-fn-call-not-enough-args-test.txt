@@ -1,0 +1,9 @@
+fn test(int b): int {
+    return 0;
+}
+
+
+fn main() {
+    int a = test();
+    print((string)a);
+}

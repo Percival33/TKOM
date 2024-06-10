@@ -13,6 +13,8 @@ public enum TokenType {
     CONST("const"),
     WHILE("while"),
     RETURN("return"),
+    BREAK("break"),
+    CONTINUE("continue"),
     FUNCTION("fn"),
 
     INTEGER_CONSTANT,

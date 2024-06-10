@@ -19,6 +19,7 @@ import org.siu.ast.type.IntegerExpression;
 import org.siu.ast.type.TypeDeclaration;
 import org.siu.ast.type.ValueType;
 import org.siu.error.ErrorHandler;
+import org.siu.interpreter.error.ZeroDivisionException;
 import org.siu.lexer.Lexer;
 import org.siu.lexer.LexerImpl;
 import org.siu.token.Position;
@@ -26,6 +27,7 @@ import org.siu.token.Position;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class LogicalExpressionTest {
     private ErrorHandler errorHandler;

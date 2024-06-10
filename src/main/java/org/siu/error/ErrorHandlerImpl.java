@@ -8,6 +8,7 @@ public class ErrorHandlerImpl implements ErrorHandler{
     @Override
     public void handleLexerError(Exception e, Position p) {
         System.out.println(e.toString() + "at" + p);
+        throw new RuntimeException(e);
     }
     @Override
     public void handleParserError(Exception e, Position p) {

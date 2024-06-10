@@ -1,0 +1,14 @@
+variant Var { int row; int col; };
+Var v = Var::row(3);
+
+fn inspect(Var v) {
+    match(v) {
+        Var::row(x) { print("row " + (string)x); }
+        Var::col(y) { print("col " + (string)y); }
+    }
+}
+
+fn main() {
+
+    inspect(v);
+}

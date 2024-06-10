@@ -13,6 +13,6 @@ public class MissingSemicolonError extends ParserError {
 
     @Override
     public String toString() {
-        return MessageFormat.format("Missing semicolon at the end of {}.", position);
+        return "Missing semicolon at the end of the statement";
     }
 }

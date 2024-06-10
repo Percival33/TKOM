@@ -1,0 +1,9 @@
+struct A { int x; };
+struct B { int x; };
+struct C { int x; };
+
+fn main() {
+    A a = A { 1 };
+    B b = B { 1 };
+    C c = C { a + b };
+}

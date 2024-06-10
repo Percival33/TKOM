@@ -5,14 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.siu.ast.Parameter;
 import org.siu.ast.Program;
-import org.siu.ast.expression.CastedFactorExpression;
-import org.siu.ast.expression.Expression;
-import org.siu.ast.expression.FunctionCallExpression;
+import org.siu.ast.Statement;
+import org.siu.ast.expression.*;
 import org.siu.ast.expression.arithmetic.*;
-import org.siu.ast.statement.ConstStatement;
-import org.siu.ast.statement.DeclarationStatement;
-import org.siu.ast.statement.StructStatement;
-import org.siu.ast.statement.VariantStatement;
+import org.siu.ast.expression.relation.GreaterExpression;
+import org.siu.ast.statement.*;
 import org.siu.ast.type.*;
 import org.siu.error.ErrorHandler;
 import org.siu.lexer.Lexer;
@@ -45,13 +42,102 @@ class DeclarationTests {
         return new DeclarationStatement(parameter, expression, position);
     }
 
+    private DeclarationStatement createDeclaration(String name, ValueType type, String typeName, Expression expression) {
+        Parameter parameter = new Parameter(new TypeDeclaration(type, typeName), name);
+        return new DeclarationStatement(parameter, expression, position);
+    }
+
+    @Test
+    void testConstIntDeclaration() {
+        String sourceCode = "const int a = 10;";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+        Parameter parameter = new Parameter(new TypeDeclaration(ValueType.INT), "a");
+        ConstStatement expectedConst = new ConstStatement(
+                parameter,
+                new DeclarationStatement(parameter, new IntegerExpression(10, position), position),
+                position
+        );
+
+
+        assertEquals(expectedConst, program.getDeclarations().get("a"));
+    }
+
+    @Test
+    void testConstStringDeclaration() {
+        String sourceCode = "const string a = \"aaaa\";";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+        Parameter parameter = new Parameter(new TypeDeclaration(ValueType.STRING), "a");
+        ConstStatement expectedConst = new ConstStatement(
+                parameter,
+                new DeclarationStatement(parameter, new StringExpression("aaaa", position), position),
+                position
+        );
+
+
+        assertEquals(expectedConst, program.getDeclarations().get("a"));
+    }
+
+    @Test
+    void testConstStructDeclarationFromAnotherStruct() {
+        String sourceCode = "const Point pt2 = pt;";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+
+        ConstStatement expectedConst = new ConstStatement(
+                new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Point"), "pt2"),
+                createDeclaration("pt2", ValueType.CUSTOM, "Point", new IdentifierExpression("pt", position)),
+                position
+        );
+
+        assertEquals(expectedConst, program.getDeclarations().get("pt2"));
+    }
+
+    @Test
+    void testIntFromStructMember() {
+        String sourceCode = "const int x = pt.x;";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+
+        ConstStatement expectedConst = new ConstStatement(
+                new Parameter(new TypeDeclaration(ValueType.INT), "x"),
+                createDeclaration("x", ValueType.INT, new StructMemberExpression("pt", "x", position)),
+                position
+        );
+
+        assertEquals(expectedConst, program.getDeclarations().get("x"));
+    }
+
     @Test
     void testNegateIntegerDeclaration() {
-        String s = "int a=-1;";
+        String s = "int a = -1;";
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
 
         Expression expression = new NegateArithmeticExpression(new IntegerExpression(1, position), position);
+
+        assertEquals(Map.of("a", createDeclaration("a", ValueType.INT, expression)), program.getDeclarations());
+    }
+
+    @Test
+    void testRelationExprAsValueOfIntegerDeclaration() {
+        String s = "bool a = 1 > 2;";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new GreaterExpression(new IntegerExpression(1, position), new IntegerExpression(2, position), position);
+
+        assertEquals(createDeclaration("a", ValueType.BOOL, expression), program.getDeclarations().get("a"));
+    }
+
+    @Test
+    void testFnCallAsValueOfIntegerDeclaration() {
+        String s = "int a = -f(1);";
+        Parser parser = toParser(s);
+        Program program = parser.buildProgram();
+
+        Expression expression = new NegateArithmeticExpression(new FunctionCallExpression("f", List.of(new IntegerExpression(1, position)), position), position);
 
         assertEquals(Map.of("a", createDeclaration("a", ValueType.INT, expression)), program.getDeclarations());
     }
@@ -62,7 +148,7 @@ class DeclarationTests {
         Parser parser = toParser(s);
         Program program = parser.buildProgram();
 
-        Expression expression = new CastedFactorExpression(ValueType.INT, new AddArithmeticExpression(new NegateArithmeticExpression(new FloatExpression(3.14159F, position), position), new FloatExpression(0.0F, position), position), position);
+        Expression expression = new CastedFactorExpression(new TypeDeclaration(ValueType.INT), new AddArithmeticExpression(new NegateArithmeticExpression(new FloatExpression(3.14159F, position), position), new FloatExpression(0.0F, position), position), position);
 
         assertEquals(Map.of("pi", createDeclaration("pi", ValueType.INT, expression)), program.getDeclarations());
     }
@@ -139,75 +225,64 @@ class DeclarationTests {
     }
 
     @Test
-    void testVariantDeclaration() {
-        String sourceCode = "variant Var { int row, int col };";
+    void testConstInvalidDeclaration() {
+        String sourceCode = "const  = 5;";
         Parser parser = toParser(sourceCode);
-        Program program = parser.buildProgram();
-        VariantStatement expectedVariant = new VariantStatement(
-                "Var",
-                List.of(
-                        new Parameter(new TypeDeclaration(ValueType.INT), "row"),
-                        new Parameter(new TypeDeclaration(ValueType.INT), "col")
-                ),
-                position
-        );
 
-
-        assertEquals(expectedVariant, program.getDeclarations().get("Var"));
+        assertThrows(RuntimeException.class, parser::buildProgram);
     }
 
     @Test
     void testStructDeclaration() {
-        String sourceCode = """
-                struct Dog {\s
-                	int age;\s
-                	string name;\s
-                	Breed breed;\s
-                }
-                """;
+        String sourceCode = "Point pt = Point { a, b, f() };";
         Parser parser = toParser(sourceCode);
         Program program = parser.buildProgram();
-        StructStatement expectedStruct = new StructStatement(
-                "Dog",
-                List.of(
-                        new Parameter(new TypeDeclaration(ValueType.INT), "age"),
-                        new Parameter(new TypeDeclaration(ValueType.STRING), "name"),
-                        new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Breed"), "breed")
+        DeclarationStatement expectedDeclaration = new DeclarationStatement(
+                new Parameter(new TypeDeclaration(ValueType.CUSTOM, "Point"), "pt"),
+                new StructDeclarationExpression(
+                        "Point",
+                        List.of(
+                                new IdentifierExpression("a", position),
+                                new IdentifierExpression("b", position),
+                                new FunctionCallExpression("f", List.of(), position)
+                        ),
+                        position
                 ),
                 position
         );
 
-
-        assertEquals(expectedStruct, program.getDeclarations().get("Dog"));
+        assertEquals(expectedDeclaration, program.getDeclarations().get("pt"));
     }
 
     @Test
-    void testWrongStructDeclaration() {
-        String sourceCode = """
-            struct Dog {\s
-                int age
-                string name;\s
-                Breed breed;\s
-            }
-            """;
-        Parser parser = toParser(sourceCode);
-
-        Exception exception = assertThrows(RuntimeException.class, parser::buildProgram);
-        assertEquals("org.siu.error.SyntaxError at: Position(line=3, column=16)", exception.getMessage());
-    }
-
-    @Test
-    void testConstIntDeclaration() {
-        String sourceCode = "const int a = 10;";
+    void testStructDeclarationFromAnotherStruct() {
+        String sourceCode = "Point pt2 = pt;";
         Parser parser = toParser(sourceCode);
         Program program = parser.buildProgram();
-        ConstStatement expectedConst = new ConstStatement(
-                "a",
-                createDeclaration("a", ValueType.INT, new IntegerExpression(10, position)),
-                position
+
+        assertEquals(createDeclaration("pt2", ValueType.CUSTOM, "Point", new IdentifierExpression("pt", position)), program.getDeclarations().get("pt2"));
+    }
+
+    @Test
+    void testVariantDeclaration() {
+        String sourceCode = "Var v = Var::row(3);";
+        Parser parser = toParser(sourceCode);
+        Program program = parser.buildProgram();
+
+        Statement expectedDeclaration = createDeclaration(
+                "v",
+                ValueType.CUSTOM, "Var",
+                new VariantDeclarationExpression("Var", "row", new IntegerExpression(3, position), position)
         );
 
+        assertEquals(expectedDeclaration, program.getDeclarations().get("v"));
+    }
 
-        assertEquals(expectedConst, program.getDeclarations().get("a"));
+    @Test
+    void testInvalidCast() {
+        String sourceCode = "int v = (A)(x + 1);";
+        Parser parser = toParser(sourceCode);
+        RuntimeException thrown = assertThrows(RuntimeException.class, parser::buildProgram);
+        assertEquals("Missing semicolon at the end of the statement at: Position(line=1, column=12)", thrown.getMessage());
     }
 }

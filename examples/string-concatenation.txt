@@ -1,0 +1,15 @@
+fn main() {
+    string text = "Hello there!\nGeneral Kenobi";
+
+    string A = "Try not.";
+    string B = "Do or do not.";
+    string C = "There is no try.";
+
+    string result = A + B + C;
+
+    print(text);
+    print(A);
+    print(B);
+    print(C);
+    print(result);
+}

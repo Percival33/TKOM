@@ -3,6 +3,7 @@ package org.siu.lexer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.siu.error.ErrorHandler;
+import org.siu.error.InvalidTokenException;
 import org.siu.token.Position;
 import org.siu.token.Token;
 import org.siu.token.TokenType;
@@ -49,10 +50,42 @@ public class LexerImpl implements Lexer {
 
         if (token == null) {
             log.error("Invalid token");
-            errorHandler.handleLexerError(new Exception("Invalid token"), tokenPosition);
+            throw new InvalidTokenException();
+        }
+
+        if (token.getType() == TokenType.SINGLE_LINE_COMMENT || token.getType() == TokenType.MULTI_LINE_COMMENT_OPEN) {
+            return buildComment(token);
         }
 
         return token;
+    }
+
+    private Token buildComment(Token token) {
+        StringBuilder sb = new StringBuilder();
+        var position = token.getPosition().copy();
+
+        if (token.getType() == TokenType.SINGLE_LINE_COMMENT) {
+            while (!character.equals(LexerConfig.LINE_BREAK) && !character.equals(TokenUtils.END_OF_FILE)) {
+                sb.append(nextCharacter());
+            }
+            return new CommentToken(position, sb.toString());
+        }
+
+        while (!character.equals(TokenUtils.END_OF_FILE)) {
+            if (character.equals(String.valueOf(TokenType.MULTI_LINE_COMMENT_CLOSE.getKeyword().charAt(0)))) {
+                nextCharacter();
+                if (character.equals(String.valueOf(TokenType.MULTI_LINE_COMMENT_CLOSE.getKeyword().charAt(1)))) {
+                    nextCharacter();
+                    break;
+                } else {
+                    sb.append(TokenType.MULTI_LINE_COMMENT_CLOSE.getKeyword().charAt(0));
+                }
+            }
+            sb.append(character);
+            nextCharacter();
+        }
+
+        return new CommentToken(position, sb.toString());
     }
 
     /**

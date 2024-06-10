@@ -1,0 +1,4 @@
+fn main() {
+    int a = 1;
+    match(a) {}
+}
