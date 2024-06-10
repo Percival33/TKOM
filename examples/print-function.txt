@@ -1,0 +1,7 @@
+fn foo() { # funkcja bezargumentowa, nie zwracająca wartości
+	print("pluto");
+}
+
+fn main() {
+    foo();
+}

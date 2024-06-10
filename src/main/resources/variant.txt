@@ -1,0 +1,19 @@
+variant Student { int id; string name; };
+
+fn foo(): Student {
+    return Student::id(0);
+}
+
+fn main() {
+    int a = 0;
+    match(foo()) {
+        Student::id(x) {
+            a = x + 1;
+        }
+        Student::name(name) {
+            print(name);
+        }
+    }
+
+    print((string)a);
+}

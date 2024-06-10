@@ -1,0 +1,12 @@
+variant V { int x; };
+
+fn f(): V {
+    return V::x(1);
+}
+
+fn main() {
+    match(f()) {
+        V::y(a) { print("y"); }
+        V::x(a) { print("x"); }
+    }
+}

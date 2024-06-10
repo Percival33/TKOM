@@ -1,0 +1,14 @@
+struct Point {
+    int x;
+    int y;
+};
+
+fn foo(): Point {
+    return Point { 3, 4 };
+}
+
+fn main() {
+    Point p = foo();
+    print((string)p.x);
+    print((string)p.y);
+}

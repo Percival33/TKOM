@@ -1,0 +1,11 @@
+struct A { int a; };
+
+fn foo(A a) {
+    a = A { 2 };
+}
+
+fn main() {
+    A a = A { 1 };
+    foo(@a);
+    print((string) a.a);
+}

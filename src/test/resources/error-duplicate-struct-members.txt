@@ -1,0 +1,6 @@
+struct A { int a; int a; };
+
+fn main() {
+   A a = A { 5, 6 };
+   print((string)a.a);
+}

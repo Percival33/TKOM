@@ -1,0 +1,17 @@
+fn test(int b): int {
+    while(b > 0) {
+        print((string)b);
+        if(b == 4) {
+            return -1;
+        }
+        b = b - 1;
+    }
+    print("test");
+    return 1;
+}
+
+
+fn main() {
+    int a = test(10);
+    print((string)a);
+}

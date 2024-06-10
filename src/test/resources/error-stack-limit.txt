@@ -1,0 +1,8 @@
+fn foo(int x) {
+    print((string)x);
+    foo(x + 1);
+}
+
+fn main() {
+    foo(0);
+}

@@ -1,0 +1,8 @@
+variant V { int x; };
+
+fn main() {
+    V v = V::x(1);
+    match(v) {
+        V::y(a) { print("y"); }
+    }
+}

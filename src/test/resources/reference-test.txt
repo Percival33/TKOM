@@ -1,0 +1,9 @@
+fn foo(int c) {
+    c = 5;
+}
+
+fn main() {
+    int a = 3;
+    foo(a);
+    print((string)a);
+}
