@@ -1,0 +1,9 @@
+fn main() {
+    int a = 0;
+    if (a % 2 == 0) {
+        a = 5;
+    } else {
+        a = 6;
+    }
+    print((string)a); # 5
+}

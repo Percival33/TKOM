@@ -1,0 +1,3 @@
+fn main() {
+    bool b = false - (bool)1;
+}

@@ -1,0 +1,13 @@
+variant Student { int id; string name; };
+
+fn main() {
+    Student student = Student::id(33);
+    match(student) {
+        Student::id(x) {
+            print((string)x);
+        }
+        Student::name(name) {
+            print(name);
+        }
+    }
+}

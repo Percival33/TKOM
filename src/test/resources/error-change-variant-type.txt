@@ -1,0 +1,6 @@
+variant V { int a; float b; };
+V v = V::a(1);
+
+fn main() {
+    v = 1;
+}

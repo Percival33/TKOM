@@ -1,0 +1,7 @@
+fn main() {
+    if(true) {
+        int a = 2;
+        print((string)a);
+    }
+    print((string)a);
+}

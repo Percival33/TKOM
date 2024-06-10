@@ -1,0 +1,17 @@
+fn getVal(int a, int b): int {
+    return a + b;
+}
+
+fn doNothing() {
+    print("Doing nothing");
+}
+
+fn getB(): int {
+    doNothing();
+    return 5;
+}
+
+fn main() {
+    int x = getVal(1, getB());
+    print((string)x);
+}

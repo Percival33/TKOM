@@ -1,0 +1,16 @@
+struct Point {
+    int x;
+    int y;
+};
+
+fn foo(int x) {
+    x = x + 1;
+}
+
+fn main() {
+    const Point p = Point { 1, 2 };
+    foo(p.x);
+    foo(@p.y);
+    print((string)p.x);
+    print((string)p.y);
+}

@@ -15,7 +15,7 @@ import org.siu.ast.type.*;
 import org.siu.error.*;
 import org.siu.lexer.Lexer;
 import org.siu.ast.expression.logical.OrLogicalExpression;
-import org.siu.ast.function.FunctionDefinition;
+import org.siu.ast.function.FunctionDefinitionStatement;
 import org.siu.ast.Statement;
 import org.siu.token.Position;
 import org.siu.token.Token;
@@ -25,7 +25,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-// TODO: implement parseMatch, ??
 
 @Slf4j
 public class Parser {
@@ -43,59 +42,143 @@ public class Parser {
         return this.token;
     }
 
-    private void saveFunctionDefinition(FunctionDefinition statement, Map<String, FunctionDefinition> functions) {
+    private void saveFunctionDefinition(FunctionDefinitionStatement statement, Map<String, FunctionDefinitionStatement> functions) {
         if (functions.containsKey(statement.getName())) {
-            handleParserError(new RedefinitionError(functions.get(statement.getName()).getPosition()), statement.getPosition());
+            handleParserError(new RedefinitionError(statement.getName() + " is already defined", functions.get(statement.getName()).getPosition()), statement.getPosition());
         }
         functions.put(statement.getName(), statement);
     }
 
-    private void saveDeclaration(Statement statement, Map<String, Statement> declarations) {
-        String name;
-        if (statement instanceof DeclarationStatement) {
-            name = ((DeclarationStatement) statement).getParameter().getName();
-        } else if (statement instanceof VariantStatement) {
-            name = ((VariantStatement) statement).getName();
-        } else if (statement instanceof StructStatement) {
-            name = ((StructStatement) statement).getName();
-        } else if (statement instanceof ConstStatement) {
-            name = ((ConstStatement) statement).getName();
+    private void saveTypeDefinition(Statement statement, Map<String, Statement> typeDefinitions) {
+        if (typeDefinitions.containsKey(statement.getName())) {
+            handleParserError(new RedefinitionError(statement.getName() + " is already defined", typeDefinitions.get(statement.getName()).getPosition()), statement.getPosition());
         }
-        else {
-            throw new RuntimeException("Invalid declaration statement");
-        }
+        typeDefinitions.put(statement.getName(), statement);
+    }
 
+    private void saveDeclaration(Statement statement, Map<String, Statement> declarations) {
+        String name = statement.getName();
 
         if (declarations.containsKey(name)) {
-            handleParserError(new RedefinitionError(declarations.get(name).getPosition()), statement.getPosition());
+            handleParserError(new RedefinitionError(statement.getName() + " is already defined", declarations.get(name).getPosition()), statement.getPosition());
         }
         declarations.put(name, statement);
     }
 
-    //    PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
+    /**
+     * PROGRAM                 = { FN_DEFINITION | DECLARATION | FN_CALL };
+     */
     public Program buildProgram() {
         nextToken();
-        Map<String, FunctionDefinition> functions = new HashMap<>();
+        Map<String, FunctionDefinitionStatement> functions = new HashMap<>();
         Map<String, Statement> declarations = new HashMap<>();
+        Map<String, Statement> typeDefinitions = new HashMap<>();
 
         do {
+            var type = parseTypeDefinitionStatement();
+            if (type.isPresent()) {
+                saveTypeDefinition(type.get(), typeDefinitions);
+                continue;
+            }
+
             var declaration = parseDeclarationStatement();
             if (declaration.isPresent()) {
                 saveDeclaration(declaration.get(), declarations);
                 continue;
             }
+
             var funDef = parseFunctionDefinition();
             if (funDef.isPresent()) {
                 saveFunctionDefinition(funDef.get(), functions);
                 continue;
             }
+
             if (token.getType() == TokenType.SEMICOLON) {
+                nextToken();
                 continue;
             }
+
+            log.error("Unhandled statement at: {}", token.getPosition());
             break;
         } while (token.getType() != TokenType.END_OF_FILE);
 
-        return new Program(functions, declarations);
+        return new Program(functions, declarations, typeDefinitions);
+    }
+
+    /**
+     * VARIANT_DEFINITION              = "variant", IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";
+     * STRUCT_DEFINITION               = "struct", IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
+     */
+    private Optional<Statement> parseTypeDefinitionStatement() {
+        switch (token.getType()) {
+            case VARIANT -> {
+                return parseVariantTypeDefinition();
+            }
+            case STRUCT -> {
+                return parseStructTypeDefinition();
+            }
+            default -> {
+                return Optional.empty();
+            }
+        }
+    }
+
+    /**
+     * STRUCT_DEFINITION               = IDENTIFIER, "{", { STRUCT_TYPE_DECL }, "}", ";";
+     */
+    private Optional<Statement> parseStructTypeDefinition() {
+        nextToken();
+        var position = token.getPosition();
+        var name = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
+        List<Parameter> members = new ArrayList<>();
+
+        var member = parseParameter();
+
+        while (member.isPresent()) {
+            members.add(member.get());
+            mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+            member = parseParameter();
+        }
+
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+
+        return Optional.of(new StructTypeDefinitionStatement(name, members, position));
+    }
+
+    /**
+     * VARIANT_DEFINITION              = IDENTIFIER, "{", STRUCT_TYPE_DECL, {, ",", STRUCT_TYPE_DECL }, "}";
+     */
+    private Optional<Statement> parseVariantTypeDefinition() {
+        nextToken();
+        var position = token.getPosition();
+        var name = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        position = token.getPosition();
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
+        List<Parameter> members = new ArrayList<>();
+
+        var member = parseParameter();
+        if (member.isEmpty()) {
+            log.error("No member in variant at: {}", position);
+            handleParserError(new EmptyVariantException(position), position);
+        }
+        members.add(member.get());
+
+        while (token.getType() == TokenType.SEMICOLON) {
+            nextToken();
+            member = parseParameter();
+            if (member.isEmpty()) {
+                break;
+            }
+
+            members.add(member.get());
+        }
+
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+
+        return Optional.of(new VariantTypeDefinitionStatement(name, members, position));
     }
 
     /**
@@ -103,75 +186,45 @@ public class Parser {
      * <p>
      * VARIABLE_DECLARATION    = SIMPLE_TYPE_AS_ARG, IDENTIFIER, "=", EXPRESSION, ";"
      * | IDENTIFIER, IDENTIFIER, "=", EXPRESSION, ";"
-     * | IDENTIFIER, IDENTIFIER, "{", STRUCT_MEMBER, { ",", STRUCT_MEMBER }, "," "}", ";"
      */
     private Optional<Statement> parseDeclarationStatement() {
         var isConst = parseConst();
         var typeDeclarationOptional = parseTypeDeclaration();
         if (typeDeclarationOptional.isEmpty()) {
+            if (isConst) {
+                log.error("No type declaration in const statement at: {}", token.getPosition());
+                handleParserError(new MissingTypeAfterConstException(token.getPosition()), token.getPosition());
+            }
+
             return Optional.empty();
         }
+
         var typeDeclaration = typeDeclarationOptional.get();
         var position = token.getPosition();
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
 
-        switch (token.getType()) {
-            case ASSIGN -> {
-                nextToken();
-                var expression = parseExpression();
-                if (expression.isEmpty()) {
-                    log.error("No expression in variable declaration at: {}", position);
-                    handleParserError(new MissingExpressionError(position), position);
-                }
-                mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
-                var parameter = new Parameter(typeDeclaration, identifier);
-                var declaration = new DeclarationStatement(parameter, expression.get(), position);
-                if (isConst) {
-                    return Optional.of(new ConstStatement(identifier, declaration, position));
-                }
-                return Optional.of(declaration);
-            }
-            case CURLY_BRACKET_OPEN -> {
-                nextToken();
-                var members = new ArrayList<Parameter>();
-                var member = parseParameter();
-                if (member.isEmpty()) {
-                    log.error("No member in variant/struct at: {}", position);
-                    handleParserError(new SyntaxError(position), position);
-                }
-                members.add(member.get());
-
-                var separator = token.getType();
-                var isVariant = separator == TokenType.COMMA;
-
-                while (token.getType() == separator) {
-                    nextToken();
-                    member = parseParameter();
-                    if (member.isEmpty()) {
-                        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-                        break;
-                    }
-                    members.add(member.get());
-                }
-
-                if (isVariant) {
-                    var variant = new VariantStatement(identifier, members, position);
-                    if (isConst) return Optional.of(new ConstStatement(variant.getName(), variant, position));
-                    return Optional.of(variant);
-                }
-                var struct = new StructStatement(identifier, members, position);
-                if (isConst) return Optional.of(new ConstStatement(struct.getName(), struct, position));
-                return Optional.of(struct);
-            }
-            default -> {
-                break;
-            }
+        if (token.getType() != TokenType.ASSIGN) {
+            log.error("Invalid declaration statement at: {}", position);
+            handleParserError(new SyntaxError(position), position);
         }
-        throw new RuntimeException("Invalid declaration statement at: " + position);
+
+        nextToken();
+        var expression = parseExpression();
+        if (expression.isEmpty()) {
+            log.error("No expression in variable declaration at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
+        }
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+        var parameter = new Parameter(typeDeclaration, identifier);
+        var declaration = new DeclarationStatement(parameter, expression.get(), position);
+        if (isConst) {
+            return Optional.of(new ConstStatement(parameter, declaration, position));
+        }
+        return Optional.of(declaration);
     }
 
     private boolean parseConst() {
-        if(token.getType() == TokenType.CONST) {
+        if (token.getType() == TokenType.CONST) {
             nextToken();
             return true;
         }
@@ -211,7 +264,7 @@ public class Parser {
     }
 
     //    FN_DEFINITION           = "fn", IDENTIFIER, "(", [ FN_PARAMS, { ",", FN_PARAMS }], ")", [":", FN_RET_TYPES], BLOCK;
-    private Optional<FunctionDefinition> parseFunctionDefinition() {
+    private Optional<FunctionDefinitionStatement> parseFunctionDefinition() {
         if (token.getType() != TokenType.FUNCTION) {
             return Optional.empty();
         }
@@ -230,15 +283,14 @@ public class Parser {
             handleParserError(new SyntaxError(position), position);
         }
 
-        return Optional.of(new FunctionDefinition(name.toString(), params, returnType, block.get(), position));
-//        return Optional.empty();
+        return Optional.of(new FunctionDefinitionStatement(name.toString(), params, returnType, block.get(), position));
     }
 
     /**
-     * BLOCK                   = "{", { STATEMENT, ";" }, "}";
+     * BLOCK                   = "{", { STATEMENT }, "}";
      */
     private Optional<BlockStatement> parseBlock() {
-        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
+        mustBe(token, TokenType.CURLY_BRACKET_OPEN, MissingBlockStatementException::new);
         var position = token.getPosition();
         List<Statement> statements = new ArrayList<>();
 
@@ -262,7 +314,7 @@ public class Parser {
     );
 
     /**
-     * MATCH                           = "match", "(", IDENTIFIER, ")", "{", { MATCH_EXP }, "}"
+     * MATCH                           = "match", "(", EXPRESSION, ")", "{", { MATCH_EXP }, "}"
      */
     private Optional<MatchStatement> parseMatchStatement() {
         if (token.getType() != TokenType.MATCH) {
@@ -270,24 +322,31 @@ public class Parser {
         }
         var position = token.getPosition();
         nextToken();
+
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
-        var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+
+        var expression = parseExpression();
+        if (expression.isEmpty()) {
+            log.error("No expression in match statement at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
+        }
+
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
         mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
-        List<MatchCaseExpression> matchCases = new ArrayList<>();
+        List<MatchCaseStatement> matchCases = new ArrayList<>();
         var matchCase = parseMatchCase();
         while (matchCase.isPresent()) {
             matchCases.add(matchCase.get());
             matchCase = parseMatchCase();
         }
         mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-        return Optional.of(new MatchStatement(identifier, matchCases, position));
+        return Optional.of(new MatchStatement(expression.get(), matchCases, position));
     }
 
     /**
      * MATCH_EXP                       = IDENTIFIER, "::", IDENTIFIER, "(", IDENTIFIER, ")", "{" EXPRESSION "}";
      */
-    private Optional<MatchCaseExpression> parseMatchCase() {
+    private Optional<MatchCaseStatement> parseMatchCase() {
         if (token.getType() != TokenType.IDENTIFIER) {
             return Optional.empty();
         }
@@ -299,22 +358,20 @@ public class Parser {
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
         var variable = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-        mustBe(token, TokenType.CURLY_BRACKET_OPEN, SyntaxError::new);
-        var expression = parseExpression();
-        if (expression.isEmpty()) {
-            log.error("No expression in match case at: {}", position);
-            handleParserError(new MissingExpressionError(position), position);
+
+        var block = parseBlock();
+        if (block.isEmpty()) {
+            log.error("No block statement in match case at: {}", position);
+            handleParserError(new MissingBlockStatementException(position), position);
         }
-        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
-        return Optional.of(new MatchCaseExpression(variantType, member, variable, expression.get(), position));
+
+        return Optional.of(new MatchCaseStatement(variantType, member, variable, block.get(), position));
     }
 
     /**
-     * ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION
-     *                                 | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
-     *                                 | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
-     *
-     *
+     * ASSINGMENT                      = IDENTIFIER, "=", EXPRESSION, ";"
+     * | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION, ";"
+     * | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION, ")", ";" ; (* variant *)
      */
     private Optional<Statement> parseAssignmentOrDeclarationOrExpression() {
         if (token.getType() != TokenType.IDENTIFIER) {
@@ -322,34 +379,53 @@ public class Parser {
         }
         var name = token.getValue().toString();
         var position = token.getPosition();
+
         nextToken();
-        if (token.getType() == TokenType.ASSIGN || token.getType() == TokenType.DOT) {
-            var statement = parseAssignmentStatement(name);
-            if (statement.isEmpty()) {
-                log.error("No statement in assignment at: {}", position);
-                handleParserError(new SyntaxError(position), position);
-            }
-            mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
-            return Optional.of((Statement) statement.get());
-        }
-        // fnCall
-        if (token.getType() == TokenType.BRACKET_OPEN) {
-            var arguments = parseFnArguments();
-            mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-            mustBe(token, TokenType.SEMICOLON, SyntaxError::new);
-            return Optional.of(new FunctionCallExpression(name, arguments, position));
-        }
+
+        var statement = parseAssignmentStatement(name, position)
+                .or(() -> parseFunctionCallStatement(name, position));
+
+        if (statement.isPresent()) return statement;
 
         var variable = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
         var expression = parseExpression();
+
         if (expression.isEmpty()) {
             log.error("No expression in declaration at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
         }
+
         var type = new TypeDeclaration(ValueType.CUSTOM, name);
         mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+
         return Optional.of(new DeclarationStatement(new Parameter(type, variable), expression.get(), position));
+    }
+
+    private Optional<Statement> parseFunctionCallStatement(String name, Position position) {
+        if (token.getType() != TokenType.BRACKET_OPEN) {
+            return Optional.empty();
+        }
+
+        var arguments = parseFnArguments();
+
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+
+        return Optional.of(new FunctionCallExpression(name, arguments, position));
+    }
+
+    private Optional<Statement> parseAssignmentStatement(String name, Position position) {
+        if (!(token.getType() == TokenType.ASSIGN || token.getType() == TokenType.DOT)) {
+            return Optional.empty();
+        }
+        var statement = parseAssignmentStatement(name);
+        if (statement.isEmpty()) {
+            log.error("No statement in assignment at: {}", position);
+            handleParserError(new SyntaxError(position), position);
+        }
+        mustBe(token, TokenType.SEMICOLON, MissingSemicolonError::new);
+        return Optional.of(statement.get());
     }
 
 
@@ -368,24 +444,17 @@ public class Parser {
      * | IDENTIFIER, "=", IDENTIFIER, "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
      * | IDENTIFIER, ".", IDENTIFIER, "=", EXPRESSION
      */
-    private Optional<AssignmentStatement> parseAssignmentStatement(String name) {
+    private Optional<Statement> parseAssignmentStatement(String name) {
         var position = token.getPosition();
 
-        if (token.getType() == TokenType.DOT) {
-            nextToken();
-            var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
-            mustBe(token, TokenType.ASSIGN, SyntaxError::new);
-            nextToken();
-            var expression = parseExpression();
-            if (expression.isEmpty()) {
-                log.error("No expression in assignment at: {}", position);
-                handleParserError(new MissingExpressionError(position), position);
-            }
-            return Optional.of(new AssignmentStatement(name + "." + fieldName, expression.get(), position));
+        var member = parseStructMemberAssignmentStatement(name, position);
+        if (member.isPresent()) {
+            return member;
         }
-        // FIXME: expr albo identifier
+
         mustBe(token, TokenType.ASSIGN, SyntaxError::new);
         var expression = parseExpression();
+
         if (expression.isEmpty()) {
             log.error("No expression in assignment at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
@@ -398,11 +467,27 @@ public class Parser {
         return Optional.of(new AssignmentStatement(name, expression.get(), position));
     }
 
+    private Optional<Statement> parseStructMemberAssignmentStatement(String structName, Position position) {
+        if (token.getType() != TokenType.DOT) {
+            return Optional.empty();
+        }
+
+        nextToken();
+        var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.ASSIGN, SyntaxError::new);
+        var expression = parseExpression();
+        if (expression.isEmpty()) {
+            log.error("No expression in assignment at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
+        }
+        return Optional.of(new StructMemberAssignmentStatement(new StructMemberExpression(structName, fieldName, position), expression.get(), position));
+    }
+
     /**
      * "::", IDENTIFIER, "(", EXPRESSION ")"; (* variant *)
      * part of variant assignment
      */
-    private Optional<AssignmentStatement> parseVariantAssignment(String name, Position position) {
+    private Optional<Statement> parseVariantAssignment(String name, Position position) {
         nextToken();
         var variantName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
         mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
@@ -431,13 +516,13 @@ public class Parser {
 
         var position = token.getPosition();
         nextToken();
-        mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+        mustBe(token, TokenType.BRACKET_OPEN, InvalidConditionExpressionException::new);
         var condition = parseExpression();
         if (condition.isEmpty()) {
             log.error("No condition in if statement at: {}", position);
             handleParserError(new MissingExpressionError(position), position);
         }
-        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        mustBe(token, TokenType.BRACKET_CLOSE, InvalidConditionExpressionException::new);
         var block = parseBlock();
         if (block.isEmpty()) {
             log.error("Block cannot be empty at: {}", position);
@@ -557,11 +642,11 @@ public class Parser {
         }
         var identifier = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
 
-        if (type.isEmpty() || identifier.isEmpty()) {
+        if (identifier.isEmpty()) {
             log.error("Invalid parameter at: {}", token.getPosition());
             handleParserError(new SyntaxError(token.getPosition()), token.getPosition());
-            return Optional.empty();
         }
+
         return Optional.of(new Parameter(type.get(), identifier));
     }
 
@@ -716,7 +801,7 @@ public class Parser {
     private Optional<Expression> parseFactor() {
         var position = token.getPosition();
         var factorOptional = Optional.<Expression>empty();
-        var castedType = Optional.<ValueType>empty();
+        var castedType = Optional.<TypeDeclaration>empty();
 
         // CASTED_FACTOR | '(', EXPRESSION, ')'
         if (token.getType() == TokenType.BRACKET_OPEN) {
@@ -736,13 +821,16 @@ public class Parser {
         return parseUnaryFactor();
     }
 
-    private Optional<ValueType> parseCastedSimpleType() {
-        var castedType = ValueType.of(token.getType());
-        if (castedType.isEmpty()) {
-            log.warn("Invalid cast syntax at: {}", token.getPosition());
-        }
-        return castedType.filter(valueType -> valueType != ValueType.CUSTOM);
+    private Optional<TypeDeclaration> parseCastedSimpleType() {
+        return ValueType.of(token.getType())
+                .filter(valueType -> valueType != ValueType.CUSTOM)
+                .map(TypeDeclaration::new)
+                .or(() -> {
+                    log.warn("Invalid cast syntax at: {}", token.getPosition());
+                    return Optional.empty();
+                });
     }
+
 
     /**
      * UNARY_FACTOR            = ["-"], FACTOR;
@@ -768,6 +856,7 @@ public class Parser {
         var factorOptional = parseLiteralExpression()
                 .or(this::parseIdentifierOrFnCallOrVariant)
                 .or(Optional::empty);
+
 
         if (factorOptional.isEmpty()) {
             return Optional.empty();
@@ -804,36 +893,45 @@ public class Parser {
         var name = token.getValue().toString();
         var position = token.getPosition();
         nextToken();
-        Expression expr;
 
-        switch (token.getType()) {
-            case DOT -> {
-                nextToken();
-                var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
-                expr = new StructExpression(name, fieldName, position);
-            }
-            case BRACKET_OPEN -> {
-                var arguments = parseFnArguments();
-                mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-                expr = new FunctionCallExpression(name, arguments, position);
-            }
-            case DOUBLE_COLON -> {
-                nextToken();
-                var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
-                mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
-                var variantExpression = parseExpression();
-                if (variantExpression.isEmpty()) {
-                    log.error("No expression in variant at: {}", position);
-                    handleParserError(new MissingExpressionError(position), position);
-                }
-                mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
-                expr = new VariantExpression(fieldName, variantExpression.get(), position);
-            }
-            default -> {
-                expr = new IdentifierExpression(name, position);
-            }
+        return parseStructDefinitionExpression(name, position)
+                .or(() -> parseStructExpression(name, position))
+                .or(() -> parseFnCallExpression(name, position))
+                .or(() -> parseVariantExpression(name, position))
+                .or(() -> Optional.of(new IdentifierExpression(name, position)));
+    }
+
+    private Optional<Expression> parseStructExpression(String name, Position position) {
+        if (token.getType() != TokenType.DOT) return Optional.empty();
+
+        nextToken();
+        var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        return Optional.of(new StructMemberExpression(name, fieldName, position));
+    }
+
+    private Optional<Expression> parseFnCallExpression(String name, Position position) {
+        if (token.getType() != TokenType.BRACKET_OPEN) return Optional.empty();
+
+        var arguments = parseFnArguments();
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        return Optional.of(new FunctionCallExpression(name, arguments, position));
+    }
+
+    private Optional<Expression> parseVariantExpression(String name, Position position) {
+        if (token.getType() != TokenType.DOUBLE_COLON) return Optional.empty();
+
+        nextToken();
+
+        var fieldName = mustBe(token, TokenType.IDENTIFIER, SyntaxError::new).toString();
+        mustBe(token, TokenType.BRACKET_OPEN, SyntaxError::new);
+        var variantExpression = parseExpression();
+
+        if (variantExpression.isEmpty()) {
+            log.error("No expression in variant at: {}", position);
+            handleParserError(new MissingExpressionError(position), position);
         }
-        return Optional.of(expr);
+        mustBe(token, TokenType.BRACKET_CLOSE, SyntaxError::new);
+        return Optional.of(new VariantDeclarationExpression(name, fieldName, variantExpression.get(), position));
     }
 
     /**
@@ -856,11 +954,42 @@ public class Parser {
             }
             expression = expressionOptional.get();
             if (copy) {
-                expression = new CopiedValueExpression(expression, expression.getPosition());
+                if (!(expression instanceof NamedExpression)) {
+                    handleParserError(new SyntaxError(token.getPosition(), "Copy operator can only be used with identifiers."), token.getPosition());
+                }
+
+                expression = new CopiedValueExpression((NamedExpression) expression, expression.getPosition());
             }
             arguments.add(expression);
         } while (token.getType() == TokenType.COMMA);
         return arguments;
+    }
+
+    /**
+     * '{', EXPRESSION, { ',', EXPRESSION }, '}' ( * struct definition expression *)
+     */
+    private Optional<Expression> parseStructDefinitionExpression(String identifier, Position position) {
+        if (token.getType() != TokenType.CURLY_BRACKET_OPEN) {
+            return Optional.empty();
+        }
+        nextToken();
+
+        var arguments = new ArrayList<Expression>();
+        while (token.getType() != TokenType.CURLY_BRACKET_CLOSE) {
+            var expression = parseExpression();
+            if (expression.isEmpty()) {
+                log.error("No expression in struct at: {}", token.getPosition());
+                handleParserError(new MissingExpressionError(token.getPosition()), token.getPosition());
+            }
+            arguments.add(expression.get());
+            if (token.getType() == TokenType.COMMA) {
+                nextToken();
+            }
+        }
+
+        mustBe(token, TokenType.CURLY_BRACKET_CLOSE, SyntaxError::new);
+
+        return Optional.of(new StructDeclarationExpression(identifier, arguments, position));
     }
 
     private boolean parseCopyOperator() {

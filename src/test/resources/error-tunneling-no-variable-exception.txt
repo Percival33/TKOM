@@ -1,0 +1,13 @@
+fn test() {
+    int a = 3;
+    secondFn();
+}
+
+fn secondFn() {
+    print((string)a);
+}
+
+
+fn main() {
+    test();
+}

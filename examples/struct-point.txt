@@ -1,0 +1,15 @@
+struct Point {
+    int x;
+    int y;
+};
+
+fn f(int x): int {
+    return x + 1;
+}
+
+fn main() {
+    int a = 10;
+    Point pt = Point { a, f(10) };
+    Point pt2 = pt;
+    print((string)pt.x + " " + (string)pt.y + " <> " + (string)pt2.x + " " + (string)pt2.y);
+}

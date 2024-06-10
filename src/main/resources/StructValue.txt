@@ -1,0 +1,16 @@
+struct Dog {
+	int age;
+	string name;
+	string breed;
+};
+
+fn foo(Dog d) {
+    d.age = -1;
+}
+
+fn main() {
+    Dog pluto = { 14, "pluto", "golden" };
+    print((string)pluto.age);
+    foo(pluto);
+    print((string)pluto.age);
+}

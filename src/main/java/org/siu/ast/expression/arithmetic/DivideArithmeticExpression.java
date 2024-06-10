@@ -4,7 +4,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import org.siu.ast.expression.Expression;
-import org.siu.parser.Visitor;
+import org.siu.interpreter.error.ZeroDivisionException;
+import org.siu.interpreter.Visitor;
 import org.siu.token.Position;
 
 @ToString(exclude = {"left", "right"})
@@ -23,11 +24,17 @@ public class DivideArithmeticExpression implements BinaryArithmeticExpression {
 
     @Override
     public int evaluate(int left, int right) {
+        if (right == 0) {
+            throw new ZeroDivisionException(position);
+        }
         return left / right;
     }
 
     @Override
     public float evaluate(float left, float right) {
+        if (right == 0) {
+            throw new ZeroDivisionException(position);
+        }
         return left / right;
     }
 }

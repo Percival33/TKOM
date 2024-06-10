@@ -1,0 +1,5 @@
+variant v { int a };
+
+fn main() {
+    v V = v::b(1);
+}

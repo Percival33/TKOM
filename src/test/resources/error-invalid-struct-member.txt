@@ -1,0 +1,6 @@
+struct A { int a; };
+
+fn main() {
+    A a = A { 1 };
+    a.b = 1;
+}
